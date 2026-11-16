@@ -30,6 +30,10 @@
 --    arrow, distance and minimap pin lead to the chosen dungeon's entrance.
 --    Outside, the client does report your position, so this is fully live.
 --    /bnav go picks a dungeon; /bnav entrance records a portal at your feet.
+--    The dungeon list is coloured against your level: red above you, grey
+--    once outgrown, green while in range.
+--  * Entrance marks on the game's world map (name, level range, same
+--    colours; click one to pick it). /bnav worldmap toggles them.
 --
 -- Boss pin coordinates follow the Forever Atlas (AtlasLootClassic) dungeon
 -- map data shipped with this client. Bosses listed without coordinates are
@@ -55,6 +59,7 @@
 --   BossNav_Live.lua       periodic live update
 --   BossNav_Travel.lua     travel mode: arrow, distance and minimap pin to a dungeon entrance
 --   BossNav_TravelPanel.lua the window outside a dungeon: zone map, entrance pin, dungeon selector
+--   BossNav_WorldMap.lua   dungeon entrance marks on the game's world map
 --   BossNav_Kills.lua      kill tracking and extra bosses
 --   BossNav_Marker.lua     skull raid mark on a boss as soon as it is seen
 --   BossNav_Roster.lua     group roster: names, classes, class colours, group chat channel
@@ -129,6 +134,7 @@ local function DB()
     if BossNavDB.hud == nil then BossNavDB.hud = true end
     if BossNavDB.minimap == nil then BossNavDB.minimap = true end
     if BossNavDB.skull == nil then BossNavDB.skull = true end
+    if BossNavDB.worldmap == nil then BossNavDB.worldmap = true end
     return BossNavDB
 end
 

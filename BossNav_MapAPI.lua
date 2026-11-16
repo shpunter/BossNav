@@ -7,22 +7,24 @@ local state                  = ns.state
 --------------------------------------------------------------------------
 -- C_Map access (all guarded; this client may hide or restrict any of it)
 --------------------------------------------------------------------------
--- Fallback: find a uiMapID by its display name (cached per name).
-local mapNameCache = {}
+-- Find a uiMapID by its display name. The client's map list is scanned once
+-- (lowest ID wins for a repeated name, which is the zone map) and kept.
+local mapNameIndex = nil
 local function ResolveMapIDByName(name)
     if not (name and C_Map and C_Map.GetMapInfo) then return nil end
     local key = Norm(name)
     if not key or key == "" then return nil end
-    if mapNameCache[key] ~= nil then return mapNameCache[key] or nil end
-    for id = 1, 6000 do
-        local ok, info = pcall(C_Map.GetMapInfo, id)
-        if ok and info and info.name and Norm(info.name) == key then
-            mapNameCache[key] = id
-            return id
+    if not mapNameIndex then
+        mapNameIndex = {}
+        for id = 1, 6000 do
+            local ok, info = pcall(C_Map.GetMapInfo, id)
+            if ok and info and info.name then
+                local k = Norm(info.name)
+                if k and k ~= "" and not mapNameIndex[k] then mapNameIndex[k] = id end
+            end
         end
     end
-    mapNameCache[key] = false
-    return nil
+    return mapNameIndex[key]
 end
 
 local function PlayerMapID()

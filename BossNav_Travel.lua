@@ -48,6 +48,30 @@ local function IndexOfKey(key)
     return nil
 end
 
+-- Your character level, or nil when the client will not say.
+local function PlayerLevel()
+    local ok, lvl = pcall(UnitLevel, "player")
+    if ok and type(lvl) == "number" and lvl > 0 then return lvl end
+    return nil
+end
+
+-- Colour code of a dungeon against your level: red above you, grey when you
+-- have outgrown it, green when you are inside its range, nil when unknown.
+local function LevelColor(entry, myLevel)
+    if not (myLevel and entry.minLevel and entry.maxLevel) then return nil end
+    if entry.minLevel > myLevel then return "|cffff4040" end
+    if entry.maxLevel < myLevel then return "|cff888888" end
+    return "|cff40ff40"
+end
+
+-- The selected dungeon changed: redraw the window and the world map marks.
+local function TargetChanged()
+    UpdateHUDVisibility()
+    RefreshIfShown()
+    if ns.RefreshWorldMapPins then pcall(ns.RefreshWorldMapPins) end
+    pcall(BossNav_UpdateLive, true)
+end
+
 -- Bring back the dungeon picked in an earlier session (saved variables).
 local function RestoreTravelTarget()
     local saved = DB().travel
@@ -62,9 +86,7 @@ function BossNav_SelectDungeon(idx)
     local _, _, _, where = EntranceOf(e)
     Print(string.format("Travel target: |cffffd100%s|r  %s", e.name,
         where and ("(" .. where .. ")") or "(entrance unknown: stand at it and type /bnav entrance)"))
-    UpdateHUDVisibility()
-    RefreshIfShown()
-    pcall(BossNav_UpdateLive, true)
+    TargetChanged()
 end
 
 function BossNav_CycleDungeon(step)
@@ -83,9 +105,8 @@ local function ClearTravelTarget(quiet)
     state.travelIdx = nil
     DB().travel = nil
     HideMinimapPins()
-    UpdateHUDVisibility()
     if not quiet then Print("Travel target cleared.") end
-    RefreshIfShown()
+    TargetChanged()
 end
 
 --------------------------------------------------------------------------
@@ -257,7 +278,9 @@ end
 
 -- shared with the other BossNav files
 ns.ClearTravelTarget = ClearTravelTarget
+ns.LevelColor = LevelColor
 ns.MapPosFromWorld = MapPosFromWorld
+ns.PlayerLevel = PlayerLevel
 ns.RestoreTravelTarget = RestoreTravelTarget
 ns.SelectedDungeon = SelectedDungeon
 ns.SetEntranceIcon = SetEntranceIcon

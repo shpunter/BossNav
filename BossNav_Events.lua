@@ -17,6 +17,7 @@ local OnUnitSpellcast        = ns.OnUnitSpellcast
 local Print                  = ns.Print
 local RefreshIfShown         = ns.RefreshIfShown
 local RestoreTravelTarget    = ns.RestoreTravelTarget
+local SetupWorldMapPins      = ns.SetupWorldMapPins
 local SyncGroupState         = ns.SyncGroupState
 local TryMarkUnit            = ns.TryMarkUnit
 local UpdateZone             = ns.UpdateZone
@@ -65,7 +66,10 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4, arg5)
             Print("loaded. /bnav opens the map, /bnav help lists commands.")
         end
     elseif event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
-        if event == "PLAYER_ENTERING_WORLD" then SyncGroupState() end
+        if event == "PLAYER_ENTERING_WORLD" then
+            SyncGroupState()
+            SetupWorldMapPins()   -- the map frame may not have existed at load time
+        end
         UpdateZone()
         OnMoneyChanged()   -- sets the purse baseline after a load or zone change
     elseif event == "GROUP_ROSTER_UPDATE" then

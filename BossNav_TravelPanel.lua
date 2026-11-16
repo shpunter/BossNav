@@ -6,10 +6,12 @@ local EntranceOf             = ns.EntranceOf
 local GetBossPin             = ns.GetBossPin
 local GetRow                 = ns.GetRow
 local HasEntrance            = ns.HasEntrance
+local LevelColor             = ns.LevelColor
 local MAX_ROWS               = ns.MAX_ROWS
 local MapName                = ns.MapName
 local MapPosFromWorld        = ns.MapPosFromWorld
 local Place                  = ns.Place
+local PlayerLevel            = ns.PlayerLevel
 local PlayerMapID            = ns.PlayerMapID
 local ROW_H                  = ns.ROW_H
 local RenderBlank            = ns.RenderBlank
@@ -124,15 +126,9 @@ local function DrawEntrancePin(entry)
     p:Show()
 end
 
--- Your character level, or nil when the client will not say.
-local function PlayerLevel()
-    local ok, lvl = pcall(UnitLevel, "player")
-    if ok and type(lvl) == "number" and lvl > 0 then return lvl end
-    return nil
-end
-
 -- Sidebar: the rows from scrollFirst on, selected dungeon kept in view.
--- A dungeon whose lowest recommended level is above yours is drawn in red.
+-- Names are coloured against your level (see LevelColor in BossNav_Travel.lua):
+-- red above you, grey when outgrown, green when in range.
 local function DrawSelector()
     KeepSelectionVisible()
     local myLevel = PlayerLevel()
@@ -142,16 +138,15 @@ local function DrawSelector()
         if not e then break end
         local r = GetRow(row)
         local selected = (i == state.travelIdx)
-        local tooHigh = myLevel and e.minLevel and e.minLevel > myLevel
         r.bossIdx = nil
         r.travelIdx = i
         r.mark:SetText(selected and "|cffffd100>|r" or "")
         r.mark:Show()
         SetEntranceIcon(r.icon)
-        local color = tooHigh and "|cffff4040" or (selected and "|cffffd100" or "|cffffffff")
-        local levelColor = tooHigh and "|cffff4040" or "|cff888888"
+        local levelColor = LevelColor(e, myLevel)
+        local color = levelColor or (selected and "|cffffd100" or "|cffffffff")
         local tag = HasEntrance(e) and "" or " |cff666666(no entrance)|r"
-        r.text:SetText(string.format("%s%s|r  %s%s|r%s", color, e.name, levelColor, e.levels, tag))
+        r.text:SetText(string.format("%s%s|r  %s%s|r%s", color, e.name, levelColor or "|cff888888", e.levels, tag))
         r:Show()
     end
     DrawScrollbar()

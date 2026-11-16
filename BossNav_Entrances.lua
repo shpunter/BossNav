@@ -62,7 +62,7 @@ for i, cfg in ipairs(DUNGEONS) do
     TRAVEL[#TRAVEL + 1] = {
         key = cfg.key, name = cfg.name, cfg = cfg,
         zone = e.zone, x = e.x, y = e.y, via = e.via, raid = e.raid or false,
-        lo = lo or 99, minLevel = lo, levels = levels, order = i,
+        lo = lo or 99, minLevel = lo, maxLevel = hi, levels = levels, order = i,
     }
 end
 table.sort(TRAVEL, function(a, b)
