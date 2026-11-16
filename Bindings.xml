@@ -1,0 +1,26 @@
+<Bindings>
+    <Binding name="BOSSNAV_TOGGLE_MAP" header="BOSSNAV">
+        BossNav_ToggleMap()
+    </Binding>
+    <Binding name="BOSSNAV_CYCLE_BOSS">
+        BossNav_CycleBoss()
+    </Binding>
+    <Binding name="BOSSNAV_PREV_STEP">
+        BossNav_PrevBoss()
+    </Binding>
+    <Binding name="BOSSNAV_NEXT_STEP">
+        BossNav_NextFloor()
+    </Binding>
+    <Binding name="BOSSNAV_TOGGLE_HUD">
+        BossNav_ToggleHUD()
+    </Binding>
+    <Binding name="BOSSNAV_MARK_WAYPOINT">
+        BossNav_MarkWaypoint()
+    </Binding>
+    <Binding name="BOSSNAV_MARK_BOSS">
+        BossNav_MarkNearbyBoss()
+    </Binding>
+    <Binding name="BOSSNAV_TOGGLE_TAB">
+        BossNav_ToggleTab()
+    </Binding>
+</Bindings>

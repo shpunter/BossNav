@@ -1,0 +1,283 @@
+-- Map window frames, sidebar rows, pins.
+local ADDON, ns = ...
+-- from the files loaded before this one
+local BOSS_DISPLAY           = ns.BOSS_DISPLAY
+local CANVAS_H               = ns.CANVAS_H
+local CANVAS_W               = ns.CANVAS_W
+local SIDEBAR_W              = ns.SIDEBAR_W
+local SKULL_TEX              = ns.SKULL_TEX
+
+-- Draw rectangle of the map art inside the canvas (set by the renderers)
+ns.drawX, ns.drawY = 0, 0
+local drawW, drawH = CANVAS_W, CANVAS_H
+ns.renderedMapID = nil   -- uiMapID when native art is shown, else nil
+
+--------------------------------------------------------------------------
+-- Map window
+--------------------------------------------------------------------------
+local mapFrame = CreateFrame("Frame", "BossNavMapFrame", UIParent)
+mapFrame:SetSize(12 + CANVAS_W + 10 + SIDEBAR_W + 12, CANVAS_H + 206)
+mapFrame:SetPoint("CENTER")
+mapFrame:SetFrameStrata("HIGH")
+mapFrame:SetClampedToScreen(true)
+mapFrame:Hide()
+tinsert(UISpecialFrames, "BossNavMapFrame")   -- Esc closes the window
+
+local border = mapFrame:CreateTexture(nil, "BACKGROUND")
+border:SetPoint("TOPLEFT", -1, 1)
+border:SetPoint("BOTTOMRIGHT", 1, -1)
+border:SetColorTexture(0.45, 0.40, 0.25, 0.9)
+local bg = mapFrame:CreateTexture(nil, "BORDER")
+bg:SetAllPoints()
+bg:SetColorTexture(0.03, 0.03, 0.04, 0.96)
+
+local headerText = mapFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+headerText:SetPoint("TOPLEFT", mapFrame, "TOPLEFT", 12, -10)
+headerText:SetJustifyH("LEFT")
+
+local statusText = mapFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+statusText:SetPoint("TOPLEFT", headerText, "BOTTOMLEFT", 0, -3)
+statusText:SetJustifyH("LEFT")
+
+local canvas = CreateFrame("Frame", "BossNavCanvas", mapFrame)
+canvas:SetSize(CANVAS_W, CANVAS_H)
+canvas:SetPoint("TOPLEFT", mapFrame, "TOPLEFT", 12, -50)
+
+local canvasBg = canvas:CreateTexture(nil, "BACKGROUND")
+canvasBg:SetAllPoints()
+canvasBg:SetColorTexture(0, 0, 0, 1)
+
+local noArtText = canvas:CreateFontString(nil, "OVERLAY", "GameFontDisable")
+noArtText:SetPoint("CENTER")
+noArtText:SetWidth(CANVAS_W - 40)
+noArtText:SetJustifyH("CENTER")
+noArtText:Hide()
+
+local navText = mapFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+navText:SetPoint("TOPLEFT", canvas, "BOTTOMLEFT", 0, -8)
+navText:SetJustifyH("LEFT")
+navText:SetWidth(CANVAS_W)   -- keep the footer text off the sidebar
+
+local helpText = mapFrame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+helpText:SetPoint("TOPLEFT", navText, "BOTTOMLEFT", 0, -4)
+helpText:SetJustifyH("LEFT")
+helpText:SetWidth(CANVAS_W)
+local HELP_BOSS = "/bnav boss | /bnav prev | /bnav floor | /bnav kill | /bnav mark X Y note | /bnav hud | /bnav help"
+helpText:SetText(HELP_BOSS)
+
+-- Sidebar boss list
+local sidebar = CreateFrame("Frame", nil, mapFrame)
+sidebar:SetSize(SIDEBAR_W, CANVAS_H + 144)   -- runs down to the window bottom so 20 tall rows fit
+sidebar:SetPoint("TOPLEFT", canvas, "TOPRIGHT", 10, 0)
+local sidebarBg = sidebar:CreateTexture(nil, "BACKGROUND")
+sidebarBg:SetAllPoints()
+sidebarBg:SetColorTexture(0.06, 0.06, 0.08, 1)
+-- The "Bosses" / "Loot" / "Profs" tab buttons at the top of the sidebar live in BossNav_Tabs.lua.
+
+-- Clip a square portrait texture to a circle (modern clients only; older
+-- ones have no mask textures and simply keep the square portrait).
+local PORTRAIT_MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
+local function RoundIcon(tex)
+    if not (tex and tex.AddMaskTexture) then return end
+    local parent = tex:GetParent()
+    if not parent or not parent.CreateMaskTexture then return end
+    local mask = parent:CreateMaskTexture()
+    mask:SetTexture(PORTRAIT_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+    mask:SetAllPoints(tex)
+    tex:AddMaskTexture(mask)
+end
+
+local bossRows = {}
+local MAX_ROWS = 20
+local ROW_H = 24
+local ICON_SIZE = 22
+local NAME_FONT_SIZE = 14
+local MARK_W = 12   -- width of the ">" selection marker column
+
+-- Bump a font string to a given point size, keeping its face and outline.
+local function SetFontSize(fs, size)
+    local face, _, flags = fs:GetFont()
+    if face then fs:SetFont(face, size, flags) end
+end
+local function GetRow(i)
+    if not bossRows[i] then
+        local b = CreateFrame("Button", nil, sidebar)
+        b:SetSize(SIDEBAR_W - 8, ROW_H)
+        b:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 4, -24 - (i - 1) * ROW_H)
+        b.hl = b:CreateTexture(nil, "HIGHLIGHT")
+        b.hl:SetAllPoints()
+        b.hl:SetColorTexture(1, 0.82, 0, 0.15)
+        -- layout: ">" | portrait | name
+        b.mark = b:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        b.mark:SetPoint("LEFT", b, "LEFT", 4, 0)
+        b.mark:SetWidth(MARK_W)
+        b.mark:SetJustifyH("CENTER")
+        b.mark:SetWordWrap(false)
+        SetFontSize(b.mark, NAME_FONT_SIZE)
+        b.icon = b:CreateTexture(nil, "ARTWORK")
+        b.icon:SetSize(ICON_SIZE, ICON_SIZE)
+        b.icon:SetPoint("LEFT", b, "LEFT", 4 + MARK_W + 4, 0)
+        RoundIcon(b.icon)
+        b.text = b:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        b.text:SetPoint("LEFT", b, "LEFT", 4 + MARK_W + 4 + ICON_SIZE + 6, 0)
+        b.text:SetWidth(SIDEBAR_W - (4 + MARK_W + 4 + ICON_SIZE + 6) - 8)
+        b.text:SetJustifyH("LEFT")
+        b.text:SetWordWrap(false)
+        SetFontSize(b.text, NAME_FONT_SIZE)
+        b:SetScript("OnClick", function(self)
+            if self.travelIdx then
+                BossNav_SelectDungeon(self.travelIdx)
+            elseif self.bossIdx then
+                BossNav_SelectBoss(self.bossIdx)
+            end
+        end)
+        bossRows[i] = b
+    end
+    return bossRows[i]
+end
+
+-- Map tiles
+local tiles = {}
+local function GetTile(i)
+    if not tiles[i] then
+        tiles[i] = canvas:CreateTexture(nil, "ARTWORK")
+    end
+    return tiles[i]
+end
+local function HideTilesFrom(i)
+    for j = i, #tiles do tiles[j]:Hide() end
+end
+
+-- Pin layer (above tiles)
+local pinLayer = CreateFrame("Frame", nil, canvas)
+pinLayer:SetAllPoints()
+pinLayer:SetFrameLevel(canvas:GetFrameLevel() + 2)
+
+local bossPins = {}
+local function GetBossPin(i)
+    if not bossPins[i] then
+        local p = CreateFrame("Button", nil, pinLayer)
+        p:SetSize(18, 18)
+        p:SetScript("OnClick", function(self)
+            if self.bossIdx then BossNav_SelectBoss(self.bossIdx) end
+        end)
+        p.icon = p:CreateTexture(nil, "ARTWORK")
+        p.icon:SetAllPoints()
+        RoundIcon(p.icon)
+        p.ring = p:CreateTexture(nil, "BORDER")
+        p.ring:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
+        p.ring:SetBlendMode("ADD")
+        p.ring:SetVertexColor(1.0, 0.72, 0.10, 0.95)
+        p.ring:SetPoint("CENTER")
+        p.ring:SetSize(44, 44)
+        p.label = p:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        p.label:SetPoint("TOP", p, "BOTTOM", 0, 1)
+        bossPins[i] = p
+    end
+    return bossPins[i]
+end
+
+local wayPins = {}
+local function GetWayPin(i)
+    if not wayPins[i] then
+        local p = CreateFrame("Frame", nil, pinLayer)
+        p:SetSize(14, 14)
+        p.dot = p:CreateTexture(nil, "ARTWORK")
+        p.dot:SetAllPoints()
+        p.dot:SetTexture("Interface\\COMMON\\Indicator-Yellow")
+        p.num = p:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        p.num:SetPoint("BOTTOM", p, "TOP", 0, 0)
+        wayPins[i] = p
+    end
+    return wayPins[i]
+end
+
+local playerPin = CreateFrame("Frame", nil, pinLayer)
+playerPin:SetSize(22, 22)
+playerPin:SetFrameLevel(pinLayer:GetFrameLevel() + 3)
+playerPin.arrow = playerPin:CreateTexture(nil, "OVERLAY")
+playerPin.arrow:SetAllPoints()
+playerPin.arrow:SetTexture("Interface\\Minimap\\MinimapArrow")
+playerPin:Hide()
+
+local function FitRect(aspect)
+    if not aspect or aspect <= 0 then return 0, 0, CANVAS_W, CANVAS_H end
+    local w, h
+    if (CANVAS_W / CANVAS_H) > aspect then
+        h = CANVAS_H; w = h * aspect
+    else
+        w = CANVAS_W; h = w / aspect
+    end
+    return (CANVAS_W - w) * 0.5, (CANVAS_H - h) * 0.5, w, h
+end
+
+local function SetDrawRect(x, y, w, h)
+    ns.drawX, ns.drawY, drawW, drawH = x, y, w, h
+end
+
+-- px, py are 0..1 fractions of the drawn map
+local function Place(region, px, py)
+    region:ClearAllPoints()
+    region:SetPoint("CENTER", canvas, "TOPLEFT", ns.drawX + px * drawW, -(ns.drawY + py * drawH))
+end
+
+-- Draw the boss portrait (from its creature display ID) into a texture, or a
+-- skull when no ID is known or the client cannot render creature portraits.
+local CROSS_TEX = "Interface\\RaidFrame\\ReadyCheck-NotReady"   -- red X
+
+local function SetBossIcon(tex, name, dead)
+    if not tex then return end
+    local displayID = name and BOSS_DISPLAY[name]
+    local ok = false
+    if displayID and SetPortraitTextureFromCreatureDisplayID then
+        ok = pcall(SetPortraitTextureFromCreatureDisplayID, tex, displayID)
+        if ok then tex:SetTexCoord(0, 1, 0, 1) end
+    end
+    if not ok then
+        tex:SetTexture(SKULL_TEX)
+        tex:SetTexCoord(0.75, 1, 0.25, 0.5)
+    end
+    if tex.SetDesaturated then pcall(tex.SetDesaturated, tex, dead and true or false) end
+    tex:SetAlpha(dead and 0.6 or 1)
+    tex:Show()
+    -- red cross over a dead boss (created on first use, sized to the icon)
+    if dead and not tex.cross then
+        local parent = tex:GetParent()
+        if parent then
+            tex.cross = parent:CreateTexture(nil, "OVERLAY")
+            tex.cross:SetTexture(CROSS_TEX)
+            tex.cross:SetPoint("TOPLEFT", tex, "TOPLEFT", -1, 1)
+            tex.cross:SetPoint("BOTTOMRIGHT", tex, "BOTTOMRIGHT", 1, -1)
+        end
+    end
+    if tex.cross then
+        if dead then tex.cross:Show() else tex.cross:Hide() end
+    end
+end
+
+-- shared with the other BossNav files
+ns.FitRect = FitRect
+ns.GetBossPin = GetBossPin
+ns.GetRow = GetRow
+ns.GetTile = GetTile
+ns.GetWayPin = GetWayPin
+ns.HELP_BOSS = HELP_BOSS
+ns.HideTilesFrom = HideTilesFrom
+ns.MAX_ROWS = MAX_ROWS
+ns.ROW_H = ROW_H
+ns.Place = Place
+ns.RoundIcon = RoundIcon
+ns.SetBossIcon = SetBossIcon
+ns.SetDrawRect = SetDrawRect
+ns.bossPins = bossPins
+ns.bossRows = bossRows
+ns.canvas = canvas
+ns.headerText = headerText
+ns.helpText = helpText
+ns.mapFrame = mapFrame
+ns.navText = navText
+ns.noArtText = noArtText
+ns.playerPin = playerPin
+ns.sidebar = sidebar
+ns.statusText = statusText
+ns.wayPins = wayPins
