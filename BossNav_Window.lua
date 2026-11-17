@@ -93,6 +93,8 @@ local ROW_H = 24
 local ICON_SIZE = 22
 local NAME_FONT_SIZE = 14
 local MARK_W = 12   -- width of the ">" selection marker column
+-- The marker every sidebar list puts in front of its selected row
+local SELECTED_MARK = "|cffffd100>|r"
 
 -- Bump a font string to a given point size, keeping its face and outline.
 local function SetFontSize(fs, size)
@@ -109,9 +111,10 @@ local function GetRow(i)
         b.hl:SetColorTexture(1, 0.82, 0, 0.15)
         -- layout: ">" | portrait | name
         b.mark = b:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        b.mark:SetPoint("LEFT", b, "LEFT", 4, 0)
+        -- pushed right so the ">" sits just in front of what it points at
+        b.mark:SetPoint("LEFT", b, "LEFT", 6, 0)
         b.mark:SetWidth(MARK_W)
-        b.mark:SetJustifyH("CENTER")
+        b.mark:SetJustifyH("RIGHT")
         b.mark:SetWordWrap(false)
         SetFontSize(b.mark, NAME_FONT_SIZE)
         b.icon = b:CreateTexture(nil, "ARTWORK")
@@ -120,10 +123,43 @@ local function GetRow(i)
         RoundIcon(b.icon)
         b.text = b:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
         b.text:SetPoint("LEFT", b, "LEFT", 4 + MARK_W + 4 + ICON_SIZE + 6, 0)
-        b.text:SetWidth(SIDEBAR_W - (4 + MARK_W + 4 + ICON_SIZE + 6) - 8)
+        local textW = SIDEBAR_W - (4 + MARK_W + 4 + ICON_SIZE + 6) - 8
+        b.text:SetWidth(textW)
         b.text:SetJustifyH("LEFT")
         b.text:SetWordWrap(false)
         SetFontSize(b.text, NAME_FONT_SIZE)
+        -- "Show on the map" button at the right end of a dungeon row (like
+        -- the Quests tab rows); boss rows have none
+        local m = CreateFrame("Button", nil, b)
+        m:SetSize(18, 18)
+        m:SetPoint("RIGHT", b, "RIGHT", -2, 0)
+        m:SetFrameLevel(b:GetFrameLevel() + 2)
+        m:SetNormalTexture("Interface\\Icons\\INV_Misc_Map_01")
+        m:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+        m:SetScript("OnClick", function()
+            if b.travelIdx and ns.ShowDungeonOnWorldMap then
+                ns.ShowDungeonOnWorldMap(b.travelIdx)
+            end
+        end)
+        m:SetScript("OnEnter", function(self)
+            if not GameTooltip then return end
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:AddLine("Show on the map", 1, 0.82, 0)
+            GameTooltip:Show()
+        end)
+        m:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
+        m:Hide()
+        b.mapBtn = m
+        -- show or hide the map button, leaving the name room for it
+        function b:SetMapButton(on)
+            if on then
+                self.mapBtn:Show()
+                self.text:SetWidth(textW - 22)
+            else
+                self.mapBtn:Hide()
+                self.text:SetWidth(textW)
+            end
+        end
         b:SetScript("OnClick", function(self)
             if self.travelIdx then
                 BossNav_SelectDungeon(self.travelIdx)
@@ -263,12 +299,16 @@ ns.GetTile = GetTile
 ns.GetWayPin = GetWayPin
 ns.HELP_BOSS = HELP_BOSS
 ns.HideTilesFrom = HideTilesFrom
+ns.MARK_W = MARK_W
 ns.MAX_ROWS = MAX_ROWS
+ns.NAME_FONT_SIZE = NAME_FONT_SIZE
 ns.ROW_H = ROW_H
 ns.Place = Place
 ns.RoundIcon = RoundIcon
+ns.SELECTED_MARK = SELECTED_MARK
 ns.SetBossIcon = SetBossIcon
 ns.SetDrawRect = SetDrawRect
+ns.SetFontSize = SetFontSize
 ns.bossPins = bossPins
 ns.bossRows = bossRows
 ns.canvas = canvas

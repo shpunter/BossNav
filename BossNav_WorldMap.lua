@@ -44,6 +44,7 @@ local flightPins = {}
 local function HideWorldMapPins()
     for _, p in ipairs(pins) do p:Hide() end
     for _, p in ipairs(flightPins) do p:Hide() end
+    if ns.HideQuestMapPins then ns.HideQuestMapPins() end
 end
 
 --------------------------------------------------------------------------
@@ -75,7 +76,7 @@ local function GetFlightPin(i)
         local c = Canvas()
         local p = CreateFrame("Button", nil, c)
         p:SetSize(10, 10)
-        p:SetFrameLevel(c:GetFrameLevel() + 190)
+        p.layer = 0
         p.icon = p:CreateTexture(nil, "ARTWORK")
         p.icon:SetAllPoints()
         p:SetScript("OnEnter", FlightTooltip)
@@ -127,7 +128,7 @@ local function GetPin(i)
         local p = CreateFrame("Button", nil, c)
         p:SetSize(12, 12)
         p:SetHitRectInsets(-4, -4, -4, -4)   -- easier to hover a small pin
-        p:SetFrameLevel(c:GetFrameLevel() + 200)
+        p.layer = 10
         p.icon = p:CreateTexture(nil, "ARTWORK")
         p.icon:SetAllPoints()
         RoundIcon(p.icon)
@@ -155,7 +156,14 @@ end
 -- Anchor a pin at fractions fx, fy of the canvas. The canvas is scaled when
 -- the map zooms; the pin is counter-scaled so it keeps its screen size, and
 -- its offset is given in its own (counter-scaled) units.
+-- Our pins sit above everything else drawn on the map (the game's own pins,
+-- other addons' pins): a frame level near the top of the 0-10000 range, set
+-- again on every placement because the game re-levels the canvas's children.
+-- p.layer orders our own kinds: flight masters < entrances < quest givers.
+local PIN_LEVEL = 9000
+
 local function PlacePin(p, c, fx, fy)
+    p:SetFrameLevel(PIN_LEVEL + (p.layer or 0))
     local w, h = c:GetWidth(), c:GetHeight()
     local cs = c:GetScale()
     if not cs or cs <= 0 then cs = 1 end
@@ -168,12 +176,19 @@ local function RefreshWorldMapPins()
     local c = Canvas()
     local mapID = ShownMapID()
     if not (c and mapID and DB().worldmap and WorldMapFrame:IsShown()) then
-        HideWorldMapPins()
+        for _, p in ipairs(pins) do p:Hide() end
+        for _, p in ipairs(flightPins) do p:Hide() end
+        -- quest givers have their own toggle (/bnav quest map)
+        if ns.RefreshQuestMapPins then pcall(ns.RefreshQuestMapPins) end
         return
     end
     local w, h = c:GetWidth(), c:GetHeight()
     if not (w and h and w > 0 and h > 0) then HideWorldMapPins() return end
 
+    -- only one pin is "selected": the dungeon or the quest giver, whichever
+    -- the arrow leads to right now (state.navFocus, see BossNav_Travel.lua)
+    local target = ns.NavTarget and ns.NavTarget()
+    local dungeonFocus = not (target and target.isQuest)
     local shown = 0
     for i, e in ipairs(TRAVEL) do
         local emap, ex, ey = EntranceOf(e)
@@ -192,7 +207,7 @@ local function RefreshWorldMapPins()
                 p.entry = e
                 PlacePin(p, c, fx, fy)
                 SetEntranceIcon(p.icon)
-                local selected = (i == state.travelIdx)
+                local selected = dungeonFocus and (i == state.travelIdx)
                 local size = selected and 16 or 12
                 p:SetSize(size, size)
                 if selected then p.ring:Show() else p.ring:Hide() end
@@ -219,6 +234,9 @@ local function RefreshWorldMapPins()
         end
     end
     for j = flights + 1, #flightPins do flightPins[j]:Hide() end
+
+    -- Quest givers of the selected dungeon (BossNav_QuestMapPins.lua)
+    if ns.RefreshQuestMapPins then pcall(ns.RefreshQuestMapPins) end
 end
 
 -- Hook the map frame once it exists: redraw on open, on map change and on
@@ -229,13 +247,77 @@ local function SetupWorldMapPins()
     local function refresh() pcall(RefreshWorldMapPins) end
     if WorldMapFrame.OnMapChanged then hooksecurefunc(WorldMapFrame, "OnMapChanged", refresh) end
     if WorldMapFrame.OnCanvasScaleChanged then hooksecurefunc(WorldMapFrame, "OnCanvasScaleChanged", refresh) end
+    -- dragging a zoomed map moves the view: quest pins at its edge follow
+    if WorldMapFrame.OnCanvasPanChanged then hooksecurefunc(WorldMapFrame, "OnCanvasPanChanged", refresh) end
+    local sc = WorldMapFrame.ScrollContainer
+    if sc and sc.HookScript then pcall(sc.HookScript, sc, "OnMouseUp", refresh) end
     WorldMapFrame:HookScript("OnShow", refresh)
     WorldMapFrame:HookScript("OnHide", HideWorldMapPins)
 end
 
 SetupWorldMapPins()
 
+-- Zoom the open world map in on a spot (fractions of the shown map).
+local function ZoomWorldMapTo(fx, fy)
+    local f = WorldMapFrame
+    local sc = f and f.ScrollContainer
+    if f.PanAndZoomTo and pcall(f.PanAndZoomTo, f, fx, fy) then return end
+    if sc and sc.PanAndZoomTo and pcall(sc.PanAndZoomTo, sc, fx, fy) then return end
+    if sc and sc.SetZoomTarget and sc.GetScaleForMaxZoom and sc.SetPanTarget then
+        pcall(function()
+            sc:SetZoomTarget(sc:GetScaleForMaxZoom())
+            sc:SetPanTarget(fx, fy)
+        end)
+    end
+end
+
+-- Open the game's world map on a uiMap, zoomed in on (fx, fy). The map lays
+-- itself out a frame after opening, so it zooms again a moment later and
+-- calls after() then (to redraw the pins).
+local function OpenWorldMapAt(mapID, fx, fy, after)
+    if not WorldMapFrame:IsShown() then
+        if not (OpenWorldMap and pcall(OpenWorldMap, mapID)) then
+            pcall(ShowUIPanel, WorldMapFrame)
+        end
+    end
+    if WorldMapFrame.SetMapID then pcall(WorldMapFrame.SetMapID, WorldMapFrame, mapID) end
+    ZoomWorldMapTo(fx, fy)
+    if C_Timer and C_Timer.After then
+        C_Timer.After(0.1, function()
+            if WorldMapFrame:IsShown() and ShownMapID() == mapID then ZoomWorldMapTo(fx, fy) end
+            if after then pcall(after) end
+        end)
+    end
+    if after then pcall(after) end
+end
+
+-- /bnav go show and the map button on a dungeon row: pick the dungeon (the
+-- arrow leads to it) and open the world map on its entrance, zoomed in, so
+-- its pin wears the ring.
+local function ShowDungeonOnWorldMap(idx)
+    local e = TRAVEL[idx]
+    if not e then ns.Print("No dungeon " .. tostring(idx) .. " in the list.") return end
+    local mapID, fx, fy = EntranceOf(e)
+    if not (mapID and fx and fy) then
+        ns.Print(e.name .. ": entrance unknown (stand at it and type /bnav entrance).")
+        return
+    end
+    if idx ~= state.travelIdx then BossNav_SelectDungeon(idx) end
+    local db = DB()
+    if not db.worldmap then
+        db.worldmap = true
+        ns.Print("Dungeon entrance marks on the world map turned on (/bnav worldmap turns them off).")
+    end
+    OpenWorldMapAt(mapID, fx, fy, RefreshWorldMapPins)
+    if ns.mapFrame and ns.mapFrame:IsShown() then BossNav_RefreshMap() end
+end
+
 -- shared with the other BossNav files
+ns.OpenWorldMapAt = OpenWorldMapAt
+ns.ShowDungeonOnWorldMap = ShowDungeonOnWorldMap
 ns.HideWorldMapPins = HideWorldMapPins
 ns.RefreshWorldMapPins = RefreshWorldMapPins
 ns.SetupWorldMapPins = SetupWorldMapPins
+ns.WorldMapCanvas = Canvas
+ns.WorldMapPlacePin = PlacePin
+ns.WorldMapShownID = ShownMapID

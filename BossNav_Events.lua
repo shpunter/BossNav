@@ -13,12 +13,12 @@ local OnEncounterStart       = ns.OnEncounterStart
 local OnGroupRosterChanged   = ns.OnGroupRosterChanged
 local OnLootMessage          = ns.OnLootMessage
 local OnMoneyChanged         = ns.OnMoneyChanged
+local OnQuestTurnedIn        = ns.OnQuestTurnedIn
 local OnUnitSpellcast        = ns.OnUnitSpellcast
 local Print                  = ns.Print
 local RefreshIfShown         = ns.RefreshIfShown
 local RestoreTravelTarget    = ns.RestoreTravelTarget
 local SetupWorldMapPins      = ns.SetupWorldMapPins
-local SyncGroupState         = ns.SyncGroupState
 local TryMarkUnit            = ns.TryMarkUnit
 local UpdateZone             = ns.UpdateZone
 local state                  = ns.state
@@ -26,6 +26,16 @@ local state                  = ns.state
 --------------------------------------------------------------------------
 -- Events
 --------------------------------------------------------------------------
+-- Left the party: wipe dungeon progress, loot rolls and profession counts.
+local function CheckLeftGroup()
+    if not OnGroupRosterChanged() then return end
+    ClearLoot()
+    ClearProfs()
+    Print("Left the group: dungeon progress, loot rolls and profession counts reset.")
+    RefreshIfShown()
+    pcall(BossNav_UpdateLive, true)
+end
+
 local events = CreateFrame("Frame")
 events:RegisterEvent("ADDON_LOADED")
 events:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -37,6 +47,10 @@ events:RegisterEvent("BOSS_KILL")
 events:RegisterEvent("PLAYER_MONEY")
 -- Travel list: dungeons above your level are red, so a level-up redraws it.
 events:RegisterEvent("PLAYER_LEVEL_UP")
+-- Quests tab: taking, handing in or dropping a quest changes what is crossed out.
+for _, ev in ipairs({ "QUEST_ACCEPTED", "QUEST_TURNED_IN", "QUEST_REMOVED" }) do
+    pcall(events.RegisterEvent, events, ev)
+end
 events:RegisterEvent("GROUP_ROSTER_UPDATE")
 events:RegisterEvent("PLAYER_TARGET_CHANGED")
 events:RegisterEvent("UNIT_HEALTH")
@@ -67,19 +81,14 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4, arg5)
         end
     elseif event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
         if event == "PLAYER_ENTERING_WORLD" then
-            SyncGroupState()
+            -- the group list can be empty for a moment right after login
+            if C_Timer and C_Timer.After then C_Timer.After(3, CheckLeftGroup) else CheckLeftGroup() end
             SetupWorldMapPins()   -- the map frame may not have existed at load time
         end
         UpdateZone()
         OnMoneyChanged()   -- sets the purse baseline after a load or zone change
     elseif event == "GROUP_ROSTER_UPDATE" then
-        if OnGroupRosterChanged() then
-            ClearLoot()
-            ClearProfs()
-            Print("Left the group: dungeon progress, loot rolls and profession counts reset.")
-            RefreshIfShown()
-            pcall(BossNav_UpdateLive, true)
-        end
+        CheckLeftGroup()
     elseif event == "ZONE_CHANGED" or event == "ZONE_CHANGED_INDOORS" then
         if state.cfg and state.cfg.floorBySubzone and not state.floorOverride and not state.autoFloor then
             RefreshIfShown()
@@ -88,6 +97,10 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4, arg5)
         OnMoneyChanged()
     elseif event == "PLAYER_LEVEL_UP" then
         RefreshIfShown()
+    elseif event == "QUEST_ACCEPTED" or event == "QUEST_TURNED_IN" or event == "QUEST_REMOVED" then
+        if event == "QUEST_TURNED_IN" then OnQuestTurnedIn(arg1) end
+        -- the quest log settles a moment after these events
+        if C_Timer and C_Timer.After then C_Timer.After(0.5, RefreshIfShown) else RefreshIfShown() end
     elseif event == "ENCOUNTER_END" then
         -- encounterID, encounterName, difficultyID, groupSize, success
         if not IsSecret(arg2) and not IsSecret(arg5) and type(arg2) == "string" and (arg5 == 1 or arg5 == true) then

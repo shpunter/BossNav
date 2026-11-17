@@ -32,6 +32,10 @@
 --    /bnav go picks a dungeon; /bnav entrance records a portal at your feet.
 --    The dungeon list is coloured against your level: red above you, grey
 --    once outgrown, green while in range.
+--  * A Quests tab: every quest of a dungeon for your faction, with the quest
+--    giver, the zone and map coordinates where to take it, the turn-in NPC
+--    and what to do first. /bnav quest opens it. The givers of that dungeon's
+--    quests are also marked on the game's world map (/bnav quest map toggles).
 --  * Entrance marks on the game's world map: hover one to see its name
 --    (green/red by level), level range and where it is; click one to pick
 --    it. /bnav worldmap toggles them.
@@ -54,6 +58,7 @@
 -- the others only through the addon namespace table `ns`):
 --   BossNav_Core.lua       constants, helpers, shared state
 --   BossNav_Data.lua       dungeon list, boss pins, trails, portrait IDs
+--   BossNav_QuestData.lua  quests per dungeon: giver, place, faction, level
 --   BossNav_Progress.lua   saved per-dungeon progress
 --   BossNav_Gold.lua       gold earned in the current dungeon
 --   BossNav_MapAPI.lua     guarded access to the client's map API
@@ -78,6 +83,9 @@
 --   BossNav_LootPanel.lua  the Loot tab: item list and roll panel in the window
 --   BossNav_Profs.lua      profession tracker (mines, herbs, skins, fish, crafts per member)
 --   BossNav_ProfsPanel.lua the Profs tab: member list and profession table in the window
+--   BossNav_QuestStatus.lua whether you already did a quest or have it in your log
+--   BossNav_QuestsPanel.lua the Quests tab: a dungeon's quests and where to take them
+--   BossNav_QuestMapPins.lua quest givers of the selected dungeon on the game's world map
 --   BossNav_Zone.lua       zone changes
 --   BossNav_Commands.lua   keybind actions, slash commands, help
 --   BossNav_Events.lua     event wiring
@@ -94,12 +102,13 @@ BINDING_NAME_BOSSNAV_NEXT_STEP = "Next Map Floor"
 BINDING_NAME_BOSSNAV_TOGGLE_HUD = "Toggle Direction HUD"
 BINDING_NAME_BOSSNAV_MARK_WAYPOINT = "Mark Waypoint Here"
 BINDING_NAME_BOSSNAV_MARK_BOSS = "Mark Nearby Boss (skull)"
-BINDING_NAME_BOSSNAV_TOGGLE_TAB = "Switch Bosses / Loot / Profs Tab"
+BINDING_NAME_BOSSNAV_TOGGLE_TAB = "Switch Bosses / Quests / Loot / Profs Tab"
+BINDING_NAME_BOSSNAV_SWITCH_NAV = "Switch Navigation: Quest Giver / Dungeon"
 
 BossNavDB = BossNavDB or {}
 
 local CANVAS_W, CANVAS_H = 540, 360
-local SIDEBAR_W = 260
+local SIDEBAR_W = 325
 local LEGACY_ASPECT = 1.5
 local WAYPOINT_RADIUS = 0.025
 local FOREVER_IMG = "Interface\\AddOns\\BossNav\\Images\\"
@@ -147,6 +156,7 @@ local function DB()
     if BossNavDB.skull == nil then BossNavDB.skull = true end
     if BossNavDB.worldmap == nil then BossNavDB.worldmap = true end
     if BossNavDB.flightmap == nil then BossNavDB.flightmap = true end
+    if BossNavDB.questmap == nil then BossNavDB.questmap = true end
     return BossNavDB
 end
 
@@ -175,9 +185,11 @@ local state = {
     inInstance = false,
     testMode = false,
     travelIdx = nil,    -- outside instances: index into the travel list of the dungeon to walk to
-    tab = "boss",       -- sidebar tab: "boss", "loot" or "prof"
+    tab = "boss",       -- sidebar tab: "boss", "quest", "loot" or "prof"
     lootIdx = 1,        -- selected item on the Loot tab, 1 = newest
     profIdx = 1,        -- selected member on the Profs tab
+    questIdx = 1,       -- selected quest on the Quests tab
+    questAll = false,   -- Quests tab: true shows both factions' quests
 }
 
 -- shared with the other BossNav files

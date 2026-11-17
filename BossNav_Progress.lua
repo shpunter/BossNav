@@ -74,17 +74,15 @@ local function IsGrouped()
     return false
 end
 
--- Call on login and after every loading screen so the first roster event
--- compares against the real state instead of a stale flag.
-local function SyncGroupState()
-    state.inGroup = IsGrouped()
-end
-
--- Call on GROUP_ROSTER_UPDATE. Returns true when progress was wiped.
+-- Call on GROUP_ROSTER_UPDATE and after every loading screen. Returns true
+-- when you were in a group and now are not (progress was wiped). The "was in
+-- a group" flag is saved, so leaving while logged out or during a loading
+-- screen is still noticed.
 local function OnGroupRosterChanged()
-    local was = state.inGroup
+    local db = DB()
+    local was = db.inGroup
     local now = IsGrouped()
-    state.inGroup = now
+    db.inGroup = now
     if not was or now then return false end
     local store = DB().progress
     for key in pairs(store) do store[key] = nil end
@@ -95,6 +93,5 @@ end
 -- shared with the other BossNav files
 ns.ClearProgress = ClearProgress
 ns.OnGroupRosterChanged = OnGroupRosterChanged
-ns.SyncGroupState = SyncGroupState
 ns.LoadProgress = LoadProgress
 ns.TouchProgress = TouchProgress

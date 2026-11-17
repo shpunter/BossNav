@@ -1,4 +1,4 @@
--- The "Bosses" / "Loot" / "Profs" tab buttons at the top of the sidebar, and
+-- The "Bosses" / "Quests" / "Loot" / "Profs" tab buttons at the top of the sidebar, and
 -- switching between the tabs. What each tab draws lives in its own file.
 local ADDON, ns = ...
 -- from the files loaded before this one
@@ -8,8 +8,8 @@ local sidebar                = ns.sidebar
 local state                  = ns.state
 
 local TAB_H = 20
-local TAB_ORDER = { "boss", "loot", "prof" }
-local TAB_LABEL = { boss = "Bosses", loot = "Loot", prof = "Profs" }
+local TAB_ORDER = { "boss", "quest", "loot", "prof" }
+local TAB_LABEL = { boss = "Bosses", quest = "Quests", loot = "Loot", prof = "Profs" }
 local tabs = {}
 
 local function IsTab(key)
@@ -23,7 +23,7 @@ local function SetTab(key)
     BossNav_RefreshMap()
 end
 
--- Bosses -> Loot -> Profs -> Bosses (keybind and /bnav tab)
+-- Bosses -> Quests -> Loot -> Profs -> Bosses (keybind and /bnav tab)
 local function NextTab()
     local pos = 1
     for i, key in ipairs(TAB_ORDER) do
@@ -53,7 +53,7 @@ end
 local function UpdateTabLook()
     -- Outside every dungeon the first tab holds the dungeon selector.
     local outside = ns.TravelMode and ns.TravelMode()
-    tabs.boss.text:SetText(outside and "Travel" or TAB_LABEL.boss)
+    tabs.boss.text:SetText(outside and "Dungeons" or TAB_LABEL.boss)
     for key, b in pairs(tabs) do
         if key == state.tab then
             b.bg:SetColorTexture(0.35, 0.28, 0.10, 1)

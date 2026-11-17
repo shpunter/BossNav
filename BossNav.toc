@@ -1,10 +1,11 @@
 ## Interface: 16001
 ## Title: BossNav
-## Notes: Dungeon boss navigator: real dungeon map with boss pins, live position, direction HUD, kill tracking, auto skull mark on bosses, a loot roll tracker, a per-member profession tracker and a travel arrow to any dungeon entrance
+## Notes: Dungeon boss navigator: real dungeon map with boss pins, live position, direction HUD, kill tracking, auto skull mark on bosses, a loot roll tracker, a per-member profession tracker, dungeon quests with giver locations per faction and a travel arrow to any dungeon entrance
 ## Version: 2.9
 ## SavedVariables: BossNavDB
 BossNav_Core.lua
 BossNav_Data.lua
+BossNav_QuestData.lua
 BossNav_Progress.lua
 BossNav_Gold.lua
 BossNav_MapAPI.lua
@@ -29,6 +30,9 @@ BossNav_Loot.lua
 BossNav_LootPanel.lua
 BossNav_Profs.lua
 BossNav_ProfsPanel.lua
+BossNav_QuestStatus.lua
+BossNav_QuestsPanel.lua
+BossNav_QuestMapPins.lua
 BossNav_Zone.lua
 BossNav_Commands.lua
 BossNav_Events.lua

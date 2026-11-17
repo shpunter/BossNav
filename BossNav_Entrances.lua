@@ -41,11 +41,17 @@ local ENTRANCES = {
     ["Blackwing Lair"]            = { zone = "Searing Gorge",        x = 35.4, y = 84.4, levels = {60, 60}, via = "Blackrock Mountain", raid = true },
     ["Ruins of Ahn'Qiraj"]        = { zone = "Silithus",             x = 29.0, y = 93.0, levels = {60, 60}, raid = true },
     ["Ahn'Qiraj"]                 = { zone = "Silithus",             x = 29.0, y = 93.0, levels = {60, 60}, raid = true },
-    -- WoW Forever dungeons: no public entrance coordinates yet; /bnav entrance records them.
-    ["The Hall of Thanes"]        = { levels = {13, 18} },
-    ["Ruins of Lordaeron"]        = { levels = {15, 20} },
-    ["Excavation Site: Wetlands"] = { levels = {24, 29} },
-    ["City of Dalaran"]           = { levels = {28, 33} },
+    -- WoW Forever dungeons. Spots come from web guides (Nov 2026), which disagree
+    -- by a few percent; /bnav entrance at the portal records the exact one.
+    -- Hall of Thanes: the passage off the High Seat into Old Ironforge; the portal is at the bottom.
+    ["The Hall of Thanes"]        = { zone = "Ironforge",            x = 43.5, y = 52.0, levels = {13, 18}, faction = "Alliance" },
+    -- Ruins of Lordaeron: the ruined keep above the Undercity.
+    ["Ruins of Lordaeron"]        = { zone = "Tirisfal Glades",      x = 63.3, y = 67.5, levels = {15, 20} },
+    -- Excavation Site: hilltop southeast of Whelgar's Excavation Site.
+    ["Excavation Site: Wetlands"] = { zone = "Wetlands",             x = 48.1, y = 56.5, levels = {24, 29} },
+    -- City of Dalaran: sewer gate on the northwest wall by Lordamere Lake (needs the Dalaran Sewer Key).
+    ["City of Dalaran"]           = { zone = "Alterac Mountains",    x = 8.0,  y = 61.2, levels = {28, 33} },
+    -- Half-Pint Tavern: datamined only, not in the game; no entrance.
     ["Half-Pint Tavern"]          = { },
 }
 
@@ -62,11 +68,13 @@ for i, cfg in ipairs(DUNGEONS) do
     TRAVEL[#TRAVEL + 1] = {
         key = cfg.key, name = cfg.name, cfg = cfg,
         zone = e.zone, x = e.x, y = e.y, via = e.via, raid = e.raid or false, faction = e.faction,
-        lo = lo or 99, minLevel = lo, maxLevel = hi, levels = levels, order = i,
+        lo = lo or 99, hi = hi or lo or 99, minLevel = lo, maxLevel = hi, levels = levels, order = i,
     }
 end
+-- by lowest level, then by highest level (narrower range first), raids last
 table.sort(TRAVEL, function(a, b)
     if a.lo ~= b.lo then return a.lo < b.lo end
+    if a.hi ~= b.hi then return a.hi < b.hi end
     if a.raid ~= b.raid then return not a.raid end
     return a.order < b.order
 end)

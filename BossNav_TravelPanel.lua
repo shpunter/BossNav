@@ -13,6 +13,8 @@ local LevelColor             = ns.LevelColor
 local MAX_ROWS               = ns.MAX_ROWS
 local MapName                = ns.MapName
 local MapPosFromWorld        = ns.MapPosFromWorld
+local NavTarget              = ns.NavTarget
+local OtherNavTarget         = ns.OtherNavTarget
 local Place                  = ns.Place
 local PlayerFaction          = ns.PlayerFaction
 local PlayerLevel            = ns.PlayerLevel
@@ -22,8 +24,8 @@ local ROW_H                  = ns.ROW_H
 local RenderBlank            = ns.RenderBlank
 local RenderNative           = ns.RenderNative
 local SIDEBAR_W              = ns.SIDEBAR_W
-local SelectedDungeon        = ns.SelectedDungeon
 local SetEntranceIcon        = ns.SetEntranceIcon
+local SetTargetIcon          = ns.SetTargetIcon
 local ShowRouteToggle        = ns.ShowRouteToggle
 local TRAVEL                 = ns.TRAVEL
 local TravelMode             = ns.TravelMode
@@ -111,7 +113,8 @@ end
 --------------------------------------------------------------------------
 -- Drawing
 --------------------------------------------------------------------------
--- Entrance pin on the drawn map, when the entrance lies on it.
+-- Target pin on the drawn map (dungeon entrance or quest giver), when it
+-- lies on it.
 local function DrawEntrancePin(entry)
     local emap, ex, ey = EntranceOf(entry)
     if not (emap and ex and ns.renderedMapID) then return end
@@ -126,7 +129,7 @@ local function DrawEntrancePin(entry)
     local p = GetBossPin(1)
     p.bossIdx = nil
     Place(p, fx, fy)
-    SetEntranceIcon(p.icon)
+    SetTargetIcon(p.icon, entry)
     p:SetSize(28, 28)
     p.ring:Show()
     p.label:SetText("|cffffd100" .. entry.name .. "|r")
@@ -168,10 +171,11 @@ local function DrawSelector()
         local e = TRAVEL[i]
         if not e then break end
         local r = GetRow(row)
-        local selected = (i == state.travelIdx)
+        -- only while the dungeon (not a quest) is the selection
+        local selected = (i == state.travelIdx) and not (ns.QuestSelected and ns.QuestSelected())
         r.bossIdx = nil
         r.travelIdx = i
-        r.mark:SetText(selected and "|cffffd100>|r" or "")
+        r.mark:SetText(selected and ns.SELECTED_MARK or "")
         r.mark:Show()
         SetEntranceIcon(r.icon)
         local levelColor = LevelColor(e, myLevel)
@@ -181,6 +185,8 @@ local function DrawSelector()
             tag = tag .. " |cff666666(" .. e.faction .. " city)|r"
         end
         r.text:SetText(string.format("%s%s|r  %s%s|r%s", color, e.name, levelColor or "|cff888888", e.levels, tag))
+        -- the map button only when the entrance has a spot on the world map
+        r:SetMapButton(HasEntrance(e))
         r:Show()
     end
     DrawScrollbar()
@@ -203,11 +209,16 @@ local function RenderTravelTab()
 
     local zone = MapName(mapID) or GetRealZoneText() or ""
     headerText:SetText("|cffffd100Travel|r  |cff888888" .. zone .. "|r")
-    local entry = SelectedDungeon()
+    -- Follows the arrow: the quest giver or the dungeon, whichever
+    -- /bnav nav (the Switch Navigation key) points at right now.
+    local entry = NavTarget()
     if entry then
         local _, _, _, where = EntranceOf(entry)
-        statusText:SetText(string.format("Target: |cff00ff00%s|r |cff888888%s|r   %s",
-            entry.name, entry.levels, where or "entrance unknown (/bnav entrance at the portal)"))
+        local other = OtherNavTarget()
+        statusText:SetText(string.format("%s: |cff00ff00%s|r |cff888888%s|r   %s%s",
+            entry.isQuest and "Quest giver" or "Dungeon", entry.name, entry.levels,
+            where or "entrance unknown (/bnav entrance at the portal)",
+            other and string.format("   |cff6699ff(also: %s)|r", other.name) or ""))
         DrawEntrancePin(entry)
         DrawLegPin(entry, mapID)
     else

@@ -104,6 +104,7 @@ local function UpdateLive(skipRefresh)
 
     local dead = state.killed[boss[1]]
     SetBossIcon(hud.icon, boss[1], dead)
+    hud.icon:SetSize(34, 34)   -- the travel HUD shrinks it for a quest icon
     hud.main:SetText(string.format("|cff%s%s|r  |cff888888Killed %d/%d|r",
         dead and "888888" or "ffd100", boss[1], KilledCount(cfg), #cfg.bosses))
 

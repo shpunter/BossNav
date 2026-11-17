@@ -64,7 +64,9 @@ function BossNav_SelectBoss(idx)
 end
 
 -- The next / previous keys walk the dungeon selector while you are outside.
+-- On the Quests tab they walk the quest list instead.
 function BossNav_CycleBoss()
+    if state.tab == "quest" and mapFrame:IsShown() then ns.CycleQuest(1) return end
     if TravelMode() then BossNav_CycleDungeon(1) return end
     local cfg = state.cfg
     if not cfg then Print("No boss data for this zone.") return end
@@ -73,6 +75,7 @@ end
 BossNav_NextStep = BossNav_CycleBoss
 
 function BossNav_PrevBoss()
+    if state.tab == "quest" and mapFrame:IsShown() then ns.CycleQuest(-1) return end
     if TravelMode() then BossNav_CycleDungeon(-1) return end
     local cfg = state.cfg
     if not cfg then Print("No boss data for this zone.") return end
@@ -97,6 +100,14 @@ local function GoCommand(rest)
         -- scroll the selector a page without changing the pick
         if not mapFrame:IsShown() then mapFrame:Show() end
         ns.TravelScrollBy((arg == "up" and -1 or 1) * (ns.MAX_ROWS - 1))
+        return
+    end
+    -- /bnav go show [n]: the selected (or n-th) dungeon's entrance on the world map
+    local showArg = arg:match("^show%s*(%d*)$")
+    if showArg then
+        local idx = tonumber(showArg) or state.travelIdx
+        if not idx then Print("Pick a dungeon first (/bnav go).") return end
+        ns.ShowDungeonOnWorldMap(idx)
         return
     end
     local n = tonumber(arg)
@@ -269,6 +280,7 @@ local function ShowHelp()
     Print("  /bnav                 toggle the dungeon map (Esc closes it); outside a dungeon it shows the dungeon selector")
     Print("  /bnav go [n|name|off] outside: pick the dungeon to walk to (HUD arrow, yards, minimap pin to its entrance)")
     Print("  /bnav go up | down    scroll the dungeon list a page (the mouse wheel over the list scrolls it too)")
+    Print("  /bnav go show [n]     pick the selected (or n-th) dungeon and show its entrance zoomed in on the world map")
     Print("  /bnav route foot|fly  outside: walk zone to zone, or use flight masters where a path is known at both ends (the boxes under the map; no word flips it)")
     Print("  /bnav worldmap        toggle the dungeon entrance marks on the game's world map")
     Print("  /bnav flights         toggle the flight masters on the game's world map (faded = not discovered yet)")
@@ -290,7 +302,15 @@ local function ShowHelp()
     Print("  /bnav skull test      explain why your target was or was not marked")
     Print("  /bnav minimap         toggle minimap icons (needs a position; this client hides it)")
     Print("  /bnav loot [n|all]    last 5 loot rolls (blue and better): who chose Need/Greed/Pass, their roll, the winner")
-    Print("  /bnav tab [boss|loot|prof|n] switch the window tab; a number n picks item n on the Loot or Profs tab")
+    Print("  /bnav quest [n]       Quests tab: the quests of this dungeon (outside: the one picked with /bnav go), who gives them and where")
+    Print("  /bnav quest next|prev pick the next / previous quest (the Select Next / Previous Boss keys do it too on that tab)")
+    Print("  /bnav quest all       show every faction's and class's quests, or only yours again")
+    Print("  /bnav quest list      print the quest list and giver places to your chat")
+    Print("  /bnav quest show [n]  navigate to the selected (or n-th) quest's giver and show it zoomed in on the world map")
+    Print("  /bnav nav             switch the arrow between the quest giver and the dungeon (also a keybind)")
+    Print("  /bnav nav quest|dungeon  follow that one; /bnav nav off forgets the quest giver target")
+    Print("  /bnav quest map       toggle the quest givers of the selected dungeon on the game's world map")
+    Print("  /bnav tab [boss|quest|loot|prof|n] switch the window tab; a number n picks item n on the Loot or Profs tab")
     Print("  /bnav prof [n]        Profs tab: how often each member mined, skinned, gathered, fished or crafted; n lists member n's spells")
     Print("  /bnav prof post       post the profession counts to party/raid chat (/bnav prof list prints them to you)")
     Print("  /bnav prof clear      forget the profession counts (also done when you leave the group)")
@@ -316,6 +336,13 @@ SlashCmdList["BOSSNAV"] = function(msg)
         BossNav_ToggleMap()
     elseif cmd == "go" or cmd == "travel" or cmd == "dungeon" then
         GoCommand(rest)
+    elseif cmd == "nav" then
+        -- /bnav nav [quest|dungeon|off]: which target the arrow follows
+        local arg = rest:lower()
+        if arg == "off" or arg == "clear" then ns.ClearQuestTarget()
+        elseif arg == "quest" or arg == "q" then ns.SwitchNav("quest")
+        elseif arg == "dungeon" or arg == "d" then ns.SwitchNav("dungeon")
+        else ns.SwitchNav() end
     elseif cmd == "entrance" then
         MarkEntranceHere(rest)
     elseif cmd == "route" then
@@ -440,6 +467,9 @@ SlashCmdList["BOSSNAV"] = function(msg)
             if state.tab == "prof" then
                 state.profIdx = n
                 SetTab("prof")
+            elseif state.tab == "quest" then
+                ns.SelectQuest(n)
+                SetTab("quest")
             else
                 state.lootIdx = n
                 SetTab("loot")
@@ -448,6 +478,8 @@ SlashCmdList["BOSSNAV"] = function(msg)
             SetTab("loot")
         elseif which == "prof" or which == "profs" then
             SetTab("prof")
+        elseif which == "quest" or which == "quests" then
+            SetTab("quest")
         elseif which == "boss" or which == "bosses" then
             SetTab("boss")
         else
@@ -455,6 +487,9 @@ SlashCmdList["BOSSNAV"] = function(msg)
         end
     elseif cmd == "prof" or cmd == "profs" then
         ProfCommand(rest)
+    elseif cmd == "quest" or cmd == "quests" or cmd == "q" then
+        if not mapFrame:IsShown() then mapFrame:Show() end
+        ns.QuestCommand(rest)
     elseif cmd == "pos" then
         Diagnostics()
     elseif cmd == "test" then

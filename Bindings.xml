@@ -23,4 +23,7 @@
     <Binding name="BOSSNAV_TOGGLE_TAB">
         BossNav_ToggleTab()
     </Binding>
+    <Binding name="BOSSNAV_SWITCH_NAV">
+        BossNav_SwitchNav()
+    </Binding>
 </Bindings>

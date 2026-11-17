@@ -49,12 +49,13 @@ function BossNav_RefreshMap()
     if ns.HideTravelWidgets then ns.HideTravelWidgets() end
     if ns.HideStartPin then ns.HideStartPin() end
 
-    -- Loot / Profs tabs: their panel covers the map and fills the sidebar
-    -- instead. Both are always called so the one not shown hides itself.
+    -- Loot / Profs / Quests tabs: their panel covers the map and fills the
+    -- sidebar instead. All are always called so the ones not shown hide themselves.
     UpdateTabLook()
     local drewLoot = ns.RenderLootTab and ns.RenderLootTab()
     local drewProf = ns.RenderProfTab and ns.RenderProfTab()
-    if drewLoot or drewProf then return end
+    local drewQuest = ns.RenderQuestTab and ns.RenderQuestTab()
+    if drewLoot or drewProf or drewQuest then return end
 
     -- Outside every dungeon: your zone map and the dungeon selector instead.
     helpText:SetText(HELP_BOSS)
@@ -162,7 +163,8 @@ function BossNav_RefreshMap()
         if not b[2] then tag = tag .. " |cff666666(no pin)|r" end
         r.bossIdx = i
         r.travelIdx = nil
-        r.mark:SetText((i == state.bossIdx) and "|cffffd100>|r" or "")
+        r:SetMapButton(false)
+        r.mark:SetText((i == state.bossIdx) and ns.SELECTED_MARK or "")
         r.mark:Show()
         SetBossIcon(r.icon, b[1], dead)
         r.text:SetText(color .. b[1] .. "|r" .. tag)
@@ -172,6 +174,7 @@ function BossNav_RefreshMap()
         local last = GetRow(MAX_ROWS)
         last.bossIdx = nil
         last.travelIdx = nil
+        last:SetMapButton(false)
         last.icon:Hide()
         last.mark:Hide()
         last.text:SetText("|cff888888... and " .. (#cfg.bosses - MAX_ROWS + 1) .. " more|r")

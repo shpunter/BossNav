@@ -37,9 +37,33 @@ local function SelectedDungeon()
     return state.travelIdx and TRAVEL[state.travelIdx] or nil
 end
 
--- True while the live arrow should run outside: a dungeon is picked.
+-- What the arrow leads to. Two targets can be kept at once: the picked
+-- dungeon's entrance and a quest giver picked with "Show on the map" (until
+-- you reach it). state.navFocus says which one the arrow follows; when only
+-- one is set, that one. A quest giver target looks like a dungeon entry
+-- (zone, x, y) so the same routing works.
+local function NavTarget()
+    local dungeon, quest = SelectedDungeon(), state.questTarget
+    if state.navFocus == "dungeon" then return dungeon or quest end
+    return quest or dungeon
+end
+
+-- What is "selected" in the lists: a quest (Quests tab) or a dungeon (Travel
+-- tab), never both. state.selKind is set by picking either one.
+local function QuestSelected()
+    return state.selKind == "quest"
+end
+
+-- The target the arrow is NOT following right now, or nil.
+local function OtherNavTarget()
+    local dungeon, quest = SelectedDungeon(), state.questTarget
+    if not (dungeon and quest) then return nil end
+    return (NavTarget() == quest) and dungeon or quest
+end
+
+-- True while the live arrow should run outside: a dungeon or giver is picked.
 local function TravelActive()
-    return TravelMode() and SelectedDungeon() ~= nil
+    return TravelMode() and NavTarget() ~= nil
 end
 
 local function IndexOfKey(key)
@@ -73,6 +97,37 @@ local function LevelColor(entry, myLevel)
     return string.format("|cff%02x%02x%02x", r * 255, g * 255, b * 255)
 end
 
+-- How many levels below you a quest still gives experience. The game's own
+-- answer when it has one, else the classic rule (5 up to level 9, then one
+-- more every 10 levels).
+local function QuestGreenRange(myLevel)
+    for _, fn in ipairs({ "GetQuestGreenRange", "UnitQuestTrivialLevelRange" }) do
+        if type(_G[fn]) == "function" then
+            local ok, n = pcall(_G[fn], "player")
+            if ok and type(n) == "number" and n > 0 then return n end
+        end
+    end
+    return 5 + math.floor(myLevel / 10)
+end
+
+-- Colour of a quest against your level, the same three as the dungeons:
+-- red when you cannot take it yet, grey when it gives no experience any
+-- more, green otherwise. A quest row without qlevel guesses it as level + 5
+-- (the usual gap in the data).
+local function QuestLevelRGB(q, myLevel)
+    if not (myLevel and q.level) then return nil end
+    if q.level > myLevel then return 1.0, 0.25, 0.25 end
+    local qlevel = q.qlevel or (q.level + 5)
+    if myLevel - qlevel > QuestGreenRange(myLevel) then return 0.53, 0.53, 0.53 end
+    return 0.25, 1.0, 0.25
+end
+
+local function QuestLevelColor(q, myLevel)
+    local r, g, b = QuestLevelRGB(q, myLevel)
+    if not r then return nil end
+    return string.format("|cff%02x%02x%02x", r * 255, g * 255, b * 255)
+end
+
 -- The selected dungeon changed: redraw the window and the world map marks.
 local function TargetChanged()
     UpdateHUDVisibility()
@@ -91,6 +146,8 @@ function BossNav_SelectDungeon(idx)
     local e = TRAVEL[idx]
     if not e then return end
     state.travelIdx = idx
+    state.navFocus = "dungeon"
+    state.selKind = "dungeon"
     DB().travel = { key = e.key }
     local _, _, _, where = EntranceOf(e)
     Print(string.format("Travel target: |cffffd100%s|r  %s", e.name,
@@ -108,6 +165,90 @@ function BossNav_CycleDungeon(step)
         idx = ((state.travelIdx + step - 1) % n) + 1
     end
     BossNav_SelectDungeon(idx)
+end
+
+-- Lead the arrow to a quest's giver (q from BossNav_QuestData.lua).
+-- brief: one chat line only (picking quests one after another in the list).
+local function SetQuestTarget(q, brief)
+    local key = "quest:" .. tostring(q.id or q.name)
+    -- already leading there: nothing new to say
+    if state.questTarget and state.questTarget.key == key and state.navFocus == "quest" then
+        state.selKind = "quest"
+        TargetChanged()
+        return
+    end
+    state.questTarget = {
+        key = key,
+        name = q.giver or q.name, levels = q.name,
+        zone = q.zone, x = q.x, y = q.y, isQuest = true,
+    }
+    state.navFocus = "quest"
+    state.selKind = "quest"
+    state.questInside = nil
+    Print(string.format("Navigating to |cffffd100%s|r  (%s %.1f, %.1f) for %s",
+        state.questTarget.name, q.zone, q.x, q.y, q.name))
+    if brief then TargetChanged() return end
+    if SelectedDungeon() then
+        Print("The dungeon target is kept: /bnav nav (or the Switch Navigation key) goes back to it.")
+    end
+    if state.inInstance then Print("The arrow starts once you are out of the dungeon.") end
+    TargetChanged()
+end
+
+-- A quest taken inside a dungeon: the arrow leads to that dungeon's
+-- entrance, which then wears the quest icon. entry: the dungeon, or nil.
+local function SetQuestInside(entry)
+    state.questInside = entry and entry.key or nil
+    state.questTarget = nil
+    state.navFocus = "dungeon"
+    state.selKind = "quest"
+    TargetChanged()
+end
+
+local function ClearQuestTarget(quiet)
+    -- the dungeon is the selection again (picking a quest sets it back after)
+    state.selKind = "dungeon"
+    if state.questInside and not state.questTarget then
+        state.questInside = nil
+        TargetChanged()
+        return
+    end
+    state.questInside = nil
+    if not state.questTarget then
+        if not quiet then Print("No quest giver target.") end
+        return
+    end
+    state.questTarget = nil
+    state.navFocus = "dungeon"
+    if not quiet then Print("Quest giver target cleared.") end
+    TargetChanged()
+end
+
+-- Switch the arrow between the quest giver and the dungeon entrance.
+-- which: "quest", "dungeon", or nil to flip.
+local function SwitchNav(which)
+    local dungeon, quest = SelectedDungeon(), state.questTarget
+    if not (dungeon or quest) then
+        Print("Nothing to navigate to: pick a dungeon (/bnav go) or a quest's map button.")
+        return
+    end
+    if not which then which = (NavTarget() == quest) and "dungeon" or "quest" end
+    if which == "quest" and not quest then
+        Print("No quest giver target: use a quest's map button or /bnav quest show.")
+        return
+    elseif which == "dungeon" and not dungeon then
+        Print("No dungeon target: pick one with /bnav go.")
+        return
+    end
+    state.navFocus = which
+    state.selKind = which
+    local t = NavTarget()
+    Print("Navigating to " .. (t.isQuest and "quest giver " or "dungeon ") .. "|cffffd100" .. t.name .. "|r.")
+    TargetChanged()
+end
+
+function BossNav_SwitchNav()
+    SwitchNav()
 end
 
 local function ClearTravelTarget(quiet)
@@ -180,6 +321,7 @@ end
 -- Icons
 --------------------------------------------------------------------------
 local ENTRANCE_TEX = "Interface\\Minimap\\Dungeon"
+local QUEST_TEX = "Interface\\GossipFrame\\AvailableQuestIcon"
 local ENTRANCE_FALLBACK_TEX = "Interface\\Icons\\INV_Misc_Map_01"
 
 -- What the next leg's spot looks like: a flight master or a zone exit is
@@ -188,6 +330,11 @@ local LEG_TEX = {
     flight = "Interface\\TaxiFrame\\UI-Taxi-Icon-Green",
     exit   = "Interface\\Icons\\Ability_Rogue_Sprint",
 }
+
+-- Top bar icon sizes. The quest "!" fills its whole box while the dungeon
+-- art has a wide empty margin, so the quest icon gets a smaller box to look
+-- the same size. Change HUD_QUEST_ICON to tune it.
+local HUD_ICON, HUD_QUEST_ICON = 34, 24
 
 local function SetIcon(tex, path, fallback)
     if not tex then return end
@@ -204,11 +351,23 @@ local function SetEntranceIcon(tex)
     SetIcon(tex, ENTRANCE_TEX, ENTRANCE_FALLBACK_TEX)
 end
 
--- The icon for the spot the leg leads to; the entrance itself (and a
--- straight line to it) keeps the dungeon icon.
-local function SetLegIcon(tex, leg)
+-- True when the target wears the quest icon: a quest giver, or the dungeon
+-- whose picked quest is taken inside it.
+local function ShowsQuestIcon(entry)
+    if not entry then return false end
+    return entry.isQuest or (state.questInside ~= nil and state.questInside == entry.key)
+end
+
+-- The icon of the target itself: a quest giver or the dungeon entrance.
+local function SetTargetIcon(tex, entry)
+    if ShowsQuestIcon(entry) then SetIcon(tex, QUEST_TEX, ENTRANCE_FALLBACK_TEX) else SetEntranceIcon(tex) end
+end
+
+-- The icon for the spot the leg leads to; the target itself (and a
+-- straight line to it) keeps the target's icon.
+local function SetLegIcon(tex, leg, entry)
     local path = leg and LEG_TEX[leg.kind]
-    if path then SetIcon(tex, path, ENTRANCE_TEX) else SetEntranceIcon(tex) end
+    if path then SetIcon(tex, path, ENTRANCE_TEX) else SetTargetIcon(tex, entry) end
 end
 
 --------------------------------------------------------------------------
@@ -230,7 +389,7 @@ local function UpdateTravelLive(skipRefresh)
         state.autoFloor = nil
         if not skipRefresh then RefreshIfShown() return end
     end
-    local entry = SelectedDungeon()
+    local entry = NavTarget()
     if not entry then
         playerPin:Hide()
         HideMinimapPins()
@@ -257,8 +416,16 @@ local function UpdateTravelLive(skipRefresh)
     local leg = CurrentLeg(entry, mapID, px, py)
     local dxE, dyS = OffsetToLeg(leg, mapID, px, py)
     local legText = leg and leg.text or ""
-    SetEntranceIcon(hud.icon)
-    hud.main:SetText(string.format("|cffffd100%s|r  |cff888888%s|r", entry.name, entry.levels))
+    if entry.isQuest and leg and (leg.kind == "entrance" or leg.kind == "direct") then
+        legText = string.format("Giver: %s %.1f, %.1f", entry.zone, entry.x, entry.y)
+    end
+    SetTargetIcon(hud.icon, entry)
+    local iconSize = ShowsQuestIcon(entry) and HUD_QUEST_ICON or HUD_ICON
+    hud.icon:SetSize(iconSize, iconSize)
+    -- the other kept target, so you know a switch is possible
+    local other = OtherNavTarget()
+    local otherText = other and string.format("  |cff6699ff(also: %s)|r", other.name) or ""
+    hud.main:SetText(string.format("|cffffd100%s|r  |cff888888%s|r%s", entry.name, entry.levels, otherText))
 
     if not dxE then
         local reason = dyS
@@ -273,6 +440,12 @@ local function UpdateTravelLive(skipRefresh)
     end
 
     local yards = math.sqrt(dxE * dxE + dyS * dyS)
+    -- At the quest giver: done, the arrow goes back to the dungeon (if any)
+    if entry.isQuest and leg.kind == "entrance" and yards < 10 then
+        Print("Arrived at " .. entry.name .. "." .. (SelectedDungeon() and (" Back to " .. SelectedDungeon().name .. ".") or ""))
+        ClearQuestTarget(true)
+        return
+    end
     local bearing = atan2(-dxE, -dyS)
     local rel = bearing - (facing or 0)
     if hud.arrow.SetRotation then hud.arrow:SetRotation(rel) end
@@ -292,7 +465,7 @@ local function UpdateTravelLive(skipRefresh)
         local p = GetMinimapPin(1)
         local clamped = PlaceMinimapPin(p, dxE, dyS, facing)
         p:SetSize(18, 18)
-        SetLegIcon(p.icon, leg)
+        SetLegIcon(p.icon, leg, entry)
         p.icon:SetAlpha(clamped and 0.55 or 1)
         p.ring:Show()
         p:Show()
@@ -326,15 +499,25 @@ local function TravelOnZone(prevCfg)
 end
 
 -- shared with the other BossNav files
+ns.ClearQuestTarget = ClearQuestTarget
 ns.ClearTravelTarget = ClearTravelTarget
+ns.SetQuestTarget = SetQuestTarget
+ns.SetQuestInside = SetQuestInside
+ns.SwitchNav = SwitchNav
 ns.CurrentLeg = CurrentLeg
 ns.LevelColor = LevelColor
 ns.LevelRGB = LevelRGB
+ns.NavTarget = NavTarget
+ns.QuestSelected = QuestSelected
+ns.OtherNavTarget = OtherNavTarget
 ns.MapPosFromWorld = MapPosFromWorld
 ns.PlayerLevel = PlayerLevel
+ns.QuestLevelColor = QuestLevelColor
+ns.QuestLevelRGB = QuestLevelRGB
 ns.RestoreTravelTarget = RestoreTravelTarget
 ns.SelectedDungeon = SelectedDungeon
 ns.SetEntranceIcon = SetEntranceIcon
+ns.SetTargetIcon = SetTargetIcon
 ns.TravelActive = TravelActive
 ns.TravelMode = TravelMode
 ns.TravelOnZone = TravelOnZone
