@@ -26,14 +26,21 @@ hud.icon:SetPoint("LEFT", hud, "LEFT", 46, 0)
 RoundIcon(hud.icon)
 hud.main = hud:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 hud.main:SetPoint("TOPLEFT", hud, "TOPLEFT", 86, -7)
-hud.main:SetWidth(247)
 hud.main:SetJustifyH("LEFT")
 hud.main:SetWordWrap(false)
 hud.sub = hud:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 hud.sub:SetPoint("TOPLEFT", hud.main, "BOTTOMLEFT", 0, -2)
-hud.sub:SetWidth(285)
 hud.sub:SetJustifyH("LEFT")
 hud.sub:SetWordWrap(false)
+
+-- The bar grows to fit its two lines so no message is ever cut off, and
+-- shrinks back to its base width for short ones. Called after every HUD
+-- text update (BossNav_UpdateLive).
+local HUD_MIN_W, HUD_TEXT_X, HUD_PAD_R = 340, 86, 12
+local function FitHUD()
+    local w = math.max(hud.main:GetStringWidth() or 0, hud.sub:GetStringWidth() or 0)
+    hud:SetWidth(math.max(HUD_MIN_W, HUD_TEXT_X + w + HUD_PAD_R))
+end
 
 local function UpdateHUDVisibility()
     local inDungeon = state.cfg and (state.inInstance or state.testMode)
@@ -70,5 +77,6 @@ end
 -- shared with the other BossNav files
 ns.AreaWord = AreaWord
 ns.DirectionWord = DirectionWord
+ns.FitHUD = FitHUD
 ns.UpdateHUDVisibility = UpdateHUDVisibility
 ns.hud = hud

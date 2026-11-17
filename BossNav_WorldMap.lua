@@ -3,7 +3,9 @@ local ADDON, ns = ...
 -- from the files loaded before this one
 local DB                     = ns.DB
 local EntranceOf             = ns.EntranceOf
+local FlightNodes            = ns.FlightNodes
 local LevelColor             = ns.LevelColor
+local LevelRGB               = ns.LevelRGB
 local MapPosFromWorld        = ns.MapPosFromWorld
 local PlayerLevel            = ns.PlayerLevel
 local RoundIcon              = ns.RoundIcon
@@ -37,16 +39,65 @@ local function ShownMapID()
     return nil
 end
 
+local flightPins = {}
+
 local function HideWorldMapPins()
     for _, p in ipairs(pins) do p:Hide() end
+    for _, p in ipairs(flightPins) do p:Hide() end
 end
 
+--------------------------------------------------------------------------
+-- Flight masters: every one on the shown map. Known ones solid, the one you
+-- stand at highlighted, undiscovered ones faded (classic taxi icons).
+--------------------------------------------------------------------------
+local TAXI_KNOWN   = "Interface\\TaxiFrame\\UI-Taxi-Icon-Green"
+local TAXI_CURRENT = "Interface\\TaxiFrame\\UI-Taxi-Icon-Yellow"
+local TAXI_UNKNOWN = "Interface\\TaxiFrame\\UI-Taxi-Icon-Gray"
+
+local function FlightTooltip(p)
+    if not (p.node and GameTooltip) then return end
+    pcall(function()
+        GameTooltip:SetOwner(p, "ANCHOR_RIGHT")
+        GameTooltip:AddLine(p.node.name, 1, 0.82, 0)
+        if p.node.current then
+            GameTooltip:AddLine("Flight master here", 1, 1, 0.5)
+        elseif p.node.known then
+            GameTooltip:AddLine("Flight path known", 0.5, 1, 0.5)
+        else
+            GameTooltip:AddLine("Not discovered yet", 0.6, 0.6, 0.6)
+        end
+        GameTooltip:Show()
+    end)
+end
+
+local function GetFlightPin(i)
+    if not flightPins[i] then
+        local c = Canvas()
+        local p = CreateFrame("Button", nil, c)
+        p:SetSize(10, 10)
+        p:SetFrameLevel(c:GetFrameLevel() + 190)
+        p.icon = p:CreateTexture(nil, "ARTWORK")
+        p.icon:SetAllPoints()
+        p:SetScript("OnEnter", FlightTooltip)
+        p:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
+        flightPins[i] = p
+    end
+    return flightPins[i]
+end
+
+-- Hovering a pin shows its tooltip: name in the level colour (green/red),
+-- level range, where the entrance is.
 local function PinTooltip(p)
     local e = p.entry
     if not (e and GameTooltip) then return end
     pcall(function()
         GameTooltip:SetOwner(p, "ANCHOR_RIGHT")
-        GameTooltip:AddLine(e.name, 1, 0.82, 0)
+        local color = LevelColor(e, PlayerLevel())
+        if color then
+            GameTooltip:AddLine(color .. e.name .. "|r")
+        else
+            GameTooltip:AddLine(e.name, 1, 0.82, 0)
+        end
         GameTooltip:AddLine("Level " .. e.levels, 1, 1, 1)
         local _, _, _, where = EntranceOf(e)
         if where then GameTooltip:AddLine(where, 0.6, 0.6, 0.6) end
@@ -55,23 +106,42 @@ local function PinTooltip(p)
     end)
 end
 
+local LEVEL_DISC = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
+-- The icon art has a clear margin inside its box, so the disc sits this far
+-- inside the box: the rim you see is the margin minus the inset.
+local DISC_INSET = 1.5
+
+-- Tint the level ring of a pin whose icon is `size` wide; hide it when the
+-- level range is unknown.
+local function SetLevelRing(p, size)
+    local r, g, b = LevelRGB(p.entry, PlayerLevel())
+    if not r then p.level:Hide() return end
+    p.level:SetSize(size - 2 * DISC_INSET, size - 2 * DISC_INSET)
+    p.level:SetVertexColor(r, g, b, 0.95)
+    p.level:Show()
+end
+
 local function GetPin(i)
     if not pins[i] then
         local c = Canvas()
         local p = CreateFrame("Button", nil, c)
-        p:SetSize(20, 20)
+        p:SetSize(12, 12)
+        p:SetHitRectInsets(-4, -4, -4, -4)   -- easier to hover a small pin
         p:SetFrameLevel(c:GetFrameLevel() + 200)
         p.icon = p:CreateTexture(nil, "ARTWORK")
         p.icon:SetAllPoints()
         RoundIcon(p.icon)
+        -- Level ring: a tinted disc just larger than the round icon, so a
+        -- green/red/grey rim shows whether the dungeon fits your level.
+        p.level = p:CreateTexture(nil, "BACKGROUND")
+        p.level:SetTexture(LEVEL_DISC)
+        p.level:SetPoint("CENTER")
         p.ring = p:CreateTexture(nil, "BORDER")
         p.ring:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
         p.ring:SetBlendMode("ADD")
         p.ring:SetVertexColor(1.0, 0.72, 0.10, 0.95)
         p.ring:SetPoint("CENTER")
-        p.ring:SetSize(46, 46)
-        p.label = p:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        p.label:SetPoint("TOP", p, "BOTTOM", 0, 1)
+        p.ring:SetSize(28, 28)
         p:SetScript("OnClick", function(self)
             if self.travelIdx then BossNav_SelectDungeon(self.travelIdx) end
         end)
@@ -104,7 +174,6 @@ local function RefreshWorldMapPins()
     local w, h = c:GetWidth(), c:GetHeight()
     if not (w and h and w > 0 and h > 0) then HideWorldMapPins() return end
 
-    local myLevel = PlayerLevel()
     local shown = 0
     for i, e in ipairs(TRAVEL) do
         local emap, ex, ey = EntranceOf(e)
@@ -124,15 +193,32 @@ local function RefreshWorldMapPins()
                 PlacePin(p, c, fx, fy)
                 SetEntranceIcon(p.icon)
                 local selected = (i == state.travelIdx)
-                local levelColor = LevelColor(e, myLevel)
-                local color = levelColor or (selected and "|cffffd100" or "|cffffffff")
-                p.label:SetText(string.format("%s%s|r %s%s|r", color, e.name, levelColor or "|cff888888", e.levels))
-                if selected then p:SetSize(26, 26) p.ring:Show() else p:SetSize(20, 20) p.ring:Hide() end
+                local size = selected and 16 or 12
+                p:SetSize(size, size)
+                if selected then p.ring:Show() else p.ring:Hide() end
+                SetLevelRing(p, size)
                 p:Show()
             end
         end
     end
     for j = shown + 1, #pins do pins[j]:Hide() end
+
+    -- Flight masters on this map
+    local flights = 0
+    if DB().flightmap then
+        for _, n in ipairs(FlightNodes(mapID) or {}) do
+            if n.x > 0 and n.x < 1 and n.y > 0 and n.y < 1 then
+                flights = flights + 1
+                local p = GetFlightPin(flights)
+                p.node = n
+                PlacePin(p, c, n.x, n.y)
+                p.icon:SetTexture(n.current and TAXI_CURRENT or (n.known and TAXI_KNOWN or TAXI_UNKNOWN))
+                p:SetAlpha(n.known and 1 or 0.45)
+                p:Show()
+            end
+        end
+    end
+    for j = flights + 1, #flightPins do flightPins[j]:Hide() end
 end
 
 -- Hook the map frame once it exists: redraw on open, on map change and on

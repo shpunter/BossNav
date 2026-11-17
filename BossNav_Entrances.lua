@@ -15,11 +15,11 @@ local ResolveMapIDByName     = ns.ResolveMapIDByName
 -- A dungeon without zone/x/y shows as "no entrance" until one is recorded.
 --------------------------------------------------------------------------
 local ENTRANCES = {
-    ["Ragefire Chasm"]            = { zone = "Orgrimmar",            x = 52.8, y = 49.0, levels = {13, 18} },
+    ["Ragefire Chasm"]            = { zone = "Orgrimmar",            x = 52.8, y = 49.0, levels = {13, 18}, faction = "Horde" },
     ["Wailing Caverns"]           = { zone = "The Barrens",          x = 46.1, y = 36.4, levels = {15, 25} },
     ["The Deadmines"]             = { zone = "Westfall",             x = 42.6, y = 71.6, levels = {18, 23} },
     ["Shadowfang Keep"]           = { zone = "Silverpine Forest",    x = 44.8, y = 67.8, levels = {22, 30} },
-    ["The Stockade"]              = { zone = "Stormwind City",       x = 50.6, y = 66.4, levels = {22, 30} },
+    ["The Stockade"]              = { zone = "Stormwind City",       x = 50.6, y = 66.4, levels = {22, 30}, faction = "Alliance" },
     ["Blackfathom Deeps"]         = { zone = "Ashenvale",            x = 14.4, y = 14.5, levels = {24, 32} },
     ["Gnomeregan"]                = { zone = "Dun Morogh",           x = 24.4, y = 39.7, levels = {29, 38} },
     ["Razorfen Kraul"]            = { zone = "The Barrens",          x = 42.2, y = 89.8, levels = {30, 40} },
@@ -61,7 +61,7 @@ for i, cfg in ipairs(DUNGEONS) do
     if lo and hi then levels = (lo == hi) and tostring(lo) or (lo .. "-" .. hi) end
     TRAVEL[#TRAVEL + 1] = {
         key = cfg.key, name = cfg.name, cfg = cfg,
-        zone = e.zone, x = e.x, y = e.y, via = e.via, raid = e.raid or false,
+        zone = e.zone, x = e.x, y = e.y, via = e.via, raid = e.raid or false, faction = e.faction,
         lo = lo or 99, minLevel = lo, maxLevel = hi, levels = levels, order = i,
     }
 end

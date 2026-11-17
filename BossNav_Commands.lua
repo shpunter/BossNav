@@ -23,6 +23,7 @@ local Print                  = ns.Print
 local ProfCommand            = ns.ProfCommand
 local RefreshIfShown         = ns.RefreshIfShown
 local RemoveBoss             = ns.RemoveBoss
+local RouteCommand           = ns.RouteCommand
 local SaveEntrance           = ns.SaveEntrance
 local SelectedBoss           = ns.SelectedBoss
 local SelectedDungeon        = ns.SelectedDungeon
@@ -268,7 +269,9 @@ local function ShowHelp()
     Print("  /bnav                 toggle the dungeon map (Esc closes it); outside a dungeon it shows the dungeon selector")
     Print("  /bnav go [n|name|off] outside: pick the dungeon to walk to (HUD arrow, yards, minimap pin to its entrance)")
     Print("  /bnav go up | down    scroll the dungeon list a page (the mouse wheel over the list scrolls it too)")
+    Print("  /bnav route foot|fly  outside: walk zone to zone, or use flight masters where a path is known at both ends (the boxes under the map; no word flips it)")
     Print("  /bnav worldmap        toggle the dungeon entrance marks on the game's world map")
+    Print("  /bnav flights         toggle the flight masters on the game's world map (faded = not discovered yet)")
     Print("  /bnav entrance [X Y]  outside: record the chosen dungeon's entrance at your feet (or X% across, Y% down the zone map)")
     Print("  /bnav boss [n|name]   select next boss, or boss number / name (outside: same as /bnav go)")
     Print("  /bnav prev            select previous boss")
@@ -315,6 +318,12 @@ SlashCmdList["BOSSNAV"] = function(msg)
         GoCommand(rest)
     elseif cmd == "entrance" then
         MarkEntranceHere(rest)
+    elseif cmd == "route" then
+        RouteCommand(rest)
+    elseif cmd == "walk" or cmd == "foot" then
+        RouteCommand("foot")
+    elseif cmd == "fly" then
+        RouteCommand("fly")
     elseif (cmd == "boss" or cmd == "next") and TravelMode() then
         GoCommand(rest)
     elseif cmd == "boss" or cmd == "next" then
@@ -413,6 +422,10 @@ SlashCmdList["BOSSNAV"] = function(msg)
     elseif cmd == "worldmap" then
         DB().worldmap = not DB().worldmap
         Print("Dungeon entrance marks on the world map " .. (DB().worldmap and "on" or "off") .. ".")
+        if ns.RefreshWorldMapPins then pcall(ns.RefreshWorldMapPins) end
+    elseif cmd == "flights" or cmd == "flight" or cmd == "taxi" then
+        DB().flightmap = not DB().flightmap
+        Print("Flight masters on the world map " .. (DB().flightmap and "on" or "off") .. ".")
         if ns.RefreshWorldMapPins then pcall(ns.RefreshWorldMapPins) end
     elseif cmd == "loot" then
         if rest:lower() == "post" then

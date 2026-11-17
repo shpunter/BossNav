@@ -2,23 +2,29 @@
 -- scrollable dungeon selector in the sidebar.
 local ADDON, ns = ...
 -- from the files loaded before this one
+local CurrentLeg             = ns.CurrentLeg
 local EntranceOf             = ns.EntranceOf
 local GetBossPin             = ns.GetBossPin
 local GetRow                 = ns.GetRow
+local GetWayPin              = ns.GetWayPin
 local HasEntrance            = ns.HasEntrance
+local HideRouteToggle        = ns.HideRouteToggle
 local LevelColor             = ns.LevelColor
 local MAX_ROWS               = ns.MAX_ROWS
 local MapName                = ns.MapName
 local MapPosFromWorld        = ns.MapPosFromWorld
 local Place                  = ns.Place
+local PlayerFaction          = ns.PlayerFaction
 local PlayerLevel            = ns.PlayerLevel
 local PlayerMapID            = ns.PlayerMapID
+local PlayerPos              = ns.PlayerPos
 local ROW_H                  = ns.ROW_H
 local RenderBlank            = ns.RenderBlank
 local RenderNative           = ns.RenderNative
 local SIDEBAR_W              = ns.SIDEBAR_W
 local SelectedDungeon        = ns.SelectedDungeon
 local SetEntranceIcon        = ns.SetEntranceIcon
+local ShowRouteToggle        = ns.ShowRouteToggle
 local TRAVEL                 = ns.TRAVEL
 local TravelMode             = ns.TravelMode
 local WorldPos               = ns.WorldPos
@@ -95,9 +101,11 @@ local function DrawScrollbar()
 end
 
 -- Called at the start of every window redraw so the bar never stays over
--- the boss list or the Loot / Profs panels.
+-- the boss list or the Loot / Profs panels, and the foot / flying boxes
+-- under the map show only in travel mode.
 local function HideTravelWidgets()
     scrollbar:Hide()
+    HideRouteToggle()
 end
 
 --------------------------------------------------------------------------
@@ -126,12 +134,35 @@ local function DrawEntrancePin(entry)
     p:Show()
 end
 
+-- The spot to walk to now when the entrance is in another zone: the zone
+-- exit or the flight master, as a numbered dot with the leg's words.
+local function DrawLegPin(entry, mapID)
+    local px, py = PlayerPos(mapID)
+    local leg = CurrentLeg(entry, mapID, px, py)
+    if not (leg and leg.mapID and ns.renderedMapID) then return end
+    if leg.kind == "entrance" or leg.kind == "direct" then return end
+    local fx, fy
+    if leg.mapID == ns.renderedMapID then
+        fx, fy = leg.fx, leg.fy
+    else
+        local cont, wx, wy = WorldPos(leg.mapID, leg.fx, leg.fy)
+        if cont then fx, fy = MapPosFromWorld(cont, wx, wy, ns.renderedMapID) end
+    end
+    if not fx then return end
+    local p = GetWayPin(1)
+    Place(p, fx, fy)
+    p.dot:SetTexture("Interface\\COMMON\\Indicator-Yellow")
+    p.num:SetText("|cffffd100" .. leg.text .. "|r")
+    p:Show()
+end
+
 -- Sidebar: the rows from scrollFirst on, selected dungeon kept in view.
 -- Names are coloured against your level (see LevelColor in BossNav_Travel.lua):
 -- red above you, grey when outgrown, green when in range.
 local function DrawSelector()
     KeepSelectionVisible()
     local myLevel = PlayerLevel()
+    local myFaction = PlayerFaction()
     for row = 1, MAX_ROWS do
         local i = scrollFirst + row - 1
         local e = TRAVEL[i]
@@ -146,6 +177,9 @@ local function DrawSelector()
         local levelColor = LevelColor(e, myLevel)
         local color = levelColor or (selected and "|cffffd100" or "|cffffffff")
         local tag = HasEntrance(e) and "" or " |cff666666(no entrance)|r"
+        if e.faction and myFaction and e.faction ~= myFaction then
+            tag = tag .. " |cff666666(" .. e.faction .. " city)|r"
+        end
         r.text:SetText(string.format("%s%s|r  %s%s|r%s", color, e.name, levelColor or "|cff888888", e.levels, tag))
         r:Show()
     end
@@ -175,12 +209,14 @@ local function RenderTravelTab()
         statusText:SetText(string.format("Target: |cff00ff00%s|r |cff888888%s|r   %s",
             entry.name, entry.levels, where or "entrance unknown (/bnav entrance at the portal)"))
         DrawEntrancePin(entry)
+        DrawLegPin(entry, mapID)
     else
         statusText:SetText("No dungeon picked. /bnav go picks the next one; /bnav go name or number picks one.")
     end
 
     DrawSelector()
     helpText:SetText(HELP_TRAVEL)
+    ShowRouteToggle()
     BossNav_UpdateLive(true)
     return true
 end

@@ -47,6 +47,7 @@ function BossNav_RefreshMap()
     playerPin:Hide()
     noArtText:Hide()
     if ns.HideTravelWidgets then ns.HideTravelWidgets() end
+    if ns.HideStartPin then ns.HideStartPin() end
 
     -- Loot / Profs tabs: their panel covers the map and fills the sidebar
     -- instead. Both are always called so the one not shown hides itself.

@@ -15,6 +15,7 @@ local PlayerMapID            = ns.PlayerMapID
 local PlayerPos              = ns.PlayerPos
 local Print                  = ns.Print
 local RefreshIfShown         = ns.RefreshIfShown
+local RouteMode              = ns.RouteMode
 local TRAVEL                 = ns.TRAVEL
 local UpdateHUDVisibility    = ns.UpdateHUDVisibility
 local atan2                  = ns.atan2
@@ -55,13 +56,21 @@ local function PlayerLevel()
     return nil
 end
 
--- Colour code of a dungeon against your level: red above you, grey when you
--- have outgrown it, green when you are inside its range, nil when unknown.
-local function LevelColor(entry, myLevel)
+-- Colour of a dungeon against your level as r, g, b: red above you, grey
+-- when you have outgrown it, green when you are inside its range, nil when
+-- unknown. Used for the ring around the world map pins.
+local function LevelRGB(entry, myLevel)
     if not (myLevel and entry.minLevel and entry.maxLevel) then return nil end
-    if entry.minLevel > myLevel then return "|cffff4040" end
-    if entry.maxLevel < myLevel then return "|cff888888" end
-    return "|cff40ff40"
+    if entry.minLevel > myLevel then return 1.0, 0.25, 0.25 end
+    if entry.maxLevel < myLevel then return 0.53, 0.53, 0.53 end
+    return 0.25, 1.0, 0.25
+end
+
+-- The same colour as a text colour code ("|cffrrggbb"), nil when unknown.
+local function LevelColor(entry, myLevel)
+    local r, g, b = LevelRGB(entry, myLevel)
+    if not r then return nil end
+    return string.format("|cff%02x%02x%02x", r * 255, g * 255, b * 255)
 end
 
 -- The selected dungeon changed: redraw the window and the world map marks.
@@ -132,23 +141,37 @@ local function MapPosFromWorld(cont, wx, wy, mapID)
     return pos.x, pos.y
 end
 
--- Yards east and south from the player (at px, py on mapID) to the entrance of
--- an entry. On failure returns nil and a reason word.
-local function OffsetToEntrance(entry, mapID, px, py)
-    local emap, ex, ey = EntranceOf(entry)
-    if not ex then return nil, "unknown" end
-    if not emap then return nil, "nomap" end
+-- The leg to walk now (BossNav_Routes.lua): the entrance when it is in your
+-- zone, else the exit toward it or a flight master. Re-planned every few
+-- seconds and whenever your zone, map or foot / flying choice changes.
+local legCache = { key = nil, time = 0, leg = nil }
+local function CurrentLeg(entry, mapID, px, py)
+    local key = entry.key .. "|" .. tostring(mapID) .. "|" .. tostring(GetRealZoneText()) .. "|" .. RouteMode()
+    local now = GetTime and GetTime() or 0
+    if legCache.key ~= key or now - legCache.time > 3 then
+        legCache.key, legCache.time = key, now
+        local ok, leg = pcall(ns.NextLeg, entry, mapID, px, py)
+        legCache.leg = ok and leg or nil
+    end
+    return legCache.leg
+end
+
+-- Yards east and south from the player (at px, py on mapID) to the leg's
+-- spot. On failure returns nil and a reason word.
+local function OffsetToLeg(leg, mapID, px, py)
+    if not leg then return nil, "unknown" end
+    if not leg.mapID then return nil, "nomap" end
     if not (mapID and px) then return nil, "noposition" end
     local cont, wx, wy = WorldPos(mapID, px, py)
-    local econt, twx, twy = WorldPos(emap, ex, ey)
+    local econt, twx, twy = WorldPos(leg.mapID, leg.fx, leg.fy)
     if cont and econt then
         if cont ~= econt then return nil, "continent" end
         local north, west = twx - wx, twy - wy
         return -west, -north
     end
-    if emap == mapID then
+    if leg.mapID == mapID then
         local ww, wh = MapWorldSize(mapID)
-        if ww then return (ex - px) * ww, (ey - py) * wh end
+        if ww then return (leg.fx - px) * ww, (leg.fy - py) * wh end
     end
     return nil, "noworld"
 end
@@ -159,10 +182,17 @@ end
 local ENTRANCE_TEX = "Interface\\Minimap\\Dungeon"
 local ENTRANCE_FALLBACK_TEX = "Interface\\Icons\\INV_Misc_Map_01"
 
-local function SetEntranceIcon(tex)
+-- What the next leg's spot looks like: a flight master or a zone exit is
+-- not the dungeon, so its pin must not wear the dungeon icon.
+local LEG_TEX = {
+    flight = "Interface\\TaxiFrame\\UI-Taxi-Icon-Green",
+    exit   = "Interface\\Icons\\Ability_Rogue_Sprint",
+}
+
+local function SetIcon(tex, path, fallback)
     if not tex then return end
-    local okTex = tex:SetTexture(ENTRANCE_TEX)
-    if okTex == false then tex:SetTexture(ENTRANCE_FALLBACK_TEX) end
+    local okTex = tex:SetTexture(path)
+    if okTex == false and fallback then tex:SetTexture(fallback) end
     tex:SetTexCoord(0, 1, 0, 1)
     if tex.SetDesaturated then pcall(tex.SetDesaturated, tex, false) end
     tex:SetAlpha(1)
@@ -170,8 +200,20 @@ local function SetEntranceIcon(tex)
     if tex.cross then tex.cross:Hide() end
 end
 
+local function SetEntranceIcon(tex)
+    SetIcon(tex, ENTRANCE_TEX, ENTRANCE_FALLBACK_TEX)
+end
+
+-- The icon for the spot the leg leads to; the entrance itself (and a
+-- straight line to it) keeps the dungeon icon.
+local function SetLegIcon(tex, leg)
+    local path = leg and LEG_TEX[leg.kind]
+    if path then SetIcon(tex, path, ENTRANCE_TEX) else SetEntranceIcon(tex) end
+end
+
 --------------------------------------------------------------------------
 -- Live update outside: player marker on the zone map, HUD arrow, minimap pin
+-- (the pin marks the leg's spot: entrance, zone exit or flight master)
 --------------------------------------------------------------------------
 local REASON_TEXT = {
     unknown    = "Entrance unknown. Stand at the portal and type /bnav entrance",
@@ -212,8 +254,9 @@ local function UpdateTravelLive(skipRefresh)
         end
     end
 
-    local dxE, dyS = OffsetToEntrance(entry, mapID, px, py)
-    local _, _, _, where = EntranceOf(entry)
+    local leg = CurrentLeg(entry, mapID, px, py)
+    local dxE, dyS = OffsetToLeg(leg, mapID, px, py)
+    local legText = leg and leg.text or ""
     SetEntranceIcon(hud.icon)
     hud.main:SetText(string.format("|cffffd100%s|r  |cff888888%s|r", entry.name, entry.levels))
 
@@ -223,7 +266,7 @@ local function UpdateTravelLive(skipRefresh)
         HideMinimapPins()
         local text = REASON_TEXT[reason] or "No route."
         if reason == "nomap" then text = text:format(entry.zone or "?") end
-        if reason == "continent" or reason == "noworld" then text = text:format(where or "?") end
+        if reason == "continent" or reason == "noworld" then text = text:format(legText ~= "" and legText or "?") end
         hud.sub:SetText(text)
         navText:SetText("|cffffd100" .. entry.name .. "|r: " .. text)
         return
@@ -235,15 +278,21 @@ local function UpdateTravelLive(skipRefresh)
     if hud.arrow.SetRotation then hud.arrow:SetRotation(rel) end
     hud.arrow:Show()
     local dir = facing and DirectionWord(rel) or "see map"
-    local zone = GetRealZoneText() or ""
-    hud.sub:SetText(string.format("%d yd, %s  |cff888888%s|r", math.floor(yards), dir, zone))
-    navText:SetText(string.format("|cffffd100%s|r: %d yd, %s.  Entrance: %s", entry.name, math.floor(yards), dir, where or "?"))
+    -- Next to a flight master: the job is to take the flight, not to walk.
+    if leg.kind == "flight" and yards < 25 then
+        hud.sub:SetText("|cff40ff40" .. legText .. "|r")
+        navText:SetText(string.format("|cffffd100%s|r: %s.", entry.name, legText))
+    else
+        local more = (leg.zonesLeft and leg.zonesLeft > 0) and string.format("  |cff888888+%d zone%s|r", leg.zonesLeft, leg.zonesLeft > 1 and "s" or "") or ""
+        hud.sub:SetText(string.format("%d yd, %s  |cff888888%s|r%s", math.floor(yards), dir, legText, more))
+        navText:SetText(string.format("|cffffd100%s|r: %d yd, %s.  %s%s", entry.name, math.floor(yards), dir, legText, more))
+    end
 
     if DB().minimap then
         local p = GetMinimapPin(1)
         local clamped = PlaceMinimapPin(p, dxE, dyS, facing)
         p:SetSize(18, 18)
-        SetEntranceIcon(p.icon)
+        SetLegIcon(p.icon, leg)
         p.icon:SetAlpha(clamped and 0.55 or 1)
         p.ring:Show()
         p:Show()
@@ -278,7 +327,9 @@ end
 
 -- shared with the other BossNav files
 ns.ClearTravelTarget = ClearTravelTarget
+ns.CurrentLeg = CurrentLeg
 ns.LevelColor = LevelColor
+ns.LevelRGB = LevelRGB
 ns.MapPosFromWorld = MapPosFromWorld
 ns.PlayerLevel = PlayerLevel
 ns.RestoreTravelTarget = RestoreTravelTarget

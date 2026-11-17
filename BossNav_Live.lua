@@ -32,7 +32,7 @@ local state                  = ns.state
 --------------------------------------------------------------------------
 -- Live update: player marker, HUD arrow, waypoint progress, floor changes
 --------------------------------------------------------------------------
-function BossNav_UpdateLive(skipRefresh)
+local function UpdateLive(skipRefresh)
     -- Outside every dungeon the travel arrow runs instead (BossNav_Travel.lua).
     if ns.TravelMode and ns.TravelMode() then
         ns.UpdateTravelLive(skipRefresh)
@@ -156,6 +156,12 @@ function BossNav_UpdateLive(skipRefresh)
     local sub = GetSubZoneText()
     hud.sub:SetText(distText .. dir .. ((sub and sub ~= "") and ("  |cff888888" .. sub .. "|r") or ""))
     navText:SetText(string.format("|cffffd100%s|r: %s%s", boss[1], distText, dir))
+end
+
+-- Every path above writes the HUD lines, so the bar is refitted once here.
+function BossNav_UpdateLive(skipRefresh)
+    UpdateLive(skipRefresh)
+    ns.FitHUD()
 end
 
 local ticker = CreateFrame("Frame")

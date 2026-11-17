@@ -277,6 +277,7 @@ ns.helpText = helpText
 ns.mapFrame = mapFrame
 ns.navText = navText
 ns.noArtText = noArtText
+ns.pinLayer = pinLayer
 ns.playerPin = playerPin
 ns.sidebar = sidebar
 ns.statusText = statusText

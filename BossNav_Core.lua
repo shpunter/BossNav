@@ -32,8 +32,17 @@
 --    /bnav go picks a dungeon; /bnav entrance records a portal at your feet.
 --    The dungeon list is coloured against your level: red above you, grey
 --    once outgrown, green while in range.
---  * Entrance marks on the game's world map (name, level range, same
---    colours; click one to pick it). /bnav worldmap toggles them.
+--  * Entrance marks on the game's world map: hover one to see its name
+--    (green/red by level), level range and where it is; click one to pick
+--    it. /bnav worldmap toggles them.
+--  * Flight masters on the game's world map: known ones solid, the one you
+--    stand at yellow, undiscovered ones faded. /bnav flights toggles them.
+--  * Zone-to-zone routing: when the dungeon is in another zone the arrow
+--    leads to the exit of your zone toward it (road crossings, boats and
+--    zeppelins from a built-in zone link table). Two boxes under the map,
+--    "By foot" and "Flying" (one always ticked; /bnav route foot|fly),
+--    choose whether a flight master is used when you have learned a flight
+--    path at both ends. Each zone crossing re-plans the route.
 --
 -- Boss pin coordinates follow the Forever Atlas (AtlasLootClassic) dungeon
 -- map data shipped with this client. Bosses listed without coordinates are
@@ -49,6 +58,7 @@
 --   BossNav_Gold.lua       gold earned in the current dungeon
 --   BossNav_MapAPI.lua     guarded access to the client's map API
 --   BossNav_Entrances.lua  dungeon entrances in the open world, travel list by level
+--   BossNav_Routes.lua     zone-to-zone routing: which exit or flight master leads toward a dungeon
 --   BossNav_Window.lua     map window frames, sidebar rows, pins
 --   BossNav_Tabs.lua       Bosses / Loot / Profs tab buttons and tab switching
 --   BossNav_MapArt.lua     map art renderers
@@ -58,6 +68,7 @@
 --   BossNav_Minimap.lua    minimap boss icons
 --   BossNav_Live.lua       periodic live update
 --   BossNav_Travel.lua     travel mode: arrow, distance and minimap pin to a dungeon entrance
+--   BossNav_RouteToggle.lua the "By foot" / "Flying" boxes under the map and /bnav route
 --   BossNav_TravelPanel.lua the window outside a dungeon: zone map, entrance pin, dungeon selector
 --   BossNav_WorldMap.lua   dungeon entrance marks on the game's world map
 --   BossNav_Kills.lua      kill tracking and extra bosses
@@ -135,6 +146,7 @@ local function DB()
     if BossNavDB.minimap == nil then BossNavDB.minimap = true end
     if BossNavDB.skull == nil then BossNavDB.skull = true end
     if BossNavDB.worldmap == nil then BossNavDB.worldmap = true end
+    if BossNavDB.flightmap == nil then BossNavDB.flightmap = true end
     return BossNavDB
 end
 
