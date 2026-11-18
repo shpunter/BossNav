@@ -30,6 +30,7 @@ local SelectedDungeon        = ns.SelectedDungeon
 local SetTab                 = ns.SetTab
 local SkullCommand           = ns.SkullCommand
 local TRAVEL                 = ns.TRAVEL
+local ThreatCommand          = ns.ThreatCommand
 local TouchProgress          = ns.TouchProgress
 local TravelMode             = ns.TravelMode
 local UpdateHUDVisibility    = ns.UpdateHUDVisibility
@@ -300,6 +301,13 @@ local function ShowHelp()
     Print("  /bnav skull           toggle the auto skull mark on bosses")
     Print("  /bnav skull now       put a skull on a boss in view, no target needed (also a keybind)")
     Print("  /bnav skull test      explain why your target was or was not marked")
+    Print("  /bnav threat          toggle the threat window: every mob in combat, who it attacks, your threat % (also a keybind)")
+    Print("  /bnav threat test     show the threat window with made-up mobs for 30 seconds; drag it with the mouse to move it")
+    Print("  /bnav threat reset    put the threat window back at its starting spot")
+    Print("  /bnav threat plates   turn the threat label next to each enemy health bar on or off")
+    Print("  /bnav threat tank     tank mode: auto (found from role, stance or Righteous Fury) -> always on -> off")
+    Print("  /bnav threat alert    tank mode: warning and sound when a mob turns from you to someone else (on/off)")
+    Print("  /bnav threat debug   print the raw threat values the game gives for each mob in view")
     Print("  /bnav minimap         toggle minimap icons (needs a position; this client hides it)")
     Print("  /bnav loot [n|all]    last 5 loot rolls (blue and better): who chose Need/Greed/Pass, their roll, the winner")
     Print("  /bnav quest [n]       Quests tab: the quests of this dungeon (outside: the one picked with /bnav go), who gives them and where")
@@ -491,6 +499,8 @@ SlashCmdList["BOSSNAV"] = function(msg)
     elseif cmd == "quest" or cmd == "quests" or cmd == "q" then
         if not mapFrame:IsShown() then mapFrame:Show() end
         ns.QuestCommand(rest)
+    elseif cmd == "threat" or cmd == "aggro" then
+        ThreatCommand(rest)
     elseif cmd == "pos" then
         Diagnostics()
     elseif cmd == "test" then

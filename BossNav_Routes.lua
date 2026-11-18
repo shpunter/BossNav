@@ -162,8 +162,21 @@ end
 -- Flight masters you have learned, per uiMap (modern taxi API; nil when the
 -- client has none). Each: { name, x, y } with x, y as 0..1 of that map.
 --------------------------------------------------------------------------
--- Every flight master on a uiMap: { name, x, y, known, current }. known is
--- false for one you have not discovered yet; current is the one you stand at.
+-- True when a flight master belongs to the other faction (the game lists
+-- both sides; its own world map hides the enemy ones, so we do too).
+local function IsEnemyNode(n, playerFaction)
+    if not playerFaction then return false end
+    local fac = Enum and Enum.FlightPathFaction or {}
+    local horde = fac.Horde or 1
+    local alliance = fac.Alliance or 2
+    if n.faction == horde then return playerFaction ~= "Horde" end
+    if n.faction == alliance then return playerFaction ~= "Alliance" end
+    return false
+end
+
+-- Every flight master on a uiMap your faction can use: { name, x, y, known,
+-- current }. known is false for one you have not discovered yet; current is
+-- the one you stand at.
 local function FlightNodes(mapID)
     if not (mapID and C_TaxiMap and C_TaxiMap.GetTaxiNodesForMap) then return nil end
     local ok, nodes = pcall(C_TaxiMap.GetTaxiNodesForMap, mapID)
@@ -171,10 +184,11 @@ local function FlightNodes(mapID)
     local states = Enum and Enum.FlightPathState or {}
     local unreachable = states.Unreachable or 2
     local current = states.Current or 0
+    local playerFaction = PlayerFaction()
     local list = {}
     for _, n in ipairs(nodes) do
         pcall(function()
-            if n.position and type(n.name) == "string" then
+            if n.position and type(n.name) == "string" and not IsEnemyNode(n, playerFaction) then
                 local x, y = n.position.x, n.position.y
                 if type(x) == "number" and type(y) == "number" then
                     list[#list + 1] = { name = n.name, x = x, y = y,

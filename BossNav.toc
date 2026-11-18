@@ -26,9 +26,14 @@ BossNav_WorldMap.lua
 BossNav_Kills.lua
 BossNav_Marker.lua
 BossNav_Roster.lua
+BossNav_Role.lua
+BossNav_ThreatPlates.lua
+BossNav_AggroAlert.lua
+BossNav_Threat.lua
 BossNav_Loot.lua
 BossNav_LootPanel.lua
 BossNav_Profs.lua
+BossNav_ProfsChat.lua
 BossNav_ProfsPanel.lua
 BossNav_QuestStatus.lua
 BossNav_QuestText.lua

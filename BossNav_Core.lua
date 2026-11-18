@@ -79,9 +79,13 @@
 --   BossNav_Kills.lua      kill tracking and extra bosses
 --   BossNav_Marker.lua     skull raid mark on a boss as soon as it is seen
 --   BossNav_Roster.lua     group roster: names, classes, class colours, group chat channel
+--   BossNav_Role.lua       is the player tanking: group role, spec, stance or Righteous Fury
+--   BossNav_ThreatPlates.lua threat label next to each enemy nameplate health bar
+--   BossNav_Threat.lua     threat window: every mob in combat, who it attacks, your threat on it
 --   BossNav_Loot.lua       loot roll tracker (Need / Greed / Pass, rolls, winner)
 --   BossNav_LootPanel.lua  the Loot tab: item list and roll panel in the window
 --   BossNav_Profs.lua      profession tracker (mines, herbs, skins, fish, crafts per member)
+--   BossNav_ProfsChat.lua  teammates' gathers and crafts read from loot / craft chat lines
 --   BossNav_ProfsPanel.lua the Profs tab: member list and profession table in the window
 --   BossNav_QuestStatus.lua whether you already did a quest or have it in your log
 --   BossNav_QuestsPanel.lua the Quests tab: a dungeon's quests and where to take them
@@ -106,6 +110,7 @@ BINDING_NAME_BOSSNAV_TOGGLE_TAB = "Switch Bosses / Quests / Loot / Profs Tab"
 BINDING_NAME_BOSSNAV_SWITCH_NAV = "Switch Navigation: Quest Giver / Dungeon"
 BINDING_NAME_BOSSNAV_QUEST_DOWN = "Scroll Quest Text Down"
 BINDING_NAME_BOSSNAV_QUEST_UP = "Scroll Quest Text Up"
+BINDING_NAME_BOSSNAV_TOGGLE_THREAT = "Toggle Threat Window"
 
 BossNavDB = BossNavDB or {}
 
@@ -159,6 +164,7 @@ local function DB()
     if BossNavDB.worldmap == nil then BossNavDB.worldmap = true end
     if BossNavDB.flightmap == nil then BossNavDB.flightmap = true end
     if BossNavDB.questmap == nil then BossNavDB.questmap = true end
+    if BossNavDB.threat == nil then BossNavDB.threat = true end
     return BossNavDB
 end
 

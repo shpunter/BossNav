@@ -72,7 +72,7 @@ local function ClassOf(name)
 end
 
 -- Small round class icon as an inline texture escape, "" when the class is unknown
-local CLASS_ICONS = "Interface\TargetingFrame\UI-Classes-Circles"
+local CLASS_ICONS = "Interface\\TargetingFrame\\UI-Classes-Circles"
 local function ClassIcon(class, size)
     local tc = class and CLASS_ICON_TCOORDS and CLASS_ICON_TCOORDS[class]
     if not tc then return "" end

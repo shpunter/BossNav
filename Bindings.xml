@@ -32,4 +32,7 @@
     <Binding name="BOSSNAV_QUEST_UP">
         BossNav_ScrollQuest(-1)
     </Binding>
+    <Binding name="BOSSNAV_TOGGLE_THREAT">
+        BossNav_ToggleThreat()
+    </Binding>
 </Bindings>

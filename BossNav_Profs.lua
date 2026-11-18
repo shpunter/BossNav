@@ -210,7 +210,14 @@ local function OnUnitSpellcast(unit, castGUID, spellID, _, oldSpellID)
     if IsSecret(unit) or type(unit) ~= "string" then return end
     if not (unit == "player" or unit:find("^party%d+$") or unit:find("^raid%d+$")) then return end
     if IsSecret(spellID) or type(spellID) ~= "number" then spellID = oldSpellID end
-    if IsSecret(spellID) or type(spellID) ~= "number" then return end
+    if IsSecret(spellID) or type(spellID) ~= "number" then
+        -- this client hides the spell of other players' casts: the chat
+        -- fallback in BossNav_ProfsChat.lua counts them instead
+        if DB().profDebug then
+            Print(string.format("cast: %s (%s) |cffff4444spell hidden by the client|r", tostring(UnitNameClass(unit) or "?"), unit))
+        end
+        return
+    end
     if IsSecret(castGUID) or type(castGUID) ~= "string" then castGUID = nil end
     local prof, spellName, icon = Classify(spellID)
     if DB().profDebug then
@@ -220,6 +227,8 @@ local function OnUnitSpellcast(unit, castGUID, spellID, _, oldSpellID)
             prof and ("|cff00ff00" .. prof .. "|r") or "|cff888888not a profession|r"))
     end
     if not prof then return end
+    -- a teammate's cast was readable: the chat fallback is not needed
+    if unit ~= "player" then state.profOtherCasts = true end
     local name, class = UnitNameClass(unit)
     if not name then return end
     name = ShortName(name)
@@ -337,6 +346,7 @@ end
 ns.ClearProfs = ClearProfs
 ns.OnUnitSpellcast = OnUnitSpellcast
 ns.PostProfs = PostProfs
+ns.ProfRecord = Record
 ns.ProfCommand = ProfCommand
 ns.ProfList = ProfList
 ns.ProfMembers = Members

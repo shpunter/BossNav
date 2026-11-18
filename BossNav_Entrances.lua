@@ -8,7 +8,8 @@ local ResolveMapIDByName     = ns.ResolveMapIDByName
 --------------------------------------------------------------------------
 -- Entrance of every dungeon: the zone map it sits on, plus percent across and
 -- percent down that zone map. Level ranges follow the Forever Atlas data
--- (AtlasLootClassic_DungeonsAndRaids). The coordinates are the classic
+-- (AtlasLootClassic_DungeonsAndRaids), except where the in-game Dungeon Finder
+-- shows a different range: the game's own list wins. The coordinates are the classic
 -- entrance spots and are unverified on this client: standing at a portal and
 -- typing /bnav entrance records the real one, which then wins over this list.
 -- raid = true sorts the entry after the dungeons of the same level.
@@ -17,8 +18,8 @@ local ResolveMapIDByName     = ns.ResolveMapIDByName
 local ENTRANCES = {
     ["Ragefire Chasm"]            = { zone = "Orgrimmar",            x = 52.8, y = 49.0, levels = {13, 18}, faction = "Horde" },
     ["Wailing Caverns"]           = { zone = "The Barrens",          x = 46.1, y = 36.4, levels = {15, 25} },
-    ["The Deadmines"]             = { zone = "Westfall",             x = 42.6, y = 71.6, levels = {18, 23} },
-    ["Shadowfang Keep"]           = { zone = "Silverpine Forest",    x = 44.8, y = 67.8, levels = {22, 30} },
+    ["The Deadmines"]             = { zone = "Westfall",             x = 42.6, y = 71.6, levels = {17, 26} },
+    ["Shadowfang Keep"]           = { zone = "Silverpine Forest",    x = 44.8, y = 67.8, levels = {20, 30} },
     ["The Stockade"]              = { zone = "Stormwind City",       x = 50.6, y = 66.4, levels = {22, 30}, faction = "Alliance" },
     ["Blackfathom Deeps"]         = { zone = "Ashenvale",            x = 14.4, y = 14.5, levels = {24, 32} },
     ["Gnomeregan"]                = { zone = "Dun Morogh",           x = 24.4, y = 39.7, levels = {29, 38} },
@@ -48,7 +49,7 @@ local ENTRANCES = {
     -- Ruins of Lordaeron: the ruined keep above the Undercity.
     ["Ruins of Lordaeron"]        = { zone = "Tirisfal Glades",      x = 63.3, y = 67.5, levels = {15, 20} },
     -- Excavation Site: hilltop southeast of Whelgar's Excavation Site.
-    ["Excavation Site: Wetlands"] = { zone = "Wetlands",             x = 48.1, y = 56.5, levels = {24, 29} },
+    ["Excavation Site: Wetlands"] = { zone = "Wetlands",             x = 48.1, y = 56.5, levels = {26, 33} },
     -- City of Dalaran: sewer gate on the northwest wall by Lordamere Lake (needs the Dalaran Sewer Key).
     ["City of Dalaran"]           = { zone = "Alterac Mountains",    x = 8.0,  y = 61.2, levels = {28, 33} },
     -- Half-Pint Tavern: datamined only, not in the game; no entrance.

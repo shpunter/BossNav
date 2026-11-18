@@ -7,12 +7,15 @@ local CheckTargetDead        = ns.CheckTargetDead
 local ClearLoot              = ns.ClearLoot
 local ClearProfs             = ns.ClearProfs
 local DB                     = ns.DB
+local EnsureNameplates       = ns.EnsureNameplates
 local IsSecret               = ns.IsSecret
 local OnBossKilled           = ns.OnBossKilled
 local OnEncounterStart       = ns.OnEncounterStart
 local OnGroupRosterChanged   = ns.OnGroupRosterChanged
 local OnLootMessage          = ns.OnLootMessage
 local OnMoneyChanged         = ns.OnMoneyChanged
+local OnProfLootMessage      = ns.OnProfLootMessage
+local OnTradeSkillMessage    = ns.OnTradeSkillMessage
 local OnQuestTurnedIn        = ns.OnQuestTurnedIn
 local OnUnitSpellcast        = ns.OnUnitSpellcast
 local Print                  = ns.Print
@@ -62,6 +65,8 @@ events:RegisterEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT")
 events:RegisterEvent("CHAT_MSG_LOOT")
 -- Profession tracker: every gather and every recipe is a spell cast of a group unit.
 events:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+-- ...and for teammates, whose cast spells the client hides: "Bob creates [X]."
+events:RegisterEvent("CHAT_MSG_TRADESKILLS")
 -- Diagnostics: if the client ever blocks a call from this addon, name it.
 events:RegisterEvent("ADDON_ACTION_FORBIDDEN")
 events:RegisterEvent("ADDON_ACTION_BLOCKED")
@@ -84,6 +89,7 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4, arg5)
             -- the group list can be empty for a moment right after login
             if C_Timer and C_Timer.After then C_Timer.After(3, CheckLeftGroup) else CheckLeftGroup() end
             SetupWorldMapPins()   -- the map frame may not have existed at load time
+            if DB().threat then EnsureNameplates() end   -- the threat window sees mobs through them
         end
         UpdateZone()
         OnMoneyChanged()   -- sets the purse baseline after a load or zone change
@@ -120,6 +126,9 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4, arg5)
         pcall(OnEncounterStart)
     elseif event == "CHAT_MSG_LOOT" then
         pcall(OnLootMessage, arg1)
+        pcall(OnProfLootMessage, arg1)
+    elseif event == "CHAT_MSG_TRADESKILLS" then
+        pcall(OnTradeSkillMessage, arg1)
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
         pcall(OnUnitSpellcast, arg1, arg2, arg3, arg4, arg5)
     end
