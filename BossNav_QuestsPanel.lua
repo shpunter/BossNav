@@ -12,6 +12,7 @@ local PlayerFaction          = ns.PlayerFaction
 local PlayerLevel            = ns.PlayerLevel
 local Print                  = ns.Print
 local QuestLevelColor        = ns.QuestLevelColor
+local QuestLevelRGB          = ns.QuestLevelRGB
 local QuestStatus            = ns.QuestStatus
 local QUEST_STATUS_WORD      = ns.QUEST_STATUS_WORD
 local SELECTED_MARK          = ns.SELECTED_MARK
@@ -29,7 +30,6 @@ local statusText             = ns.statusText
 local ROW_H = 24
 local MAX_ROWS = 20
 local FACTION_WORD = { A = "Alliance", H = "Horde", B = "Both factions" }
-local FACTION_COLOR = { A = "4080ff", H = "ff4040", B = "ffd100" }
 
 -- Faction crest(s) as inline text icons: one for a one-side quest, both for
 -- a quest either side can take.
@@ -240,37 +240,38 @@ empty:SetPoint("CENTER")
 empty:SetWidth(CANVAS_W - 60)
 empty:SetJustifyH("CENTER")
 
-local LABEL = "|cff888888%s|r  "
+-- Colours that read on the quest window's parchment.
+local LABEL = "|cff6b5a40%s|r  "
+local INK = { A = "1a3f99", H = "991a1a", B = "6b4a00" }
+local function DarkLevelColor(q, myLevel)
+    local r, g, b = QuestLevelRGB(q, myLevel)
+    if not r then return "|cff000000" end
+    return string.format("|cff%02x%02x%02x", r * 140, g * 140, b * 140)
+end
+
+-- The selected quest, drawn like the game's quest window
+-- (BossNav_QuestInfo.lua) with where to take it under the title.
 local function ShowQuest(q, myLevel)
-    local lvl = (QuestLevelColor(q, myLevel) or "|cffffffff") .. q.level .. "|r"
-        .. ((q.qlevel and q.qlevel ~= q.level) and ("  |cff888888(quest level " .. q.qlevel .. ")|r") or "")
-    title:SetText(q.name)
+    local lvl = DarkLevelColor(q, myLevel) .. q.level .. "|r"
+        .. ((q.qlevel and q.qlevel ~= q.level) and ("  |cff6b5a40(quest level " .. q.qlevel .. ")|r") or "")
     local lines = {}
     lines[#lines + 1] = LABEL:format("Level") .. lvl .. "   " .. LABEL:format("For")
-        .. FactionIcons(q, 16) .. " |cff" .. FACTION_COLOR[q.faction] .. FACTION_WORD[q.faction] .. "|r"
+        .. FactionIcons(q, 14) .. " |cff" .. INK[q.faction] .. FACTION_WORD[q.faction] .. "|r"
         .. (q.classes and ("   " .. LABEL:format("Class") .. q.classes) or "")
     local status = QuestStatus(q)
     if status == "done" then
-        lines[#lines + 1] = LABEL:format("Status") .. "|cffd9d9d9Done - you already handed it in|r"
+        lines[#lines + 1] = LABEL:format("Status") .. "Done - you already handed it in"
     elseif status == "active" then
-        lines[#lines + 1] = LABEL:format("Status") .. "|cffffd100In your quest log|r"
+        lines[#lines + 1] = LABEL:format("Status") .. "In your quest log"
     end
     local who, where = StartText(q)
-    lines[#lines + 1] = ""
-    lines[#lines + 1] = LABEL:format("Take it from") .. "|cffffd100" .. who .. "|r"
-    lines[#lines + 1] = LABEL:format("Where") .. "|cff40ff40" .. where .. "|r"
+    lines[#lines + 1] = LABEL:format("Take it from") .. who .. "  |cff0d5c0d" .. where .. "|r"
     local back = TurninText(q)
     if back then lines[#lines + 1] = LABEL:format("Hand it in to") .. back end
-    if q.pre then
-        lines[#lines + 1] = ""
-        lines[#lines + 1] = LABEL:format("Do first") .. q.pre
-    end
-    if q.note then
-        lines[#lines + 1] = ""
-        lines[#lines + 1] = q.note
-    end
-    body:SetText(table.concat(lines, "\n"))
-    title:Show(); body:Show(); empty:Hide()
+    if q.pre then lines[#lines + 1] = LABEL:format("Do first") .. q.pre end
+    if q.note then lines[#lines + 1] = LABEL:format("Tip") .. q.note end
+    title:Hide(); body:Hide(); empty:Hide()
+    ns.ShowQuestInfo(q, q.name, lines)
 end
 
 --------------------------------------------------------------------------
@@ -283,6 +284,7 @@ end
 local function RenderQuestTab()
     if state.tab ~= "quest" then
         panel:Hide()
+        ns.HideQuestInfo()
         HideRows(1)
         return false
     end
@@ -337,6 +339,7 @@ local function RenderQuestTab()
     end
     HideRows(shown + 1)
 
+    if not cfg or count == 0 then ns.HideQuestInfo() end
     if not cfg then
         title:Hide(); body:Hide()
         empty:SetText("Pick a dungeon first: /bnav go name, or the Travel tab.\nThe quests of that dungeon show up here.")
@@ -378,6 +381,13 @@ local function QuestCommand(rest)
     local arg = (rest or ""):lower()
     local n = tonumber(arg)
     if arg == "list" then PrintQuests() return end
+    -- /bnav quest down|up|top: scroll the quest text and rewards
+    local scrollStep = ({ down = 1, up = -1, top = 0 })[arg]
+    if scrollStep then
+        if state.tab ~= "quest" then ns.SetTab("quest") end
+        ns.ScrollQuestInfo(scrollStep)
+        return
+    end
     -- /bnav quest show [n]: the selected (or n-th) quest's giver on the world map
     local showArg = arg:match("^show%s*(%d*)$")
     if showArg then

@@ -91,7 +91,7 @@ local QUESTS = {
         { id=6564, name="Allegiance to the Old Gods", faction="H", level=17, qlevel=22, giver="Damp Note", start="item", from="Blackfathom Tide Priestess", zone="Darkshore", x=31.4, y=92.3, turnin="Je'neu Sancrea", tzone="Ashenvale", tx=11.6, ty=34.3 },
         { id=6563, name="The Essence of Aku'Mai", faction="H", level=17, qlevel=22, giver="Je'neu Sancrea", zone="Ashenvale", x=11.6, y=34.3, pre="Trouble in the Deeps" },
         { id=78922, name="Blackfathom Villainy", faction="H", level=18, giver="Argent Guard Thaelrid", inside=true, turnin="Bashana Runetotem", tzone="Thunder Bluff", tx=71.1, ty=34.2 },
-        { id=908, name="Amongst the Ruins", faction="H", level=21, giver="Je'neu Sancrea", zone="Ashenvale", x=11.6, y=34.3, note="Fathom Core under water; the standing stone summons Baron Aquanis" },
+        { id=6921, name="Amongst the Ruins", faction="H", level=21, giver="Je'neu Sancrea", zone="Ashenvale", x=11.6, y=34.3, note="Fathom Core under water; the standing stone summons Baron Aquanis" },
         { id=78920, name="Baron Aquanis", faction="H", level=21, giver="Strange Water Globe", start="item", from="Baron Aquanis", inside=true, turnin="Je'neu Sancrea", tzone="Ashenvale", tx=11.6, ty=34.3 },
         { id=1740, name="The Orb of Soran'ruk", faction="B", level=20, qlevel=25, classes="Warlock", giver="Doan Karhan", zone="The Barrens", x=49.3, y=57.2 },
     },

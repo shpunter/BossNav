@@ -31,6 +31,9 @@ BossNav_LootPanel.lua
 BossNav_Profs.lua
 BossNav_ProfsPanel.lua
 BossNav_QuestStatus.lua
+BossNav_QuestText.lua
+BossNav_QuestLogInfo.lua
+BossNav_QuestInfo.lua
 BossNav_QuestsPanel.lua
 BossNav_QuestMapPins.lua
 BossNav_Zone.lua

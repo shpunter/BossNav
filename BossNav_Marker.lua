@@ -121,8 +121,16 @@ local function TryMarkUnit(unit, knownName, force)
 end
 
 -- The encounter began: the game exposes the boss as boss1..boss5.
+-- The bosses recognised here are remembered, so the kill still counts when
+-- the encounter's end names the boss differently (BossNav_Kills.lua).
 local function OnEncounterStart(encounterName)
-    for i = 1, 5 do TryMarkUnit("boss" .. i, encounterName) end
+    state.encounterBosses = state.encounterBosses or {}
+    for i = 1, 5 do
+        local unit = "boss" .. i
+        pcall(TryMarkUnit, unit, encounterName)
+        local ok, boss = pcall(IdentifyBoss, unit)
+        if ok and boss then state.encounterBosses[boss[1]] = true end
+    end
 end
 
 -- /bnav skull test: show what the client lets us read about the target,
@@ -197,6 +205,7 @@ local function SkullCommand(rest)
 end
 
 -- shared with the other BossNav files
+ns.IdentifyBoss = IdentifyBoss
 ns.MarkNearbyBoss = MarkNearbyBoss
 ns.OnEncounterStart = OnEncounterStart
 ns.SkullCommand = SkullCommand

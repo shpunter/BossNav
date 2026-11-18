@@ -104,6 +104,8 @@ BINDING_NAME_BOSSNAV_MARK_WAYPOINT = "Mark Waypoint Here"
 BINDING_NAME_BOSSNAV_MARK_BOSS = "Mark Nearby Boss (skull)"
 BINDING_NAME_BOSSNAV_TOGGLE_TAB = "Switch Bosses / Quests / Loot / Profs Tab"
 BINDING_NAME_BOSSNAV_SWITCH_NAV = "Switch Navigation: Quest Giver / Dungeon"
+BINDING_NAME_BOSSNAV_QUEST_DOWN = "Scroll Quest Text Down"
+BINDING_NAME_BOSSNAV_QUEST_UP = "Scroll Quest Text Up"
 
 BossNavDB = BossNavDB or {}
 

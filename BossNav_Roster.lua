@@ -10,15 +10,23 @@ local function Plain(v)
     return nil
 end
 
-local function PlayerName()
-    local ok, name = pcall(UnitName, "player")
-    if ok and Plain(name) then return name end
-    return "You"
+-- One spelling per person. On this server names can contain spaces and
+-- hyphens: the unit API gives "Mouse-Off" while chat lines say "Mouse Off".
+-- Cutting at the hyphen (the old realm strip) turned that into "Mouse", a
+-- second person. So a hyphen counts as a space, and nothing is cut off.
+local function ShortName(name)
+    local s = tostring(name):gsub("%-", " "):gsub("%s+", " ")
+    return (s:gsub("^ ", ""):gsub(" $", ""))
 end
 
--- Strip the realm suffix so "Bob-Realm" and "Bob" are the same person
-local function ShortName(name)
-    return (tostring(name):gsub("%-.*$", ""))
+local function PlayerName()
+    local ok, name, realm = pcall(UnitName, "player")
+    if ok and Plain(name) then
+        -- a second part, if the client splits the name, belongs to the name here
+        if Plain(realm) then name = name .. " " .. realm end
+        return ShortName(name)
+    end
+    return "You"
 end
 
 -- Unit tokens of everyone who can be in the group
