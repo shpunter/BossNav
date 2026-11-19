@@ -78,6 +78,7 @@
 --   BossNav_WorldMap.lua   dungeon entrance marks on the game's world map
 --   BossNav_Kills.lua      kill tracking and extra bosses
 --   BossNav_Marker.lua     skull raid mark on a boss as soon as it is seen
+--   BossNav_Portraits.lua  boss portraits learned in game for bosses without a known one
 --   BossNav_Roster.lua     group roster: names, classes, class colours, group chat channel
 --   BossNav_Role.lua       is the player tanking: group role, spec, stance or Righteous Fury
 --   BossNav_ThreatPlates.lua threat label next to each enemy nameplate health bar

@@ -43,8 +43,8 @@ local BOSS_DISPLAY = {
     ["Urok Doomhowl"]=11583, ["Quartermaster Zigris"]=9738, ["Halycon"]=9567,
     ["Gizrul the Slavener"]=9564, ["Overlord Wyrmthalak"]=8711, ["Pyroguard Emberseer"]=2172,
     ["Warchief Rend Blackhand"]=9778, ["The Beast"]=10193, ["General Drakkisath"]=10115,
-    ["Lord Valthalak"]=14308, ["Kirtonos"]=7534, ["Jandice Barov"]=11073, ["Rattlegore"]=12073,
-    ["Marduk Blackpool"]=10248, ["Vectus"]=2606, ["Kormok"]=16020, ["Ras Frostwhisperer"]=7919,
+    ["Lord Valthalak"]=14308, ["Kirtonos the Herald (Kirtonos)"]=7534, ["Jandice Barov"]=11073, ["Rattlegore"]=12073,
+    ["Marduk Blackpool"]=10248, ["Vectus"]=2606, ["Kormok"]=16020, ["Ras Frostwhisper"]=7919,
     ["Instructor Malicia"]=11069, ["Doctor Theolen Krastinov"]=10901, ["Lorekeeper Polkelt"]=11492,
     ["The Ravenian"]=10433, ["Lord Alexei Barov"]=11072, ["Lady Illucia Barov"]=11835,
     ["Darkmaster Gandling"]=11070, ["Skul"]=2606, ["Hearthsinger Forresten"]=10482,
@@ -69,9 +69,21 @@ local BOSS_DISPLAY = {
     ["Broodlord Lashlayer"]=14308, ["Firemaw"]=6377, ["Ebonroc"]=6377, ["Flamegor"]=6377,
     ["Chromaggus"]=14367, ["Nefarian"]=11380, ["Kurinnaxx"]=15742, ["General Rajaxx"]=15376,
     ["Moam"]=15392, ["Buru the Gorger"]=15654, ["Ayamiss the Hunter"]=15431,
-    ["Ossirian the Unscarred"]=15432, ["The Prophet Skeram"]=15345, ["Bug Trio"]=15657,
+    ["Ossirian the Unscarred"]=15432, ["The Prophet Skeram"]=15345, ["Silithid Royalty (Bug Trio)"]=15657,
     ["Battleguard Sartura"]=15583, ["Fankriss the Unyielding"]=15743, ["Viscidus"]=15686,
     ["Princess Huhuran"]=15739, ["Twin Emperors"]=15761, ["Ouro"]=15509, ["C'Thun"]=15787,
+    -- Added 2026-11-18 from the cmangos classic database (creature_template ModelId1).
+    -- Group encounters show their first member.
+    ["Oggleflint"]=11611, ["Bazzalan"]=2007, ["Targorr the Dread"]=517, ["Hamhock"]=3250,
+    ["Dextren Ward"]=2149, ["Bazil Thredd"]=1621, ["Lorgus Jett"]=12822, ["Roogug"]=6110,
+    ["Miner Johnson"]=556, ["The Lost Dwarves"]=5710, ["Hurley Blackbreath"]=8658,
+    ["Ribbly Screwspigot"]=8667, ["Plugger Spazzring"]=8652, ["The Seven"]=8687,
+    ["Princess Moira Bronzebeard"]=8705, ["Ring of Law"]=9329,   -- High Justice Grimstone, who runs the arena
+    ["Anub'Rekhan"]=15931, ["Grand Widow Faerlina"]=15940, ["Maexxna"]=15928,
+    ["Noth the Plaguebringer"]=16590, ["Heigan the Unclean"]=16309, ["Loatheb"]=16110,
+    ["Instructor Razuvious"]=16582, ["Gothik the Harvester"]=16279, ["The Four Horsemen"]=16139,
+    ["Patchwerk"]=16174, ["Grobbulus"]=16035, ["Gluth"]=16064, ["Thaddius"]=16137,
+    ["Sapphiron"]=16033, ["Kel'Thuzad"]=15945,
 }
 
 --------------------------------------------------------------------------
@@ -100,7 +112,7 @@ local DUNGEONS = {
       } },
     { zones = {"The Deadmines","Deadmines"}, folder = "TheDeadmines", floors = {1,2},
       floorNames = {"The Deadmines","Ironclad Cove"}, bosses = {
-        {"Rhahk'Zor",35.5,53.5,1},{"Sneed",49.2,75.3,1},{"Gilnid",12.1,65.9,2},
+        {"Rhahk'Zor",35.5,53.5,1},{"Miner Johnson"},{"Sneed",49.2,75.3,1},{"Gilnid",12.1,65.9,2},
         {"Captain Greenskin",59.2,32.7,2},{"Mr. Smite",27.8,40.1,2},{"Cookie",70.0,45.0,2},
         {"Edwin VanCleef",59.4,39.2,2},
     } },
@@ -176,8 +188,8 @@ local DUNGEONS = {
         {"Pyroguard Emberseer",18.0,69.0,2},{"Warchief Rend Blackhand",49.0,46.0,7},{"The Beast",82.0,53.0,7},{"General Drakkisath",51.0,10.0,7},{"Lord Valthalak",82.0,53.0,7},
     } },
     { zones = {"Scholomance"}, folder = "Scholomance", floors = {1,2,3,4}, floorNames = {"Reliquary","Summoning / Ossuary","Lower Study","Headmaster's Study"}, bosses = {
-        {"Kirtonos",78.0,82.0,1},{"Jandice Barov",39.0,10.0,2},{"Rattlegore",49.0,45.0,2},{"Marduk Blackpool",69.0,58.0,2},{"Vectus",79.0,66.0,2},
-        {"Kormok",7.0,74.0,2},{"Ras Frostwhisperer",7.0,74.0,2},{"Instructor Malicia",33.0,79.0,4},{"Doctor Theolen Krastinov",69.0,62.0,4},
+        {"Kirtonos the Herald (Kirtonos)",78.0,82.0,1},{"Jandice Barov",39.0,10.0,2},{"Rattlegore",49.0,45.0,2},{"Marduk Blackpool",69.0,58.0,2},{"Vectus",79.0,66.0,2},
+        {"Kormok",7.0,74.0,2},{"Ras Frostwhisper",7.0,74.0,2},{"Instructor Malicia",33.0,79.0,4},{"Doctor Theolen Krastinov",69.0,62.0,4},
         {"Lorekeeper Polkelt",32.0,47.0,4},{"The Ravenian",33.0,30.0,4},{"Lord Alexei Barov",59.0,17.0,4},{"Lady Illucia Barov",32.0,8.0,4},{"Darkmaster Gandling",37.0,17.0,4},
     } },
     { zones = {"Stratholme"}, folder = "Stratholme", floors = {1,2}, floorNames = {"Living Side","Undead Side"}, bosses = {
@@ -202,14 +214,32 @@ local DUNGEONS = {
         {"High Priestess Jeklik",37.9,63.6,1},{"High Priest Venoxis",49.8,47.2,1},{"High Priestess Mar'li",47.2,68.2,1},{"Bloodlord Mandokir",58.9,69.5,1},
         {"Gahz'ranka",56.3,29.6,1},{"High Priest Thekal",61.1,29.7,1},{"High Priestess Arlokk",46.8,18.0,1},{"Jin'do the Hexxer",30.8,21.5,1},{"Hakkar",48.9,34.6,1},
     } },
-    { zones = {"Blackwing Lair"}, folder = "BlackwingLair", floors = {1}, bosses = {
-        {"Razorgore the Untamed"},{"Vaelastrasz the Corrupt"},{"Broodlord Lashlayer"},{"Firemaw"},{"Ebonroc"},{"Flamegor"},{"Chromaggus"},{"Nefarian"},
+    -- Blackwing Lair, both Ahn'Qiraj raids and Naxxramas: pins from the game's own encounter
+    -- journal positions (retail JournalEncounter via wago.tools), scaled to the classic map tiles
+    -- (x * 1002/1024, y * 668/768). The same scaling reproduces the Molten Core and Wailing
+    -- Caverns pins above within about 1%. Not yet checked in game.
+    { zones = {"Blackwing Lair"}, folder = "BlackwingLair", floors = {1,2,3,4},
+      floorNames = {"Dragonmaw Garrison","Halls of Strife","Crimson Laboratories","Nefarian's Lair"}, bosses = {
+        {"Razorgore the Untamed",41.0,52.4,1},{"Vaelastrasz the Corrupt",32.6,24.0,1},{"Broodlord Lashlayer",49.5,53.7,3},
+        {"Firemaw",45.4,37.4,3},{"Ebonroc",34.2,18.2,3},{"Flamegor",34.8,32.3,4},{"Chromaggus",38.6,63.2,4},{"Nefarian",68.9,63.0,4},
     } },
     { zones = {"Ruins of Ahn'Qiraj"}, folder = "RuinsofAhnQiraj", floors = {1}, special = true, bosses = {
-        {"Kurinnaxx"},{"General Rajaxx"},{"Moam"},{"Buru the Gorger"},{"Ayamiss the Hunter"},{"Ossirian the Unscarred"},
+        {"Kurinnaxx",55.1,31.1,1},{"General Rajaxx",57.1,42.7,1},{"Moam",32.2,31.4,1},{"Buru the Gorger",68.3,54.0,1},
+        {"Ayamiss the Hunter",60.4,78.7,1},{"Ossirian the Unscarred",42.0,60.5,1},
     } },
-    { zones = {"Ahn'Qiraj","Temple of Ahn'Qiraj"}, folder = "AhnQiraj", floors = {1}, bosses = {
-        {"The Prophet Skeram"},{"Bug Trio"},{"Battleguard Sartura"},{"Fankriss the Unyielding"},{"Viscidus"},{"Princess Huhuran"},{"Twin Emperors"},{"Ouro"},{"C'Thun"},
+    { zones = {"Ahn'Qiraj","Temple of Ahn'Qiraj","Ahn'Qiraj Temple"}, folder = "AhnQiraj", floors = {1,2,3},
+      floorNames = {"The Hive Undergrounds","The Temple Gates","Vault of C'Thun"}, bosses = {
+        {"The Prophet Skeram",44.8,45.4,2},{"Silithid Royalty (Bug Trio)",27.8,43.3,1},{"Battleguard Sartura",43.6,29.2,1},
+        {"Fankriss the Unyielding",61.0,19.0,1},{"Viscidus",70.6,15.6,1},{"Princess Huhuran",42.6,43.8,1},
+        {"Twin Emperors",59.4,60.7,1},{"Ouro",29.5,71.2,1},{"C'Thun",55.8,54.4,3},
+    } },
+    { zones = {"Naxxramas"}, folder = "Naxxramas", floors = {1,2,3,4,6},
+      floorNames = {"The Construct Quarter","The Arachnid Quarter","The Military Quarter","The Plague Quarter","The Upper Necropolis"}, bosses = {
+        {"Anub'Rekhan",30.0,40.9,2},{"Grand Widow Faerlina",43.2,31.4,2},{"Maexxna",67.2,13.3,2},
+        {"Noth the Plaguebringer",33.9,49.1,4},{"Heigan the Unclean",48.7,39.7,4},{"Loatheb",74.4,24.7,4},
+        {"Instructor Razuvious",41.8,40.0,3},{"Gothik the Harvester",66.1,51.9,3},{"The Four Horsemen",29.5,66.8,3},
+        {"Patchwerk",53.0,36.3,1},{"Grobbulus",60.3,46.2,1},{"Gluth",45.3,38.1,1},{"Thaddius",26.0,12.7,1},
+        {"Sapphiron",55.3,58.7,6},{"Kel'Thuzad",35.7,19.4,6},
     } },
     -- WoW Forever dungeons (map art in BossNav/Images where available, originally from Forever Atlas)
     { zones = {"The Hall of Thanes","Hall of Thanes"}, floors = {1},
@@ -229,6 +259,26 @@ local DUNGEONS = {
         {"Shade of the Archmage"},{"Lyn the Ignored"},{"Atrexis the Grave Knight"},{"Mana Wraith"},
     } },
     { zones = {"Half-Pint Tavern","The Half-Pint Tavern"}, floors = {1}, bosses = { {"Deathulus"},{"Crushfist Bloodbreaker"} } },
+    -- Forever dungeons with no map art or pins yet. Boss names come from the game client's
+    -- DungeonEncounter table (WoW Forever build 1.60.1.70959, via wago.tools), so they match
+    -- the names the game reports on a kill. /bnav markboss X Y places a pin.
+    { zones = {"Blackmaw Hold"}, floors = {1}, bosses = {
+        {"Withermaw"},{"Impaan the Imprisoner"},{"Bonesnout the Unbroken"},{"Blackmaw Behemoth"},
+        {"Elder Shaman Bloodmane"},{"Varrox Bleakhoof"},{"Unbound Spirit"},
+    } },
+    { zones = {"Alcaz Prison"}, floors = {1}, bosses = {
+        {"Overseer Wrex"},{"Blazeroar"},{"Tidemistress Ca'zass"},{"The Questioner"},{"Katerina the Cleaner"},
+    } },
+    { zones = {"Krol'dok Stronghold"}, floors = {1}, bosses = {
+        {"Nar'gurk"},{"Slavecrusher Grox"},{"Overseer Mugg"},{"Twilight Commander Zarmok"},{"Handler Ashka"},
+    } },
+    { zones = {"The Drowned City","Drowned City"}, floors = {1}, bosses = {
+        {"Zul'Alai"},{"Var'Taka"},{"Captain Dreadrise"},{"Deathless Guardians"},{"Min'loth the Serpent"},{"Primeval Elemental"},
+    } },
+    { zones = {"The Shaper's Terrace","Shaper's Terrace"}, floors = {1}, bosses = {
+        {"Titanosaur"},{"Ravasaur Hunters"},{"Thunderhoof"},{"Venomridge"},{"Nanaya"},{"Cinder"},
+        {"King Op"},{"Bolt"},{"Direhorn Matriarch"},{"Snowtalon"},{"Vitrix"},
+    } },
 }
 
 local ZONE_INDEX = {}
@@ -250,7 +300,7 @@ local BOSS_NPC = {
     ["Balnazzar"]={10812,10813}, ["Baron Geddon"]=12056, ["Baron Rivendare"]=10440,
     ["Baron Silverlaine"]=3887, ["Baroness Anastari"]=10436, ["Battleguard Sartura"]=15516,
     ["Black Guard Swordsmith"]=11121, ["Bloodlord Mandokir"]=11382, ["Bloodmage Thalnos"]=4543,
-    ["Broodlord Lashlayer"]=12017, ["Bug Trio"]={15543,15544,15511}, ["Buru the Gorger"]=15370,
+    ["Broodlord Lashlayer"]=12017, ["Silithid Royalty (Bug Trio)"]={15543,15544,15511}, ["Buru the Gorger"]=15370,
     ["C'Thun"]=15727, ["Cannon Master Willey"]=10997, ["Captain Greenskin"]=647,
     ["Captain Kromcrush"]=14325, ["Celebras the Cursed"]=12225, ["Charlga Razorflank"]=4421,
     ["Chief Ukorz Sandscalp"]=7267, ["Cho'Rush the Observer"]=14324, ["Chromaggus"]=14020,
@@ -304,6 +354,45 @@ local BOSS_NPC = {
     ["Viscidus"]=15299, ["Viscous Fallout"]=7079, ["War Master Voone"]=9237,
     ["Warchief Rend Blackhand"]=10429, ["Warder Stilgiss"]=9041, ["Weaver"]=5720,
     ["Witch Doctor Zum'rah"]=7271, ["Wolf Master Nandos"]=3927, ["Zevrim Thornhoof"]=11490,
+    -- Added 2026-11-18 from the cmangos classic database, names checked on Wowhead Classic.
+    ["Oggleflint"]=11517, ["Bazzalan"]=11519, ["Targorr the Dread"]=1696, ["Hamhock"]=1717,
+    ["Dextren Ward"]=1663, ["Bazil Thredd"]=1716, ["Lorgus Jett"]=12902, ["Roogug"]=6168,
+    ["Miner Johnson"]=3586, ["The Lost Dwarves"]={6906,6907,6908}, ["High Interrogator Gerstahn"]=9018,
+    ["Ring of Law"]={9027,9028,9029,9030,9031,9032}, ["Hurley Blackbreath"]=9537,
+    ["Ribbly Screwspigot"]=9543, ["Plugger Spazzring"]=9499,
+    ["The Seven"]={9034,9035,9036,9037,9038,9039,9040}, ["Princess Moira Bronzebeard"]=8929,
+    ["Kirtonos the Herald (Kirtonos)"]=10506, ["Ras Frostwhisper"]=10508,
+    ["Anub'Rekhan"]=15956, ["Grand Widow Faerlina"]=15953, ["Maexxna"]=15952,
+    ["Noth the Plaguebringer"]=15954, ["Heigan the Unclean"]=15936, ["Loatheb"]=16011,
+    ["Instructor Razuvious"]=16061, ["Gothik the Harvester"]=16060,
+    ["The Four Horsemen"]={16062,16063,16064,16065}, ["Patchwerk"]=16028, ["Grobbulus"]=15931,
+    ["Gluth"]=15932, ["Thaddius"]=15928, ["Sapphiron"]=15989, ["Kel'Thuzad"]=15990,
+    -- WoW Forever bosses: creature IDs from Wowhead's Forever database (search by name).
+    -- Their portraits are not published anywhere; BossNav_Portraits.lua learns each one
+    -- in game the first time you target the boss or see its nameplate.
+    -- Not found there: The Butcher (Ruins of Lordaeron), Bolt (Shaper's Terrace).
+    ["Faldrim Anvilmar"]=261306, ["Magmatus (Infurnus)"]=261316, ["Plunder"]=261311,
+    ["Durgen Dirgehammer"]=261319,
+    ["Witherfang"]=250483, ["The Abandoned"]=250631, ["Bjork"]=256097, ["Rath'mael"]=250657,
+    ["Viktor the Vile"]=256035,
+    ["Saltspine"]=260322, ["Shadetooth"]=260325, ["Highland Horror"]=260808, ["Relic Guardian"]=260326,
+    ["Arcane Anomaly"]=245999, ["Fel Ancient"]=246003, ["Mana Devourer"]=246008,
+    ["Mana Elemental"]=240352, ["Unstable Sentinel"]=246017, ["Shade of the Archmage"]=246020,
+    ["Lyn the Ignored"]=247032, ["Atrexis the Grave Knight"]=247126, ["Mana Wraith"]=246931,
+    ["Deathulus"]=251615, ["Crushfist Bloodbreaker"]=251618,
+    ["Withermaw"]=247195, ["Impaan the Imprisoner"]=247206, ["Bonesnout the Unbroken"]=247198,
+    ["Blackmaw Behemoth"]=247207, ["Elder Shaman Bloodmane"]=247209, ["Varrox Bleakhoof"]=247234,
+    ["Unbound Spirit"]=247231,
+    ["Overseer Wrex"]=255391, ["Blazeroar"]=255702, ["Tidemistress Ca'zass"]=255997,
+    ["The Questioner"]=256236, ["Katerina the Cleaner"]=257016,
+    ["Nar'gurk"]=258964, ["Slavecrusher Grox"]=258966, ["Overseer Mugg"]=258968,   -- "Overlord Mugg" on Wowhead
+    ["Twilight Commander Zarmok"]=258972, ["Handler Ashka"]=259281,                -- "War Handler Ashka" on Wowhead
+    ["Zul'Alai"]={258905,270882}, ["Var'Taka"]={258924,270883}, ["Captain Dreadrise"]={260042,270884},
+    ["Deathless Guardians"]={260213,268478}, ["Min'loth the Serpent"]={260243,260274,267852,269466,270886},
+    ["Primeval Elemental"]={263886,270887,273738},
+    ["Titanosaur"]=253201, ["Ravasaur Hunters"]={253214,262688}, ["Thunderhoof"]=261812,
+    ["Venomridge"]=261813, ["Nanaya"]=261809, ["Cinder"]=261974, ["King Op"]=261993,
+    ["Direhorn Matriarch"]=262127, ["Snowtalon"]=262297, ["Vitrix"]=272561,
 }
 
 -- shared with the other BossNav files

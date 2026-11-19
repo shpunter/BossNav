@@ -241,19 +241,19 @@ empty:SetWidth(CANVAS_W - 60)
 empty:SetJustifyH("CENTER")
 
 -- Colours that read on the quest window's parchment.
-local LABEL = "|cff6b5a40%s|r  "
-local INK = { A = "1a3f99", H = "991a1a", B = "6b4a00" }
+local LABEL = "|cff3d2b12%s|r  "
+local INK = { A = "0a2a75", H = "7a0d0d", B = "4a3300" }
 local function DarkLevelColor(q, myLevel)
     local r, g, b = QuestLevelRGB(q, myLevel)
     if not r then return "|cff000000" end
-    return string.format("|cff%02x%02x%02x", r * 140, g * 140, b * 140)
+    return string.format("|cff%02x%02x%02x", r * 85, g * 85, b * 85)
 end
 
 -- The selected quest, drawn like the game's quest window
 -- (BossNav_QuestInfo.lua) with where to take it under the title.
 local function ShowQuest(q, myLevel)
     local lvl = DarkLevelColor(q, myLevel) .. q.level .. "|r"
-        .. ((q.qlevel and q.qlevel ~= q.level) and ("  |cff6b5a40(quest level " .. q.qlevel .. ")|r") or "")
+        .. ((q.qlevel and q.qlevel ~= q.level) and ("  |cff3d2b12(quest level " .. q.qlevel .. ")|r") or "")
     local lines = {}
     lines[#lines + 1] = LABEL:format("Level") .. lvl .. "   " .. LABEL:format("For")
         .. FactionIcons(q, 14) .. " |cff" .. INK[q.faction] .. FACTION_WORD[q.faction] .. "|r"
@@ -265,7 +265,7 @@ local function ShowQuest(q, myLevel)
         lines[#lines + 1] = LABEL:format("Status") .. "In your quest log"
     end
     local who, where = StartText(q)
-    lines[#lines + 1] = LABEL:format("Take it from") .. who .. "  |cff0d5c0d" .. where .. "|r"
+    lines[#lines + 1] = LABEL:format("Take it from") .. who .. "  |cff033a03" .. where .. "|r"
     local back = TurninText(q)
     if back then lines[#lines + 1] = LABEL:format("Hand it in to") .. back end
     if q.pre then lines[#lines + 1] = LABEL:format("Do first") .. q.pre end

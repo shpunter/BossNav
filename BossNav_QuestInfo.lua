@@ -23,7 +23,7 @@ local SCROLL_STEP = 60
 -- quest window colours: black headings, dark brown text on parchment
 local HEAD_R, HEAD_G, HEAD_B = 0, 0, 0
 local TEXT_R, TEXT_G, TEXT_B = 0.18, 0.12, 0.06
-local QUALITY_HEX = { [0] = "4a4a4a", "000000", "0d6b0d", "0a3d8f", "6a1a9a", "a85400" }
+local QUALITY_HEX = { [0] = "4a4a4a", "000000", "033a03", "0a3d8f", "6a1a9a", "a85400" }
 
 --------------------------------------------------------------------------
 -- Frame: parchment with a scrolling page
@@ -165,15 +165,18 @@ local function SlotAt(i)
     s.plate:SetSize(SLOT_W - 30, 64)
     s.plate:SetTexture("Interface\\QuestFrame\\UI-QuestItemNameFrame")
     s.plateFill = s:CreateTexture(nil, "BACKGROUND", nil, -1)
-    s.plateFill:SetPoint("TOPLEFT", s.icon, "TOPRIGHT", 0, -2)
-    s.plateFill:SetPoint("BOTTOMRIGHT", s, "BOTTOMRIGHT", 0, 2)
+    -- the frame art only covers the middle of the texture: ~40 in from
+    -- the icon, ~30 short of the slot's right edge
+    s.plateFill:SetPoint("TOPLEFT", s.icon, "TOPRIGHT", 42, -2)
+    s.plateFill:SetPoint("BOTTOMRIGHT", s, "BOTTOMRIGHT", -32, 2)
     s.plateFill:SetColorTexture(0.62, 0.52, 0.36, 0.35)
     s.count = s:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
     s.count:SetPoint("BOTTOMRIGHT", s.icon, "BOTTOMRIGHT", -2, 2)
     s.name = s:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     SetFontObjectSafe(s.name, "QuestFontNormalSmall")
-    s.name:SetPoint("LEFT", s.icon, "RIGHT", 8, 0)
-    s.name:SetWidth(SLOT_W - 37 - 14)
+    s.name:SetPoint("LEFT", s.icon, "RIGHT", 50, 0)
+    s.name:SetWidth(SLOT_W - 37 - 50 - 40)
+    s.name:SetMaxLines(2)
     s.name:SetJustifyH("LEFT")
     s.name:SetShadowColor(0, 0, 0, 0)
     s:SetScript("OnEnter", function(self)
@@ -369,7 +372,7 @@ local function ShowQuestInfo(q, titleText, infoLines)
         Put("small", "No item or money reward.", 16)
     end
     if not live and q.id and QUEST_TEXT[q.id] then
-        Put("small", "|cff6b5a40Text and rewards from the classic quest database; take the quest to see WoW Forever's own.|r", 16)
+        Put("small", "|cff3d2b12Text and rewards from the classic quest database; take the quest to see WoW Forever's own.|r", 16)
     end
 
     HideUnused()

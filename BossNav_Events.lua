@@ -3,6 +3,9 @@ local ADDON, ns = ...
 -- from the files loaded before this one
 local ApplySavedBossPins     = ns.ApplySavedBossPins
 local ApplySavedExtraBosses  = ns.ApplySavedExtraBosses
+local ApplySavedPortraits    = ns.ApplySavedPortraits
+local LearnEncounterPortraits = ns.LearnEncounterPortraits
+local LearnPortrait          = ns.LearnPortrait
 local CheckTargetDead        = ns.CheckTargetDead
 local ClearLoot              = ns.ClearLoot
 local ClearProfs             = ns.ClearProfs
@@ -81,6 +84,7 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4, arg5)
             DB()
             ApplySavedExtraBosses()
             ApplySavedBossPins()
+            ApplySavedPortraits()
             RestoreTravelTarget()
             Print("loaded. /bnav opens the map, /bnav help lists commands.")
         end
@@ -116,14 +120,20 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4, arg5)
         if not IsSecret(arg2) and type(arg2) == "string" then OnBossKilled(arg2) end
     elseif event == "PLAYER_TARGET_CHANGED" or (event == "UNIT_HEALTH" and arg1 == "target") then
         pcall(CheckTargetDead)
-        if event == "PLAYER_TARGET_CHANGED" then pcall(TryMarkUnit, "target") end
+        if event == "PLAYER_TARGET_CHANGED" then
+            pcall(TryMarkUnit, "target")
+            pcall(LearnPortrait, "target")
+        end
     elseif event == "NAME_PLATE_UNIT_ADDED" then
         pcall(TryMarkUnit, arg1)
+        pcall(LearnPortrait, arg1)
     elseif event == "ENCOUNTER_START" then
         -- encounterID, encounterName, difficultyID, groupSize
         pcall(OnEncounterStart, arg2)
+        pcall(LearnEncounterPortraits)
     elseif event == "INSTANCE_ENCOUNTER_ENGAGE_UNIT" then
         pcall(OnEncounterStart)
+        pcall(LearnEncounterPortraits)
     elseif event == "CHAT_MSG_LOOT" then
         pcall(OnLootMessage, arg1)
         pcall(OnProfLootMessage, arg1)

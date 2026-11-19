@@ -25,6 +25,7 @@ BossNav_TravelPanel.lua
 BossNav_WorldMap.lua
 BossNav_Kills.lua
 BossNav_Marker.lua
+BossNav_Portraits.lua
 BossNav_Roster.lua
 BossNav_Role.lua
 BossNav_ThreatPlates.lua

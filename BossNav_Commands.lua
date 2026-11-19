@@ -29,6 +29,7 @@ local SelectedBoss           = ns.SelectedBoss
 local SelectedDungeon        = ns.SelectedDungeon
 local SetTab                 = ns.SetTab
 local SkullCommand           = ns.SkullCommand
+local PortraitCommand        = ns.PortraitCommand
 local TRAVEL                 = ns.TRAVEL
 local ThreatCommand          = ns.ThreatCommand
 local TouchProgress          = ns.TouchProgress
@@ -301,6 +302,8 @@ local function ShowHelp()
     Print("  /bnav skull           toggle the auto skull mark on bosses")
     Print("  /bnav skull now       put a skull on a boss in view, no target needed (also a keybind)")
     Print("  /bnav skull test      explain why your target was or was not marked")
+    Print("  /bnav portrait        learn the portrait of the boss you target (also happens by itself)")
+    Print("  /bnav portrait list   which boss portraits were learned in game; 'clear' forgets them")
     Print("  /bnav threat          toggle the threat window: every mob in combat, who it attacks, your threat % (also a keybind)")
     Print("  /bnav threat test     show the threat window with made-up mobs for 30 seconds; drag it with the mouse to move it")
     Print("  /bnav threat reset    put the threat window back at its starting spot")
@@ -451,6 +454,8 @@ SlashCmdList["BOSSNAV"] = function(msg)
         BossNav_ToggleHUD()
     elseif cmd == "skull" then
         SkullCommand(rest)
+    elseif cmd == "portrait" or cmd == "portraits" or cmd == "icon" or cmd == "icons" then
+        PortraitCommand(rest)
     elseif cmd == "minimap" then
         DB().minimap = not DB().minimap
         Print("Minimap boss icons " .. (DB().minimap and "on" or "off") .. ".")

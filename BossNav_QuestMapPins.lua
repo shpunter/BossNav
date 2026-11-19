@@ -1,7 +1,8 @@
 -- Quest givers on the game's own world map: where to take the quests of the
 -- dungeon the Quests tab is about (the one you are in, else the one picked
 -- with /bnav go). Only that dungeon's quests, only your faction's and class's
--- (unless /bnav quest all). Givers standing on the same spot share one pin.
+-- (unless /bnav quest all), and only ones you have not done and do not have
+-- in your log yet. Givers standing on the same spot share one pin.
 -- A giver outside the part of the map you are looking at (zoomed into a
 -- zone, or into part of a map) stays visible: its pin sits on the edge of
 -- the view, faded, with an arrow pointing toward the real spot.
@@ -106,7 +107,8 @@ local function GiverSpots()
     local list = VisibleQuests()
     local spots, byKey = {}, {}
     for i, q in ipairs(list) do
-        if q.zone and q.x and q.y and not q.inside then
+        -- only quests still to pick up: not done, not already in your log
+        if q.zone and q.x and q.y and not q.inside and not QuestStatus(q) then
             local key = string.format("%s|%.0f|%.0f", q.zone, q.x, q.y)
             local s = byKey[key]
             if not s then
