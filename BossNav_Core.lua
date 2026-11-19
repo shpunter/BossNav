@@ -65,7 +65,7 @@
 --   BossNav_Entrances.lua  dungeon entrances in the open world, travel list by level
 --   BossNav_Routes.lua     zone-to-zone routing: which exit or flight master leads toward a dungeon
 --   BossNav_Window.lua     map window frames, sidebar rows, pins
---   BossNav_Tabs.lua       Bosses / Loot / Profs tab buttons and tab switching
+--   BossNav_Tabs.lua       two rows of tab buttons (Dungeons > Travel / Bosses / Quests, Loot, Profs) and tab switching
 --   BossNav_MapArt.lua     map art renderers
 --   BossNav_Waypoints.lua  boss selection, floors, waypoints
 --   BossNav_Render.lua     drawing the whole map window
@@ -74,7 +74,8 @@
 --   BossNav_Live.lua       periodic live update
 --   BossNav_Travel.lua     travel mode: arrow, distance and minimap pin to a dungeon entrance
 --   BossNav_RouteToggle.lua the "By foot" / "Flying" boxes under the map and /bnav route
---   BossNav_TravelPanel.lua the window outside a dungeon: zone map, entrance pin, dungeon selector
+--   BossNav_TravelPanel.lua the Travel tab outside a dungeon: zone map, entrance pin, dungeon selector
+--   BossNav_BossPreview.lua the Bosses tab outside a dungeon: the picked dungeon's map and bosses
 --   BossNav_WorldMap.lua   dungeon entrance marks on the game's world map
 --   BossNav_Kills.lua      kill tracking and extra bosses
 --   BossNav_Marker.lua     skull raid mark on a boss as soon as it is seen
@@ -107,7 +108,7 @@ BINDING_NAME_BOSSNAV_NEXT_STEP = "Next Map Floor"
 BINDING_NAME_BOSSNAV_TOGGLE_HUD = "Toggle Direction HUD"
 BINDING_NAME_BOSSNAV_MARK_WAYPOINT = "Mark Waypoint Here"
 BINDING_NAME_BOSSNAV_MARK_BOSS = "Mark Nearby Boss (skull)"
-BINDING_NAME_BOSSNAV_TOGGLE_TAB = "Switch Bosses / Quests / Loot / Profs Tab"
+BINDING_NAME_BOSSNAV_TOGGLE_TAB = "Switch Travel / Bosses / Quests / Loot / Profs Tab"
 BINDING_NAME_BOSSNAV_SWITCH_NAV = "Switch Navigation: Quest Giver / Dungeon"
 BINDING_NAME_BOSSNAV_QUEST_DOWN = "Scroll Quest Text Down"
 BINDING_NAME_BOSSNAV_QUEST_UP = "Scroll Quest Text Up"
@@ -194,7 +195,7 @@ local state = {
     inInstance = false,
     testMode = false,
     travelIdx = nil,    -- outside instances: index into the travel list of the dungeon to walk to
-    tab = "boss",       -- sidebar tab: "boss", "quest", "loot" or "prof"
+    tab = "travel",     -- sidebar tab: "travel", "boss", "quest", "loot" or "prof" ("travel" shows "boss" inside)
     lootIdx = 1,        -- selected item on the Loot tab, 1 = newest
     profIdx = 1,        -- selected member on the Profs tab
     questIdx = 1,       -- selected quest on the Quests tab

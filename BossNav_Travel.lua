@@ -393,7 +393,7 @@ local function UpdateTravelLive(skipRefresh)
     if not entry then
         playerPin:Hide()
         HideMinimapPins()
-        if mapFrame:IsShown() and state.tab == "boss" then
+        if mapFrame:IsShown() and state.tab == "travel" then
             navText:SetText("Pick a dungeon: |cffffd100/bnav go|r, or the Select Next Boss key.")
         end
         return
@@ -403,7 +403,7 @@ local function UpdateTravelLive(skipRefresh)
     local facing = PlayerFacing()
 
     -- Your marker on the drawn zone map
-    if mapFrame:IsShown() and state.tab == "boss" then
+    if mapFrame:IsShown() and state.tab == "travel" then
         if px and ns.renderedMapID == mapID then
             Place(playerPin, px, py)
             if facing and playerPin.arrow.SetRotation then playerPin.arrow:SetRotation(facing) end

@@ -53,6 +53,8 @@ function BossNav_ToggleMap()
 end
 
 function BossNav_SelectBoss(idx)
+    -- outside: the Bosses tab lists the picked dungeon's bosses
+    if TravelMode() then ns.SelectPreviewBoss(idx) return end
     local cfg = state.cfg
     if not cfg or not cfg.bosses[idx] then return end
     state.bossIdx = idx
@@ -65,11 +67,16 @@ function BossNav_SelectBoss(idx)
     pcall(BossNav_UpdateLive, true)
 end
 
--- The next / previous keys walk the dungeon selector while you are outside.
--- On the Quests tab they walk the quest list instead.
+-- The next / previous keys walk the dungeon selector while you are outside,
+-- or that dungeon's boss list on the Bosses tab. On the Quests tab they walk
+-- the quest list instead.
 function BossNav_CycleBoss()
     if state.tab == "quest" and mapFrame:IsShown() then ns.CycleQuest(1) return end
-    if TravelMode() then BossNav_CycleDungeon(1) return end
+    if TravelMode() then
+        if state.tab == "boss" and mapFrame:IsShown() and ns.CyclePreviewBoss(1) then return end
+        BossNav_CycleDungeon(1)
+        return
+    end
     local cfg = state.cfg
     if not cfg then Print("No boss data for this zone.") return end
     BossNav_SelectBoss((state.bossIdx % #cfg.bosses) + 1)
@@ -78,7 +85,11 @@ BossNav_NextStep = BossNav_CycleBoss
 
 function BossNav_PrevBoss()
     if state.tab == "quest" and mapFrame:IsShown() then ns.CycleQuest(-1) return end
-    if TravelMode() then BossNav_CycleDungeon(-1) return end
+    if TravelMode() then
+        if state.tab == "boss" and mapFrame:IsShown() and ns.CyclePreviewBoss(-1) then return end
+        BossNav_CycleDungeon(-1)
+        return
+    end
     local cfg = state.cfg
     if not cfg then Print("No boss data for this zone.") return end
     BossNav_SelectBoss(((state.bossIdx - 2) % #cfg.bosses) + 1)
@@ -322,7 +333,7 @@ local function ShowHelp()
     Print("  /bnav nav             switch the arrow between the quest giver and the dungeon (also a keybind)")
     Print("  /bnav nav quest|dungeon  follow that one; /bnav nav off forgets the quest giver target")
     Print("  /bnav quest map       toggle the quest givers of the selected dungeon on the game's world map")
-    Print("  /bnav tab [boss|quest|loot|prof|n] switch the window tab; a number n picks item n on the Loot or Profs tab")
+    Print("  /bnav tab [travel|boss|quest|loot|prof|n] switch the window tab (Travel, Bosses and Quests sit under Dungeons; Travel only outside); a number n picks item n on the Loot or Profs tab")
     Print("  /bnav prof [n]        Profs tab: how often each member mined, skinned, gathered, fished or crafted; n lists member n's spells")
     Print("  /bnav prof post       post the profession counts to party/raid chat (/bnav prof list prints them to you)")
     Print("  /bnav prof clear      forget the profession counts (also done when you leave the group)")
@@ -494,6 +505,8 @@ SlashCmdList["BOSSNAV"] = function(msg)
             SetTab("prof")
         elseif which == "quest" or which == "quests" then
             SetTab("quest")
+        elseif which == "travel" or which == "dungeon" or which == "dungeons" then
+            SetTab("travel")
         elseif which == "boss" or which == "bosses" then
             SetTab("boss")
         else

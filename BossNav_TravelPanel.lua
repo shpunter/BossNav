@@ -10,6 +10,7 @@ local GetWayPin              = ns.GetWayPin
 local HasEntrance            = ns.HasEntrance
 local HideRouteToggle        = ns.HideRouteToggle
 local LevelColor             = ns.LevelColor
+local LIST_TOP               = ns.LIST_TOP
 local MAX_ROWS               = ns.MAX_ROWS
 local MapName                = ns.MapName
 local MapPosFromWorld        = ns.MapPosFromWorld
@@ -74,14 +75,14 @@ end
 
 sidebar:EnableMouseWheel(true)
 sidebar:SetScript("OnMouseWheel", function(_, delta)
-    if TravelMode() and state.tab == "boss" then TravelScrollBy(-delta * 3) end
+    if TravelMode() and state.tab == "travel" then TravelScrollBy(-delta * 3) end
 end)
 
 -- Scrollbar on the right edge of the sidebar: a track and a thumb
 local scrollbar = CreateFrame("Frame", nil, sidebar)
 scrollbar:SetWidth(5)
-scrollbar:SetPoint("TOPRIGHT", sidebar, "TOPRIGHT", -1, -24)
-scrollbar:SetPoint("BOTTOMRIGHT", sidebar, "TOPRIGHT", -1, -24 - MAX_ROWS * ROW_H)
+scrollbar:SetPoint("TOPRIGHT", sidebar, "TOPRIGHT", -1, LIST_TOP)
+scrollbar:SetPoint("BOTTOMRIGHT", sidebar, "TOPRIGHT", -1, LIST_TOP - MAX_ROWS * ROW_H)
 scrollbar.track = scrollbar:CreateTexture(nil, "BACKGROUND")
 scrollbar.track:SetAllPoints()
 scrollbar.track:SetColorTexture(0.15, 0.15, 0.18, 1)
@@ -195,7 +196,7 @@ end
 -- Draws the whole window in travel mode. Returns false inside a dungeon or
 -- in preview mode so the boss view is drawn instead.
 local function RenderTravelTab()
-    if not TravelMode() then return false end
+    if not TravelMode() or state.tab ~= "travel" then return false end
 
     local mapID = PlayerMapID()
     state.mapID = mapID

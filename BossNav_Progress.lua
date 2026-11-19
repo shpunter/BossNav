@@ -93,5 +93,6 @@ end
 -- shared with the other BossNav files
 ns.ClearProgress = ClearProgress
 ns.OnGroupRosterChanged = OnGroupRosterChanged
+ns.PROGRESS_MAX_AGE = PROGRESS_MAX_AGE
 ns.LoadProgress = LoadProgress
 ns.TouchProgress = TouchProgress

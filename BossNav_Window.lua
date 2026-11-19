@@ -16,7 +16,7 @@ ns.renderedMapID = nil   -- uiMapID when native art is shown, else nil
 -- Map window
 --------------------------------------------------------------------------
 local mapFrame = CreateFrame("Frame", "BossNavMapFrame", UIParent)
-mapFrame:SetSize(12 + CANVAS_W + 10 + SIDEBAR_W + 12, CANVAS_H + 206)
+mapFrame:SetSize(12 + CANVAS_W + 10 + SIDEBAR_W + 12, CANVAS_H + 228)
 mapFrame:SetPoint("CENTER")
 mapFrame:SetFrameStrata("HIGH")
 mapFrame:SetClampedToScreen(true)
@@ -67,12 +67,14 @@ helpText:SetText(HELP_BOSS)
 
 -- Sidebar boss list
 local sidebar = CreateFrame("Frame", nil, mapFrame)
-sidebar:SetSize(SIDEBAR_W, CANVAS_H + 144)   -- runs down to the window bottom so 20 tall rows fit
+sidebar:SetSize(SIDEBAR_W, CANVAS_H + 166)   -- runs down to the window bottom so 20 tall rows fit under the two tab rows
 sidebar:SetPoint("TOPLEFT", canvas, "TOPRIGHT", 10, 0)
 local sidebarBg = sidebar:CreateTexture(nil, "BACKGROUND")
 sidebarBg:SetAllPoints()
 sidebarBg:SetColorTexture(0.06, 0.06, 0.08, 1)
--- The "Bosses" / "Loot" / "Profs" tab buttons at the top of the sidebar live in BossNav_Tabs.lua.
+-- The two rows of tab buttons at the top of the sidebar live in BossNav_Tabs.lua;
+-- every sidebar list starts below them, at LIST_TOP.
+local LIST_TOP = -46
 
 -- Clip a square portrait texture to a circle (modern clients only; older
 -- ones have no mask textures and simply keep the square portrait).
@@ -105,7 +107,7 @@ local function GetRow(i)
     if not bossRows[i] then
         local b = CreateFrame("Button", nil, sidebar)
         b:SetSize(SIDEBAR_W - 8, ROW_H)
-        b:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 4, -24 - (i - 1) * ROW_H)
+        b:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 4, LIST_TOP - (i - 1) * ROW_H)
         b.hl = b:CreateTexture(nil, "HIGHLIGHT")
         b.hl:SetAllPoints()
         b.hl:SetColorTexture(1, 0.82, 0, 0.15)
@@ -300,6 +302,7 @@ ns.GetWayPin = GetWayPin
 ns.HELP_BOSS = HELP_BOSS
 ns.HideTilesFrom = HideTilesFrom
 ns.MARK_W = MARK_W
+ns.LIST_TOP = LIST_TOP
 ns.MAX_ROWS = MAX_ROWS
 ns.NAME_FONT_SIZE = NAME_FONT_SIZE
 ns.ROW_H = ROW_H

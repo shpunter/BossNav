@@ -34,12 +34,106 @@ local statusText             = ns.statusText
 local wayPins                = ns.wayPins
 
 --------------------------------------------------------------------------
--- Rendering the whole window
+-- Pieces of the boss view, shared with the outside boss list
+-- (BossNav_BossPreview.lua). `killed` is a [bossName] = true table.
 --------------------------------------------------------------------------
 local function RefreshIfShown()
     if mapFrame:IsShown() then BossNav_RefreshMap() end
 end
 
+-- Map art of one floor. liveMap is the uiMapID you stand on (inside only).
+local function DrawBossArt(cfg, floor, liveMap)
+    local rendered = false
+    if cfg.bundled then
+        rendered = RenderBundled(cfg)
+    end
+    if not rendered and liveMap and (not state.autoFloor or state.autoFloor == floor) then
+        rendered = RenderNative(liveMap)
+    end
+    if not rendered then
+        rendered = RenderLegacy(cfg, floor)
+    end
+    if not rendered then
+        RenderBlank()
+        noArtText:SetText("This client exposes no map art for " .. cfg.name .. ".\nBoss pins and your waypoints are still shown.")
+        noArtText:Show()
+    end
+end
+
+local function DrawBossPins(cfg, floor, bossIdx, killed)
+    local shown = 0
+    for i, b in ipairs(cfg.bosses) do
+        if b[2] and b[3] and (b[4] or cfg.floors[1]) == floor then
+            shown = shown + 1
+            local p = GetBossPin(shown)
+            p.bossIdx = i
+            Place(p, b[2] / 100, b[3] / 100)
+            local dead = killed[b[1]]
+            SetBossIcon(p.icon, b[1], dead)
+            if i == bossIdx then
+                p:SetSize(28, 28); p.ring:Show()
+                p.label:SetText("|cffffd100" .. b[1] .. "|r")
+                p.label:Show()
+            else
+                p:SetSize(22, 22); p.ring:Hide()
+                p.label:Hide()
+            end
+            p:Show()
+        end
+    end
+end
+
+-- The trail to a boss. visited is a [WaypointKey] = true table.
+local function DrawWaypoints(cfg, boss, floor, visited)
+    local wps = Waypoints(cfg, boss)
+    if not wps then return end
+    for i, wp in ipairs(wps) do
+        if (not wp.floor) or wp.floor == floor then
+            local p = GetWayPin(i)
+            Place(p, wp.x / 100, wp.y / 100)
+            if visited[WaypointKey(cfg, boss, i)] then
+                p.dot:SetTexture("Interface\\COMMON\\Indicator-Gray")
+                p.num:SetText("|cff888888" .. i .. "|r")
+            else
+                p.dot:SetTexture("Interface\\COMMON\\Indicator-Yellow")
+                p.num:SetText("|cffffd100" .. i .. ((wp.note and wp.note ~= "") and (" " .. wp.note) or "") .. "|r")
+            end
+            p:Show()
+        end
+    end
+end
+
+local function DrawBossRows(cfg, bossIdx, killed)
+    for i, b in ipairs(cfg.bosses) do
+        if i > MAX_ROWS then break end
+        local r = GetRow(i)
+        local dead = killed[b[1]]
+        local color = dead and "|cff777777" or ((i == bossIdx) and "|cffffd100" or "|cffffffff")
+        local tag = dead and " |cff777777[DEAD]|r" or ""
+        if not b[2] then tag = tag .. " |cff666666(no pin)|r" end
+        r.bossIdx = i
+        r.travelIdx = nil
+        r:SetMapButton(false)
+        r.mark:SetText((i == bossIdx) and ns.SELECTED_MARK or "")
+        r.mark:Show()
+        SetBossIcon(r.icon, b[1], dead)
+        r.text:SetText(color .. b[1] .. "|r" .. tag)
+        r:Show()
+    end
+    if #cfg.bosses > MAX_ROWS then
+        local last = GetRow(MAX_ROWS)
+        last.bossIdx = nil
+        last.travelIdx = nil
+        last:SetMapButton(false)
+        last.icon:Hide()
+        last.mark:Hide()
+        last.text:SetText("|cff888888... and " .. (#cfg.bosses - MAX_ROWS + 1) .. " more|r")
+    end
+end
+
+--------------------------------------------------------------------------
+-- Rendering the whole window
+--------------------------------------------------------------------------
 function BossNav_RefreshMap()
     for _, p in ipairs(bossPins) do p:Hide() end
     for _, p in ipairs(wayPins) do p:Hide() end
@@ -57,9 +151,11 @@ function BossNav_RefreshMap()
     local drewQuest = ns.RenderQuestTab and ns.RenderQuestTab()
     if drewLoot or drewProf or drewQuest then return end
 
-    -- Outside every dungeon: your zone map and the dungeon selector instead.
+    -- Outside every dungeon: the Travel tab (your zone map and the dungeon
+    -- selector) or the Bosses tab (the picked dungeon's bosses).
     helpText:SetText(HELP_BOSS)
     if ns.RenderTravelTab and ns.RenderTravelTab() then return end
+    if ns.RenderBossPreview and ns.RenderBossPreview() then return end
 
     local cfg = state.cfg
     if not cfg then
@@ -82,22 +178,7 @@ function BossNav_RefreshMap()
     -- Floor + art
     local floor = CurrentFloor(cfg)
     state.shownFloor = floor
-    local rendered = false
-    local liveMap = state.inInstance and state.mapID or nil
-    if cfg.bundled then
-        rendered = RenderBundled(cfg)
-    end
-    if not rendered and liveMap and (not state.autoFloor or state.autoFloor == floor) then
-        rendered = RenderNative(liveMap)
-    end
-    if not rendered then
-        rendered = RenderLegacy(cfg, floor)
-    end
-    if not rendered then
-        RenderBlank()
-        noArtText:SetText("This client exposes no map art for " .. cfg.name .. ".\nBoss pins and your waypoints are still shown.")
-        noArtText:Show()
-    end
+    DrawBossArt(cfg, floor, state.inInstance and state.mapID or nil)
 
     -- Header
     local boss = SelectedBoss()
@@ -111,78 +192,17 @@ function BossNav_RefreshMap()
         statusText:SetText("")
     end
 
-    -- Boss pins for this floor
-    local shown = 0
-    for i, b in ipairs(cfg.bosses) do
-        if b[2] and b[3] and (b[4] or cfg.floors[1]) == floor then
-            shown = shown + 1
-            local p = GetBossPin(shown)
-            p.bossIdx = i
-            Place(p, b[2] / 100, b[3] / 100)
-            local dead = state.killed[b[1]]
-            local selected = (i == state.bossIdx)
-            SetBossIcon(p.icon, b[1], dead)
-            if selected then
-                p:SetSize(28, 28); p.ring:Show()
-                p.label:SetText("|cffffd100" .. b[1] .. "|r")
-                p.label:Show()
-            else
-                p:SetSize(22, 22); p.ring:Hide()
-                p.label:Hide()
-            end
-            p:Show()
-        end
-    end
-
-    -- Waypoints of the selected boss
-    local wps = Waypoints(cfg, boss)
-    if wps then
-        for i, wp in ipairs(wps) do
-            if (not wp.floor) or wp.floor == floor then
-                local p = GetWayPin(i)
-                Place(p, wp.x / 100, wp.y / 100)
-                if state.visited[WaypointKey(cfg, boss, i)] then
-                    p.dot:SetTexture("Interface\\COMMON\\Indicator-Gray")
-                    p.num:SetText("|cff888888" .. i .. "|r")
-                else
-                    p.dot:SetTexture("Interface\\COMMON\\Indicator-Yellow")
-                    p.num:SetText("|cffffd100" .. i .. ((wp.note and wp.note ~= "") and (" " .. wp.note) or "") .. "|r")
-                end
-                p:Show()
-            end
-        end
-    end
-
-    -- Sidebar
-    for i, b in ipairs(cfg.bosses) do
-        if i > MAX_ROWS then break end
-        local r = GetRow(i)
-        local dead = state.killed[b[1]]
-        local color = dead and "|cff777777" or ((i == state.bossIdx) and "|cffffd100" or "|cffffffff")
-        local tag = dead and " |cff777777[DEAD]|r" or ""
-        if not b[2] then tag = tag .. " |cff666666(no pin)|r" end
-        r.bossIdx = i
-        r.travelIdx = nil
-        r:SetMapButton(false)
-        r.mark:SetText((i == state.bossIdx) and ns.SELECTED_MARK or "")
-        r.mark:Show()
-        SetBossIcon(r.icon, b[1], dead)
-        r.text:SetText(color .. b[1] .. "|r" .. tag)
-        r:Show()
-    end
-    if #cfg.bosses > MAX_ROWS then
-        local last = GetRow(MAX_ROWS)
-        last.bossIdx = nil
-        last.travelIdx = nil
-        last:SetMapButton(false)
-        last.icon:Hide()
-        last.mark:Hide()
-        last.text:SetText("|cff888888... and " .. (#cfg.bosses - MAX_ROWS + 1) .. " more|r")
-    end
+    DrawBossPins(cfg, floor, state.bossIdx, state.killed)
+    DrawWaypoints(cfg, boss, floor, state.visited)
+    DrawBossRows(cfg, state.bossIdx, state.killed)
 
     navText:SetText("")
     BossNav_UpdateLive(true)
 end
 
 -- shared with the other BossNav files
+ns.DrawBossArt = DrawBossArt
+ns.DrawBossPins = DrawBossPins
+ns.DrawBossRows = DrawBossRows
+ns.DrawWaypoints = DrawWaypoints
 ns.RefreshIfShown = RefreshIfShown

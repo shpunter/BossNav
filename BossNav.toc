@@ -22,6 +22,7 @@ BossNav_Live.lua
 BossNav_Travel.lua
 BossNav_RouteToggle.lua
 BossNav_TravelPanel.lua
+BossNav_BossPreview.lua
 BossNav_WorldMap.lua
 BossNav_Kills.lua
 BossNav_Marker.lua
