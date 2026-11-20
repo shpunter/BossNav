@@ -4,15 +4,14 @@
 -- current run there, if it is still fresh.
 local ADDON, ns = ...
 -- from the files loaded before this one
-local DB                     = ns.DB
 local DrawBossArt            = ns.DrawBossArt
 local DrawBossPins           = ns.DrawBossPins
 local DrawBossRows           = ns.DrawBossRows
 local DrawWaypoints          = ns.DrawWaypoints
 local FloorName              = ns.FloorName
-local PROGRESS_MAX_AGE       = ns.PROGRESS_MAX_AGE
 local RefreshIfShown         = ns.RefreshIfShown
 local RenderBlank            = ns.RenderBlank
+local SavedKilled            = ns.SavedKilled
 local SelectedDungeon        = ns.SelectedDungeon
 local TravelMode             = ns.TravelMode
 local headerText             = ns.headerText
@@ -36,15 +35,6 @@ local function PreviewCfg()
         previewIdx = 1
     end
     return cfg
-end
-
--- Kills of your current run in that dungeon (read only; nothing is created).
-local function SavedKilled(cfg)
-    local rec = DB().progress[cfg.key]
-    if rec and type(rec.time) == "number" and time() - rec.time <= PROGRESS_MAX_AGE and rec.killed then
-        return rec.killed
-    end
-    return {}
 end
 
 local function SelectPreviewBoss(idx)

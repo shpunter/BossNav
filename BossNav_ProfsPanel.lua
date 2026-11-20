@@ -12,7 +12,7 @@ local ProfCommand            = ns.ProfCommand
 local ProfList               = ns.ProfList
 local ProfMembers            = ns.ProfMembers
 local ProfTotalActions       = ns.ProfTotalActions
-local LIST_TOP               = ns.LIST_TOP
+local listAnchor             = ns.listAnchor
 local SIDEBAR_W              = ns.SIDEBAR_W
 local canvas                 = ns.canvas
 local headerText             = ns.headerText
@@ -37,7 +37,7 @@ local function GetMemberRow(i)
     if not rows[i] then
         local b = CreateFrame("Button", nil, sidebar)
         b:SetSize(SIDEBAR_W - 8, ROW_H)
-        b:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 4, LIST_TOP - (i - 1) * ROW_H)
+        b:SetPoint("TOPLEFT", listAnchor, "TOPLEFT", 4, -(i - 1) * ROW_H)
         b.hl = b:CreateTexture(nil, "HIGHLIGHT")
         b.hl:SetAllPoints()
         b.hl:SetColorTexture(1, 0.82, 0, 0.15)

@@ -167,8 +167,14 @@ function BossNav_NextFloor()
     BossNav_RefreshMap()
 end
 
+-- Switch Section key (Dungeons / Loot / Profs) and Switch View key
+-- (Travel / Bosses / Quests), see BossNav_Tabs.lua
 function BossNav_ToggleTab()
     NextTab()
+end
+
+function BossNav_NextView()
+    ns.NextView()
 end
 
 function BossNav_ToggleHUD()
@@ -333,7 +339,9 @@ local function ShowHelp()
     Print("  /bnav nav             switch the arrow between the quest giver and the dungeon (also a keybind)")
     Print("  /bnav nav quest|dungeon  follow that one; /bnav nav off forgets the quest giver target")
     Print("  /bnav quest map       toggle the quest givers of the selected dungeon on the game's world map")
-    Print("  /bnav tab [travel|boss|quest|loot|prof|n] switch the window tab (Travel, Bosses and Quests sit under Dungeons; Travel only outside); a number n picks item n on the Loot or Profs tab")
+    Print("  /bnav tab              next section: Dungeons / Loot / Profs (the Switch Section key)")
+    Print("  /bnav tab view         next view of Dungeons: Travel / Bosses / Quests (the Switch View key)")
+    Print("  /bnav tab [travel|boss|quest|loot|prof|n] open that tab; a number n picks item n on the Loot or Profs tab")
     Print("  /bnav prof [n]        Profs tab: how often each member mined, skinned, gathered, fished or crafted; n lists member n's spells")
     Print("  /bnav prof post       post the profession counts to party/raid chat (/bnav prof list prints them to you)")
     Print("  /bnav prof clear      forget the profession counts (also done when you leave the group)")
@@ -509,6 +517,8 @@ SlashCmdList["BOSSNAV"] = function(msg)
             SetTab("travel")
         elseif which == "boss" or which == "bosses" then
             SetTab("boss")
+        elseif which == "view" then
+            BossNav_NextView()
         else
             BossNav_ToggleTab()
         end

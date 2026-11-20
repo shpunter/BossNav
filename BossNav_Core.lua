@@ -65,7 +65,7 @@
 --   BossNav_Entrances.lua  dungeon entrances in the open world, travel list by level
 --   BossNav_Routes.lua     zone-to-zone routing: which exit or flight master leads toward a dungeon
 --   BossNav_Window.lua     map window frames, sidebar rows, pins
---   BossNav_Tabs.lua       two rows of tab buttons (Dungeons > Travel / Bosses / Quests, Loot, Profs) and tab switching
+--   BossNav_Tabs.lua       two rows of tab buttons (sections Dungeons / Loot / Profs; Dungeons views Travel / Bosses / Quests) and tab switching
 --   BossNav_MapArt.lua     map art renderers
 --   BossNav_Waypoints.lua  boss selection, floors, waypoints
 --   BossNav_Render.lua     drawing the whole map window
@@ -108,7 +108,8 @@ BINDING_NAME_BOSSNAV_NEXT_STEP = "Next Map Floor"
 BINDING_NAME_BOSSNAV_TOGGLE_HUD = "Toggle Direction HUD"
 BINDING_NAME_BOSSNAV_MARK_WAYPOINT = "Mark Waypoint Here"
 BINDING_NAME_BOSSNAV_MARK_BOSS = "Mark Nearby Boss (skull)"
-BINDING_NAME_BOSSNAV_TOGGLE_TAB = "Switch Travel / Bosses / Quests / Loot / Profs Tab"
+BINDING_NAME_BOSSNAV_TOGGLE_TAB = "Switch Section: Dungeons / Loot / Profs"
+BINDING_NAME_BOSSNAV_NEXT_VIEW = "Switch View: Travel / Bosses / Quests"
 BINDING_NAME_BOSSNAV_SWITCH_NAV = "Switch Navigation: Quest Giver / Dungeon"
 BINDING_NAME_BOSSNAV_QUEST_DOWN = "Scroll Quest Text Down"
 BINDING_NAME_BOSSNAV_QUEST_UP = "Scroll Quest Text Up"

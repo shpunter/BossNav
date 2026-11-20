@@ -16,7 +16,7 @@ local QuestLevelRGB          = ns.QuestLevelRGB
 local QuestStatus            = ns.QuestStatus
 local QUEST_STATUS_WORD      = ns.QUEST_STATUS_WORD
 local SELECTED_MARK          = ns.SELECTED_MARK
-local LIST_TOP               = ns.LIST_TOP
+local listAnchor             = ns.listAnchor
 local SIDEBAR_W              = ns.SIDEBAR_W
 local SelectedDungeon        = ns.SelectedDungeon
 local SetFontSize            = ns.SetFontSize
@@ -160,7 +160,7 @@ local function GetQuestRow(i)
     if not questRows[i] then
         local b = CreateFrame("Button", nil, sidebar)
         b:SetSize(SIDEBAR_W - 8, ROW_H)
-        b:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 4, LIST_TOP - (i - 1) * ROW_H)
+        b:SetPoint("TOPLEFT", listAnchor, "TOPLEFT", 4, -(i - 1) * ROW_H)
         b.hl = b:CreateTexture(nil, "HIGHLIGHT")
         b.hl:SetAllPoints()
         b.hl:SetColorTexture(1, 0.82, 0, 0.15)

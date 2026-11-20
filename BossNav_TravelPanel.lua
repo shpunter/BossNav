@@ -10,7 +10,7 @@ local GetWayPin              = ns.GetWayPin
 local HasEntrance            = ns.HasEntrance
 local HideRouteToggle        = ns.HideRouteToggle
 local LevelColor             = ns.LevelColor
-local LIST_TOP               = ns.LIST_TOP
+local listAnchor             = ns.listAnchor
 local MAX_ROWS               = ns.MAX_ROWS
 local MapName                = ns.MapName
 local MapPosFromWorld        = ns.MapPosFromWorld
@@ -81,8 +81,8 @@ end)
 -- Scrollbar on the right edge of the sidebar: a track and a thumb
 local scrollbar = CreateFrame("Frame", nil, sidebar)
 scrollbar:SetWidth(5)
-scrollbar:SetPoint("TOPRIGHT", sidebar, "TOPRIGHT", -1, LIST_TOP)
-scrollbar:SetPoint("BOTTOMRIGHT", sidebar, "TOPRIGHT", -1, LIST_TOP - MAX_ROWS * ROW_H)
+scrollbar:SetPoint("TOPRIGHT", listAnchor, "TOPRIGHT", -1, 0)
+scrollbar:SetPoint("BOTTOMRIGHT", listAnchor, "TOPRIGHT", -1, -MAX_ROWS * ROW_H)
 scrollbar.track = scrollbar:CreateTexture(nil, "BACKGROUND")
 scrollbar.track:SetAllPoints()
 scrollbar.track:SetColorTexture(0.15, 0.15, 0.18, 1)

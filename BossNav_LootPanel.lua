@@ -16,7 +16,7 @@ local LootItems              = ns.LootItems
 local LootSortedRolls        = ns.LootSortedRolls
 local LootWinnerClass        = ns.LootWinnerClass
 local Print                  = ns.Print
-local LIST_TOP               = ns.LIST_TOP
+local listAnchor             = ns.listAnchor
 local SIDEBAR_W              = ns.SIDEBAR_W
 local canvas                 = ns.canvas
 local headerText             = ns.headerText
@@ -84,7 +84,7 @@ local function GetLootRow(i)
     if not lootRows[i] then
         local b = CreateFrame("Button", nil, sidebar)
         b:SetSize(SIDEBAR_W - 8, ROW_H)
-        b:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 4, LIST_TOP - (i - 1) * ROW_H)
+        b:SetPoint("TOPLEFT", listAnchor, "TOPLEFT", 4, -(i - 1) * ROW_H)
         b.hl = b:CreateTexture(nil, "HIGHLIGHT")
         b.hl:SetAllPoints()
         b.hl:SetColorTexture(1, 0.82, 0, 0.15)

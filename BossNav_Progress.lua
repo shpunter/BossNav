@@ -39,6 +39,16 @@ local function LoadProgress(cfg)
     return rec
 end
 
+-- Kills of your current run in a dungeon you are not in (read only; nothing
+-- is created). Empty when there is no fresh record.
+local function SavedKilled(cfg)
+    local rec = cfg and DB().progress[cfg.key]
+    if rec and type(rec.time) == "number" and time() - rec.time <= PROGRESS_MAX_AGE and rec.killed then
+        return rec.killed
+    end
+    return {}
+end
+
 -- Call after any change to kill marks, visited waypoints or the selected boss.
 local function TouchProgress()
     local cfg = state.cfg
@@ -93,6 +103,6 @@ end
 -- shared with the other BossNav files
 ns.ClearProgress = ClearProgress
 ns.OnGroupRosterChanged = OnGroupRosterChanged
-ns.PROGRESS_MAX_AGE = PROGRESS_MAX_AGE
+ns.SavedKilled = SavedKilled
 ns.LoadProgress = LoadProgress
 ns.TouchProgress = TouchProgress
