@@ -35,6 +35,7 @@ local PortraitCommand        = ns.PortraitCommand
 local TRAVEL                 = ns.TRAVEL
 local ThreatCommand          = ns.ThreatCommand
 local ToggleClassColors      = ns.ToggleClassColors
+local ToggleDrinkIcon        = ns.ToggleDrinkIcon
 local ToggleRangeFade        = ns.ToggleRangeFade
 local TouchProgress          = ns.TouchProgress
 local TravelMode             = ns.TravelMode
@@ -334,6 +335,7 @@ local function ShowHelp()
     Print("  /bnav threat debug   print the raw threat values the game gives for each mob in view")
     Print("  /bnav classplates     class colour on players' health bars: nameplates, target, target of target, party/raid (on/off)")
     Print("  /bnav rangefade       fade party/raid frames of group members farther than 30 yards (on/off)")
+    Print("  /bnav drinkicon       cup icon next to the name of a group member who is drinking (on/off)")
     Print("  /bnav minimap         toggle minimap icons (needs a position; this client hides it)")
     Print("  /bnav loot [n|all]    last 5 loot rolls (blue and better): who chose Need/Greed/Pass, their roll, the winner")
     Print("  /bnav quest [n]       Quests tab: the quests of this dungeon (outside: the one picked with /bnav go), who gives them and where")
@@ -543,6 +545,8 @@ SlashCmdList["BOSSNAV"] = function(msg)
         ThreatCommand(rest)
     elseif cmd == "classplates" or cmd == "classplate" or cmd == "classcolors" or cmd == "classcolor" then
         Print("Class colours on player health bars " .. (ToggleClassColors() and "on" or "off") .. ".")
+    elseif cmd == "drinkicon" or cmd == "drink" then
+        Print("Drinking icon on party/raid frames " .. (ToggleDrinkIcon() and "on" or "off") .. ".")
     elseif cmd == "rangefade" or cmd == "range" then
         Print("Fading group members beyond 30 yards " .. (ToggleRangeFade() and "on" or "off") .. ".")
     elseif cmd == "pos" then
