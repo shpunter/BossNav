@@ -174,21 +174,21 @@ local function SortedRolls(it, kind)
     return list
 end
 
-local function RollsLine(it)
-    local parts = {}
+-- Chat lines for one drop: a heading per roll type, then each player on a line of their own
+local function RollsLines(it)
+    local lines = {}
     for _, kind in ipairs(KIND_ORDER) do
         local list = SortedRolls(it, kind)
         if #list > 0 then
-            local names = {}
+            lines[#lines + 1] = string.format("    |cff%s%s:|r", KIND_COLOR[kind], KIND_LABEL[kind])
             for _, r in ipairs(list) do
                 local won = r.name == it.winner
-                names[#names + 1] = LinkName(r.name, r.class) .. (r.roll and (" " .. r.roll) or "") .. (won and " |cffffd100(won)|r" or "")
+                lines[#lines + 1] = "        " .. LinkName(r.name, r.class) .. (r.roll and (" " .. r.roll) or "") .. (won and " |cffffd100(won)|r" or "")
             end
-            parts[#parts + 1] = string.format("|cff%s%s:|r %s", KIND_COLOR[kind], KIND_LABEL[kind], table.concat(names, ", "))
         end
     end
-    if #parts == 0 then return "|cff888888no rolls yet|r" end
-    return table.concat(parts, "   ")
+    if #lines == 0 then lines[1] = "    |cff888888no rolls yet|r" end
+    return lines
 end
 
 -- Class of the winner, looked up again when it was unknown at the time of the win
@@ -211,7 +211,7 @@ local function PrintDrop(it)
         status = "  |cff888888rolling...|r"
     end
     Print(it.link .. status)
-    Print("    " .. RollsLine(it))
+    for _, line in ipairs(RollsLines(it)) do Print(line) end
 end
 
 local function ShowLoot(count)

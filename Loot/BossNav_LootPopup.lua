@@ -127,20 +127,22 @@ local function Status(it)
     return "|cff888888Rolling...|r"
 end
 
--- "Need: Bob 87 (won), Ann 45" - one line per roll type somebody chose
+-- One heading per roll type somebody chose, then each player on a line of their own:
+--   Need:
+--      Bob 87 (won)
+--      Ann 45
 local function Body(it)
     local lines = {}
     for _, kind in ipairs(LOOT_KIND_ORDER) do
         local list = LootSortedRolls(it, kind)
         if #list > 0 then
-            local names = {}
+            lines[#lines + 1] = string.format("|cff%s%s:|r", LOOT_KIND_COLOR[kind], LOOT_KIND_LABEL[kind])
             for _, r in ipairs(list) do
                 local won = (r.name == it.winner)
-                names[#names + 1] = ColorName(r.name, r.class, 12)
+                lines[#lines + 1] = "      " .. ColorName(r.name, r.class, 12)
                     .. (r.roll and (" |cffffffff" .. r.roll .. "|r") or "")
                     .. (won and " |cffffd100(won)|r" or "")
             end
-            lines[#lines + 1] = string.format("|cff%s%s:|r %s", LOOT_KIND_COLOR[kind], LOOT_KIND_LABEL[kind], table.concat(names, ", "))
         end
     end
     if #lines == 0 then return "|cff888888nobody has chosen yet|r" end
