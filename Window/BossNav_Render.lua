@@ -5,7 +5,7 @@ local CurrentFloor           = ns.CurrentFloor
 local FloorFromMapGroup      = ns.FloorFromMapGroup
 local FloorName              = ns.FloorName
 local GetBossPin             = ns.GetBossPin
-local GetRow                 = ns.GetRow
+local GetBossRow             = ns.GetBossRow
 local GetWayPin              = ns.GetWayPin
 local HELP_BOSS              = ns.HELP_BOSS
 local KilledCount            = ns.KilledCount
@@ -22,6 +22,7 @@ local UpdateTabLook          = ns.UpdateTabLook
 local WaypointKey            = ns.WaypointKey
 local Waypoints              = ns.Waypoints
 local bossPins               = ns.bossPins
+local bossColRows            = ns.bossColRows
 local bossRows               = ns.bossRows
 local headerText             = ns.headerText
 local helpText               = ns.helpText
@@ -103,32 +104,68 @@ local function DrawWaypoints(cfg, boss, floor, visited)
     end
 end
 
+local TRASH_ICON = "Interface\\Icons\\INV_Misc_Bag_10"
+
+-- The last row of the boss column: picks the loot of trash, rares and other
+-- non-boss sources in the Items column. The map keeps its boss.
+local function DrawTrashRow(cfg, i, picked)
+    local r = GetBossRow(i)
+    r.bossIdx = nil
+    r.travelIdx = nil
+    r.trashCfg = cfg
+    r:SetMapButton(false)
+    r.mark:SetText(picked and ns.SELECTED_MARK or "")
+    r.mark:Show()
+    SetBossIcon(r.icon, nil, false)
+    r.icon:SetTexture(TRASH_ICON)
+    r.icon:SetTexCoord(0, 1, 0, 1)
+    r.text:SetText((picked and "|cffffd100" or "|cffbbbbbb") .. "Trash|r |cff888888(rares too)|r")
+    r:Show()
+end
+
+-- The boss column (middle of the three Dungeons columns).
 local function DrawBossRows(cfg, bossIdx, killed)
+    local trash = ns.TrashPicked and ns.TrashPicked(cfg)
     for i, b in ipairs(cfg.bosses) do
         if i > MAX_ROWS then break end
-        local r = GetRow(i)
+        local r = GetBossRow(i)
         local dead = killed[b[1]]
         local color = dead and "|cff777777" or ((i == bossIdx) and "|cffffd100" or "|cffffffff")
         local tag = dead and " |cff777777[DEAD]|r" or ""
         if not b[2] then tag = tag .. " |cff666666(no pin)|r" end
         r.bossIdx = i
         r.travelIdx = nil
+        r.trashCfg = nil
         r:SetMapButton(false)
-        r.mark:SetText((i == bossIdx) and ns.SELECTED_MARK or "")
+        r.mark:SetText((i == bossIdx and not trash) and ns.SELECTED_MARK or "")
         r.mark:Show()
         SetBossIcon(r.icon, b[1], dead)
         r.text:SetText(color .. b[1] .. "|r" .. tag)
         r:Show()
     end
     if #cfg.bosses > MAX_ROWS then
-        local last = GetRow(MAX_ROWS)
+        local last = GetBossRow(MAX_ROWS)
         last.bossIdx = nil
         last.travelIdx = nil
+        last.trashCfg = nil
         last:SetMapButton(false)
         last.icon:Hide()
         last.mark:Hide()
         last.text:SetText("|cff888888... and " .. (#cfg.bosses - MAX_ROWS + 1) .. " more|r")
+    elseif ns.HasTrash and ns.HasTrash(cfg) and #cfg.bosses < MAX_ROWS then
+        DrawTrashRow(cfg, #cfg.bosses + 1, trash)
     end
+end
+
+-- Bosses of the dungeon the columns are about: the one you are in, else the
+-- one picked in the dungeon list (with its saved kills).
+local function DrawBossColumn()
+    if not (ns.TravelMode and ns.TravelMode()) then
+        if state.cfg then DrawBossRows(state.cfg, state.bossIdx, state.killed) end
+        return
+    end
+    local cfg, idx = ns.PreviewState and ns.PreviewState()
+    if cfg then DrawBossRows(cfg, idx, ns.SavedKilled(cfg)) end
 end
 
 --------------------------------------------------------------------------
@@ -138,21 +175,28 @@ function BossNav_RefreshMap()
     for _, p in ipairs(bossPins) do p:Hide() end
     for _, p in ipairs(wayPins) do p:Hide() end
     for _, r in ipairs(bossRows) do r:Hide() end
+    for _, r in ipairs(bossColRows) do r:Hide() end
     playerPin:Hide()
     noArtText:Hide()
     if ns.HideTravelWidgets then ns.HideTravelWidgets() end
     if ns.HideStartPin then ns.HideStartPin() end
 
-    -- Loot / Profs / Quests tabs: their panel covers the map and fills the
+    -- Loot / Profs / Quests / Items tabs: their panel covers the map and fills the
     -- sidebar instead. All are always called so the ones not shown hide themselves.
     UpdateTabLook()
     local drewLoot = ns.RenderLootTab and ns.RenderLootTab()
     local drewProf = ns.RenderProfTab and ns.RenderProfTab()
     local drewQuest = ns.RenderQuestTab and ns.RenderQuestTab()
+    -- the item column is drawn on every Dungeons view; true when the item
+    -- card (Items column focused) covers the map
+    local drewItem = ns.RenderItemTab and ns.RenderItemTab()
     if drewLoot or drewProf or drewQuest then return end
 
-    -- Outside every dungeon: the Travel tab (your zone map and the dungeon
-    -- selector) or the Bosses tab (the picked dungeon's bosses).
+    -- Dungeons section: the dungeon list and the boss column always, then the
+    -- map area for the focused column (zone map, dungeon map or item card).
+    if ns.DrawDungeonColumn then ns.DrawDungeonColumn() end
+    DrawBossColumn()
+    if drewItem then return end
     helpText:SetText(HELP_BOSS)
     if ns.RenderTravelTab and ns.RenderTravelTab() then return end
     if ns.RenderBossPreview and ns.RenderBossPreview() then return end
@@ -194,7 +238,6 @@ function BossNav_RefreshMap()
 
     DrawBossPins(cfg, floor, state.bossIdx, state.killed)
     DrawWaypoints(cfg, boss, floor, state.visited)
-    DrawBossRows(cfg, state.bossIdx, state.killed)
 
     navText:SetText("")
     BossNav_UpdateLive(true)

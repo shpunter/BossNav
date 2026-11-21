@@ -72,15 +72,61 @@ sidebar:SetPoint("TOPLEFT", canvas, "TOPRIGHT", 10, 0)
 local sidebarBg = sidebar:CreateTexture(nil, "BACKGROUND")
 sidebarBg:SetAllPoints()
 sidebarBg:SetColorTexture(0.06, 0.06, 0.08, 1)
+-- The Dungeons section shows three columns side by side: the dungeon list
+-- (the sidebar itself), then the picked dungeon's bosses, then their loot.
+-- The two extra columns, and the wider window they need, show only there.
+--
+--   +-- canvas --------+ +- sidebar -+ +- bossCol -+ +- itemCol -+
+--   | map or item card | | Dungeons  | | Bosses    | | Items     |
+local BOSS_COL_W, ITEM_COL_W, COL_GAP = 210, 270, 4
+local NARROW_W = 12 + CANVAS_W + 10 + SIDEBAR_W + 12
+local WIDE_W = NARROW_W + COL_GAP + BOSS_COL_W + COL_GAP + ITEM_COL_W
+
+local function NewColumn(width, leftOf)
+    local col = CreateFrame("Frame", nil, mapFrame)
+    col:SetSize(width, CANVAS_H + 184)
+    col:SetPoint("TOPLEFT", leftOf, "TOPRIGHT", COL_GAP, 0)
+    local colBg = col:CreateTexture(nil, "BACKGROUND")
+    colBg:SetAllPoints()
+    colBg:SetColorTexture(0.06, 0.06, 0.08, 1)
+    col:Hide()
+    return col
+end
+local bossCol = NewColumn(BOSS_COL_W, sidebar)
+local itemCol = NewColumn(ITEM_COL_W, bossCol)
+
+-- Wide window with all three columns (Dungeons section) or the narrow one.
+-- The left edge stays where it is, so the map does not jump.
+local function SetWide(on)
+    local w = on and WIDE_W or NARROW_W
+    bossCol:SetShown(on)
+    itemCol:SetShown(on)
+    if math.abs(mapFrame:GetWidth() - w) < 1 then return end
+    local left, top = mapFrame:GetLeft(), mapFrame:GetTop()
+    mapFrame:SetWidth(w)
+    if left and top then
+        mapFrame:ClearAllPoints()
+        mapFrame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+    end
+end
+
 -- The tab rows at the top of the sidebar live in BossNav_Tabs.lua. Every
--- sidebar list hangs from listAnchor, which the tabs move up or down
--- (SetListTop) since the Dungeons section has more rows above its lists.
-local listAnchor = CreateFrame("Frame", nil, sidebar)
-listAnchor:SetHeight(1)
+-- list hangs from its column's anchor, which the tabs move up or down
+-- (SetListTop) since the sections have different rows above their lists.
+local function NewListAnchor(col)
+    local a = CreateFrame("Frame", nil, col)
+    a:SetHeight(1)
+    return a
+end
+local listAnchor = NewListAnchor(sidebar)
+local bossAnchor = NewListAnchor(bossCol)
+local itemAnchor = NewListAnchor(itemCol)
 local function SetListTop(y)
-    listAnchor:ClearAllPoints()
-    listAnchor:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 0, y)
-    listAnchor:SetPoint("TOPRIGHT", sidebar, "TOPRIGHT", 0, y)
+    for col, a in pairs({ [sidebar] = listAnchor, [bossCol] = bossAnchor, [itemCol] = itemAnchor }) do
+        a:ClearAllPoints()
+        a:SetPoint("TOPLEFT", col, "TOPLEFT", 0, y)
+        a:SetPoint("TOPRIGHT", col, "TOPRIGHT", 0, y)
+    end
 end
 SetListTop(-28)
 
@@ -111,75 +157,91 @@ local function SetFontSize(fs, size)
     local face, _, flags = fs:GetFont()
     if face then fs:SetFont(face, size, flags) end
 end
-local function GetRow(i)
-    if not bossRows[i] then
-        local b = CreateFrame("Button", nil, sidebar)
-        b:SetSize(SIDEBAR_W - 8, ROW_H)
-        b:SetPoint("TOPLEFT", listAnchor, "TOPLEFT", 4, -(i - 1) * ROW_H)
-        b.hl = b:CreateTexture(nil, "HIGHLIGHT")
-        b.hl:SetAllPoints()
-        b.hl:SetColorTexture(1, 0.82, 0, 0.15)
-        -- layout: ">" | portrait | name
-        b.mark = b:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        -- pushed right so the ">" sits just in front of what it points at
-        b.mark:SetPoint("LEFT", b, "LEFT", 6, 0)
-        b.mark:SetWidth(MARK_W)
-        b.mark:SetJustifyH("RIGHT")
-        b.mark:SetWordWrap(false)
-        SetFontSize(b.mark, NAME_FONT_SIZE)
-        b.icon = b:CreateTexture(nil, "ARTWORK")
-        b.icon:SetSize(ICON_SIZE, ICON_SIZE)
-        b.icon:SetPoint("LEFT", b, "LEFT", 4 + MARK_W + 4, 0)
-        RoundIcon(b.icon)
-        b.text = b:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        b.text:SetPoint("LEFT", b, "LEFT", 4 + MARK_W + 4 + ICON_SIZE + 6, 0)
-        local textW = SIDEBAR_W - (4 + MARK_W + 4 + ICON_SIZE + 6) - 8
-        b.text:SetWidth(textW)
-        b.text:SetJustifyH("LEFT")
-        b.text:SetWordWrap(false)
-        SetFontSize(b.text, NAME_FONT_SIZE)
-        -- "Show on the map" button at the right end of a dungeon row (like
-        -- the Quests tab rows); boss rows have none
-        local m = CreateFrame("Button", nil, b)
-        m:SetSize(18, 18)
-        m:SetPoint("RIGHT", b, "RIGHT", -2, 0)
-        m:SetFrameLevel(b:GetFrameLevel() + 2)
-        m:SetNormalTexture("Interface\\Icons\\INV_Misc_Map_01")
-        m:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
-        m:SetScript("OnClick", function()
-            if b.travelIdx and ns.ShowDungeonOnWorldMap then
-                ns.ShowDungeonOnWorldMap(b.travelIdx)
-            end
-        end)
-        m:SetScript("OnEnter", function(self)
-            if not GameTooltip then return end
-            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-            GameTooltip:AddLine("Show on the map", 1, 0.82, 0)
-            GameTooltip:Show()
-        end)
-        m:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
-        m:Hide()
-        b.mapBtn = m
-        -- show or hide the map button, leaving the name room for it
-        function b:SetMapButton(on)
-            if on then
-                self.mapBtn:Show()
-                self.text:SetWidth(textW - 22)
-            else
-                self.mapBtn:Hide()
-                self.text:SetWidth(textW)
-            end
+-- One list row: ">" | round icon | name, plus a map button at the right end
+-- (dungeon rows only). Clicking picks the row's dungeon or boss.
+local function NewRow(col, anchor, colW, i)
+    local b = CreateFrame("Button", nil, col)
+    b:SetSize(colW - 8, ROW_H)
+    b:SetPoint("TOPLEFT", anchor, "TOPLEFT", 4, -(i - 1) * ROW_H)
+    b.hl = b:CreateTexture(nil, "HIGHLIGHT")
+    b.hl:SetAllPoints()
+    b.hl:SetColorTexture(1, 0.82, 0, 0.15)
+    -- layout: ">" | portrait | name
+    b.mark = b:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    -- pushed right so the ">" sits just in front of what it points at
+    b.mark:SetPoint("LEFT", b, "LEFT", 6, 0)
+    b.mark:SetWidth(MARK_W)
+    b.mark:SetJustifyH("RIGHT")
+    b.mark:SetWordWrap(false)
+    SetFontSize(b.mark, NAME_FONT_SIZE)
+    b.icon = b:CreateTexture(nil, "ARTWORK")
+    b.icon:SetSize(ICON_SIZE, ICON_SIZE)
+    b.icon:SetPoint("LEFT", b, "LEFT", 4 + MARK_W + 4, 0)
+    RoundIcon(b.icon)
+    b.text = b:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    b.text:SetPoint("LEFT", b, "LEFT", 4 + MARK_W + 4 + ICON_SIZE + 6, 0)
+    local textW = colW - (4 + MARK_W + 4 + ICON_SIZE + 6) - 8
+    b.text:SetWidth(textW)
+    b.text:SetJustifyH("LEFT")
+    b.text:SetWordWrap(false)
+    SetFontSize(b.text, NAME_FONT_SIZE)
+    -- "Show on the map" button at the right end of a dungeon row (like
+    -- the Quests tab rows); boss rows have none
+    local m = CreateFrame("Button", nil, b)
+    m:SetSize(18, 18)
+    m:SetPoint("RIGHT", b, "RIGHT", -2, 0)
+    m:SetFrameLevel(b:GetFrameLevel() + 2)
+    m:SetNormalTexture("Interface\\Icons\\INV_Misc_Map_01")
+    m:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+    m:SetScript("OnClick", function()
+        if b.travelIdx and ns.ShowDungeonOnWorldMap then
+            ns.ShowDungeonOnWorldMap(b.travelIdx)
         end
-        b:SetScript("OnClick", function(self)
-            if self.travelIdx then
-                BossNav_SelectDungeon(self.travelIdx)
-            elseif self.bossIdx then
-                BossNav_SelectBoss(self.bossIdx)
-            end
-        end)
-        bossRows[i] = b
+    end)
+    m:SetScript("OnEnter", function(self)
+        if not GameTooltip then return end
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:AddLine("Show on the map", 1, 0.82, 0)
+        GameTooltip:Show()
+    end)
+    m:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
+    m:Hide()
+    b.mapBtn = m
+    -- show or hide the map button, leaving the name room for it
+    function b:SetMapButton(on)
+        if on then
+            self.mapBtn:Show()
+            self.text:SetWidth(textW - 22)
+        else
+            self.mapBtn:Hide()
+            self.text:SetWidth(textW)
+        end
     end
+    -- picks the dungeon or boss and gives its column the focus
+    b:SetScript("OnClick", function(self)
+        if self.travelIdx then
+            BossNav_SelectDungeon(self.travelIdx)
+            if ns.SetTab then ns.SetTab("travel") end
+        elseif self.bossIdx then
+            BossNav_SelectBoss(self.bossIdx)
+            if ns.SetTab then ns.SetTab("boss") end
+        elseif self.trashCfg and ns.PickTrash then
+            ns.PickTrash(self.trashCfg)
+            if ns.SetTab then ns.SetTab("boss") end
+        end
+    end)
+    return b
+end
+
+-- Rows of the dungeon list (the sidebar) and of the boss column.
+local bossColRows = {}
+local function GetRow(i)
+    bossRows[i] = bossRows[i] or NewRow(sidebar, listAnchor, SIDEBAR_W, i)
     return bossRows[i]
+end
+local function GetBossRow(i)
+    bossColRows[i] = bossColRows[i] or NewRow(bossCol, bossAnchor, BOSS_COL_W, i)
+    return bossColRows[i]
 end
 
 -- Map tiles
@@ -305,6 +367,14 @@ end
 ns.FitRect = FitRect
 ns.GetBossPin = GetBossPin
 ns.GetRow = GetRow
+ns.GetBossRow = GetBossRow
+ns.SetWide = SetWide
+ns.BOSS_COL_W = BOSS_COL_W
+ns.ITEM_COL_W = ITEM_COL_W
+ns.bossCol = bossCol
+ns.bossColRows = bossColRows
+ns.itemAnchor = itemAnchor
+ns.itemCol = itemCol
 ns.GetTile = GetTile
 ns.GetWayPin = GetWayPin
 ns.HELP_BOSS = HELP_BOSS

@@ -65,7 +65,7 @@
 --   BossNav_Entrances.lua  dungeon entrances in the open world, travel list by level
 --   BossNav_Routes.lua     zone-to-zone routing: which exit or flight master leads toward a dungeon
 --   BossNav_Window.lua     map window frames, sidebar rows, pins
---   BossNav_Tabs.lua       two rows of tab buttons (sections Dungeons / Loot / Profs; Dungeons views Travel / Bosses / Quests) and tab switching
+--   BossNav_Tabs.lua       section tabs (Dungeons / Quests / Loot / Profs), the Dungeons column headers (Dungeons / Bosses / Items) and switching
 --   BossNav_MapArt.lua     map art renderers
 --   BossNav_Waypoints.lua  boss selection, floors, waypoints
 --   BossNav_Render.lua     drawing the whole map window
@@ -74,8 +74,8 @@
 --   BossNav_Live.lua       periodic live update
 --   BossNav_Travel.lua     travel mode: arrow, distance and minimap pin to a dungeon entrance
 --   BossNav_RouteToggle.lua the "By foot" / "Flying" boxes under the map and /bnav route
---   BossNav_TravelPanel.lua the Travel tab outside a dungeon: zone map, entrance pin, dungeon selector
---   BossNav_BossPreview.lua the Bosses tab outside a dungeon: the picked dungeon's map and bosses
+--   BossNav_TravelPanel.lua the dungeon list column, and outside a dungeon the zone map with the entrance pin
+--   BossNav_BossPreview.lua outside a dungeon, Bosses column focused: the picked dungeon's map and boss pins
 --   BossNav_WorldMap.lua   dungeon entrance marks on the game's world map
 --   BossNav_Kills.lua      kill tracking and extra bosses
 --   BossNav_Marker.lua     skull raid mark on a boss as soon as it is seen
@@ -96,6 +96,10 @@
 --   BossNav_QuestStatus.lua whether you already did a quest or have it in your log
 --   BossNav_QuestsPanel.lua the Quests tab: a dungeon's quests and where to take them
 --   BossNav_QuestMapPins.lua quest givers of the selected dungeon on the game's world map
+--   BossNav_ItemData.lua   loot per dungeon boss, generated from Forever Atlas by Tools/export_items.js
+--   BossNav_ItemFilter.lua which items the Items column lists (the dungeon and boss you picked)
+--   BossNav_ItemInfo.lua   item name, icon, quality and level from the game client
+--   BossNav_ItemsPanel.lua the Items column: item list with icons and an item card over the map
 --   BossNav_Zone.lua       zone changes
 --   BossNav_Commands.lua   keybind actions, slash commands, help
 --   BossNav_Events.lua     event wiring
@@ -112,11 +116,11 @@ BINDING_NAME_BOSSNAV_NEXT_STEP = "Next Map Floor"
 BINDING_NAME_BOSSNAV_TOGGLE_HUD = "Toggle Direction HUD"
 BINDING_NAME_BOSSNAV_MARK_WAYPOINT = "Mark Waypoint Here"
 BINDING_NAME_BOSSNAV_MARK_BOSS = "Mark Nearby Boss (skull)"
-BINDING_NAME_BOSSNAV_TOGGLE_TAB = "Switch Section: Dungeons / Loot / Profs"
-BINDING_NAME_BOSSNAV_NEXT_VIEW = "Switch View: Travel / Bosses / Quests"
+BINDING_NAME_BOSSNAV_TOGGLE_TAB = "Switch Section: Dungeons / Quests / Loot / Profs"
+BINDING_NAME_BOSSNAV_NEXT_VIEW = "Switch Column: Dungeons / Bosses / Items"
 BINDING_NAME_BOSSNAV_SWITCH_NAV = "Switch Navigation: Quest Giver / Dungeon"
-BINDING_NAME_BOSSNAV_QUEST_DOWN = "Scroll Quest Text Down"
-BINDING_NAME_BOSSNAV_QUEST_UP = "Scroll Quest Text Up"
+BINDING_NAME_BOSSNAV_QUEST_DOWN = "Scroll Down (quest text / item list)"
+BINDING_NAME_BOSSNAV_QUEST_UP = "Scroll Up (quest text / item list)"
 BINDING_NAME_BOSSNAV_TOGGLE_THREAT = "Toggle Threat Window"
 
 BossNavDB = BossNavDB or {}

@@ -355,7 +355,7 @@ local function RenderQuestTab()
     if not cfg or count == 0 then ns.HideQuestInfo() end
     if not cfg then
         title:Hide(); body:Hide()
-        empty:SetText("Pick a dungeon first: /bnav go name, or the Travel tab.\nThe quests of that dungeon show up here.")
+        empty:SetText("Pick a dungeon first: /bnav go name, or the Dungeons tab.\nThe quests of that dungeon show up here.")
         empty:Show()
     elseif count == 0 then
         title:Hide(); body:Hide()

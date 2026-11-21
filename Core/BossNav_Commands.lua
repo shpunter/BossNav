@@ -58,11 +58,12 @@ function BossNav_ToggleMap()
 end
 
 function BossNav_SelectBoss(idx)
-    -- outside: the Bosses tab lists the picked dungeon's bosses
+    -- outside: the Bosses column lists the picked dungeon's bosses
     if TravelMode() then ns.SelectPreviewBoss(idx) return end
     local cfg = state.cfg
     if not cfg or not cfg.bosses[idx] then return end
     state.bossIdx = idx
+    if ns.PickItemBoss then ns.PickItemBoss(cfg, cfg.bosses[idx][1]) end
     state.floorOverride = nil
     TouchProgress()
     local b = cfg.bosses[idx]
@@ -72,32 +73,44 @@ function BossNav_SelectBoss(idx)
     pcall(BossNav_UpdateLive, true)
 end
 
+-- Inside a dungeon: the next / previous boss, or the Trash row after the last
+-- one (it only filters the Items column; the arrow keeps its boss).
+local function StepInsideBoss(step)
+    local cfg = state.cfg
+    if not cfg then Print("No boss data for this zone.") return end
+    local nxt = ns.StepBossColumn(cfg, state.bossIdx, step)
+    if nxt == "trash" then
+        ns.PickTrash(cfg)
+        RefreshIfShown()
+    elseif nxt then
+        BossNav_SelectBoss(nxt)
+    end
+end
+
 -- The next / previous keys walk the dungeon selector while you are outside,
--- or that dungeon's boss list on the Bosses tab. On the Quests tab they walk
--- the quest list instead.
+-- or that dungeon's boss list while the Bosses column has the focus. On the Quests tab they walk
+-- the quest list instead, on the Items tab the item list.
 function BossNav_CycleBoss()
     if state.tab == "quest" and mapFrame:IsShown() then ns.CycleQuest(1) return end
+    if state.tab == "item" and mapFrame:IsShown() then ns.CycleItem(1) return end
     if TravelMode() then
         if state.tab == "boss" and mapFrame:IsShown() and ns.CyclePreviewBoss(1) then return end
         BossNav_CycleDungeon(1)
         return
     end
-    local cfg = state.cfg
-    if not cfg then Print("No boss data for this zone.") return end
-    BossNav_SelectBoss((state.bossIdx % #cfg.bosses) + 1)
+    StepInsideBoss(1)
 end
 BossNav_NextStep = BossNav_CycleBoss
 
 function BossNav_PrevBoss()
     if state.tab == "quest" and mapFrame:IsShown() then ns.CycleQuest(-1) return end
+    if state.tab == "item" and mapFrame:IsShown() then ns.CycleItem(-1) return end
     if TravelMode() then
         if state.tab == "boss" and mapFrame:IsShown() and ns.CyclePreviewBoss(-1) then return end
         BossNav_CycleDungeon(-1)
         return
     end
-    local cfg = state.cfg
-    if not cfg then Print("No boss data for this zone.") return end
-    BossNav_SelectBoss(((state.bossIdx - 2) % #cfg.bosses) + 1)
+    StepInsideBoss(-1)
 end
 BossNav_PrevStep = BossNav_PrevBoss
 
@@ -172,8 +185,8 @@ function BossNav_NextFloor()
     BossNav_RefreshMap()
 end
 
--- Switch Section key (Dungeons / Loot / Profs) and Switch View key
--- (Travel / Bosses / Quests), see BossNav_Tabs.lua
+-- Switch Section key (Dungeons / Quests / Loot / Profs) and Switch View key
+-- (focus the Dungeons / Bosses / Items column), see BossNav_Tabs.lua
 function BossNav_ToggleTab()
     NextTab()
 end
@@ -347,9 +360,14 @@ local function ShowHelp()
     Print("  /bnav nav             switch the arrow between the quest giver and the dungeon (also a keybind)")
     Print("  /bnav nav quest|dungeon  follow that one; /bnav nav off forgets the quest giver target")
     Print("  /bnav quest map       toggle the quest givers of the selected dungeon on the game's world map")
-    Print("  /bnav tab              next section: Dungeons / Loot / Profs (the Switch Section key)")
-    Print("  /bnav tab view         next view of Dungeons: Travel / Bosses / Quests (the Switch View key)")
-    Print("  /bnav tab [travel|boss|quest|loot|prof|n] open that tab; a number n picks item n on the Loot or Profs tab")
+    Print("  /bnav tab              next section: Dungeons / Quests / Loot / Profs (the Switch Section key)")
+    Print("  /bnav tab view         Dungeons: focus the next column, Dungeons / Bosses / Items (the Switch Column key);")
+    Print("                         the Select Next / Previous Boss keys walk the focused column")
+    Print("  /bnav tab [travel|boss|item|quest|loot|prof|n] open that column or section; a number n picks item n on the Loot or Profs tab")
+    Print("  /bnav items [n]       Items column: loot of the dungeon (and of the boss you picked in Bosses), icon, drop chance and stats")
+    Print("  /bnav items next|prev|down|up  walk or page the item list (the Select Next / Previous Boss and Scroll keys do it too)")
+    Print("  /bnav items all       drop the boss filter: loot of every boss of the dungeon")
+    Print("  /bnav items trash     loot of trash, rares and mini-bosses (the Trash row under the bosses)")
     Print("  /bnav prof [n]        Profs tab: how often each member mined, skinned, gathered, fished or crafted; n lists member n's spells")
     Print("  /bnav prof post       post the profession counts to party/raid chat (/bnav prof list prints them to you)")
     Print("  /bnav prof clear      forget the profession counts (also done when you leave the group)")
@@ -531,6 +549,8 @@ SlashCmdList["BOSSNAV"] = function(msg)
             SetTab("travel")
         elseif which == "boss" or which == "bosses" then
             SetTab("boss")
+        elseif which == "item" or which == "items" then
+            SetTab("item")
         elseif which == "view" then
             BossNav_NextView()
         else
@@ -541,6 +561,9 @@ SlashCmdList["BOSSNAV"] = function(msg)
     elseif cmd == "quest" or cmd == "quests" or cmd == "q" then
         if not mapFrame:IsShown() then mapFrame:Show() end
         ns.QuestCommand(rest)
+    elseif cmd == "items" or cmd == "item" then
+        if not mapFrame:IsShown() then mapFrame:Show() end
+        ns.ItemsCommand(rest)
     elseif cmd == "threat" or cmd == "aggro" then
         ThreatCommand(rest)
     elseif cmd == "classplates" or cmd == "classplate" or cmd == "classcolors" or cmd == "classcolor" then
