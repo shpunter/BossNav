@@ -1,8 +1,9 @@
 -- Threat window: one row per enemy that is in combat near you.
 --
--- Each row shows the mob's raid mark, name and health, who it is attacking
--- (the group member at the top of its threat list, else its current target),
--- and your own threat on it in percent, coloured by the game's threat status:
+-- Each row starts with your own threat on the mob in percent, then its raid
+-- mark, level ("L30"), name and health, and who it is attacking (the group
+-- member at the top of its threat list, else its current target). The row is
+-- coloured by the game's threat status:
 --   grey   you are low on its list
 --   yellow you are above the tank and about to pull it
 --   orange it is attacking you but someone is close to taking it
@@ -36,7 +37,7 @@ local UpdateThreatPlates     = ns.UpdateThreatPlates
 
 local MAX_ROWS = 10
 local ROW_H = 18
-local WIDTH = 330
+local WIDTH = 350
 local UPDATE_EVERY = 0.2       -- seconds between refreshes
 local MARK_TEX = "Interface\\TargetingFrame\\UI-RaidTargetingIcons"
 
@@ -97,23 +98,28 @@ for i = 1, MAX_ROWS do
     r.hp:SetStatusBarColor(0.2, 0.9, 0.2, 0.9)
     r.hp:SetMinMaxValues(0, 1)
     r.hp:SetValue(1)
+    -- first column: the threat number, in the threat colour
+    r.num = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    r.num:SetPoint("LEFT", r, "LEFT", 2, 0)
+    r.num:SetWidth(34)
+    r.num:SetJustifyH("RIGHT")
     r.mark = r:CreateTexture(nil, "OVERLAY")
     r.mark:SetSize(14, 14)
-    r.mark:SetPoint("LEFT", r, "LEFT", 2, 0)
+    r.mark:SetPoint("LEFT", r, "LEFT", 40, 0)
     r.mark:SetTexture(MARK_TEX)
     -- mob level, coloured like the game's con colours (grey/green/yellow/orange/red)
     r.level = r:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    r.level:SetPoint("LEFT", r, "LEFT", 19, 0)
-    r.level:SetWidth(22)
+    r.level:SetPoint("LEFT", r, "LEFT", 57, 0)
+    r.level:SetWidth(26)
     r.level:SetJustifyH("LEFT")
     r.name = r:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    r.name:SetPoint("LEFT", r, "LEFT", 42, 0)
-    r.name:SetWidth(102)
+    r.name:SetPoint("LEFT", r, "LEFT", 84, 0)
+    r.name:SetWidth(100)
     r.name:SetJustifyH("LEFT")
     r.name:SetWordWrap(false)
     r.holder = r:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     r.holder:SetPoint("LEFT", r.name, "RIGHT", 4, 0)
-    r.holder:SetWidth(120)
+    r.holder:SetWidth(110)
     r.holder:SetJustifyH("LEFT")
     r.holder:SetWordWrap(false)
     r.pct = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -263,11 +269,11 @@ local function SetLevel(fs, level)
     level = tonumber(Known(level))
     if not level then fs:SetText("") return end
     if level < 0 then
-        fs:SetText("??")
+        fs:SetText("L??")
         fs:SetTextColor(1.0, 0.1, 0.1)
         return
     end
-    fs:SetText(tostring(level))
+    fs:SetText("L" .. tostring(level))
     local okC, c = pcall(GetCreatureDifficultyColor or GetQuestDifficultyColor, level)
     if okC and type(c) == "table" and c.r then
         fs:SetTextColor(c.r, c.g, c.b)
@@ -311,10 +317,12 @@ local function Tint(r, status, loose)
     if c then
         r.tint:SetColorTexture(c[1] * 0.45, c[2] * 0.45, c[3] * 0.45, 0.75)
         r.pct:SetTextColor(c[1], c[2], c[3])
+        r.num:SetTextColor(c[1], c[2], c[3])
         r.hp:SetStatusBarColor(c[1], c[2], c[3], 0.9)
     else
         r.tint:SetColorTexture(0.15, 0.15, 0.15, 0.6)
         r.pct:SetTextColor(0.7, 0.7, 0.7)
+        r.num:SetTextColor(0.7, 0.7, 0.7)
         r.hp:SetStatusBarColor(0.2, 0.9, 0.2, 0.9)
     end
 end
@@ -331,18 +339,19 @@ local function DrawRow(r, t, tank)
     HolderText(r, t, tank)
     local loose = tank and (t.myStatus or 0) < 2 and (t.myStatus ~= nil or t.holder ~= nil or t.onList)
     Tint(r, t.myStatus, loose)
+    -- first column: the threat number; last column: LOOSE for a mob not on you
+    local function Pct(v) return string.format("%d%%", math.floor(v + 0.5)) end
     if tank and (t.myStatus or 0) >= 2 then
         -- yours: how close the next one in line is to pulling it
-        r.pct:SetText(t.nextPct and string.format("%d%%", math.floor(t.nextPct + 0.5)) or "-")
-    elseif loose then
-        r.pct:SetText("LOOSE" .. (t.myPct and string.format(" %d%%", math.floor(t.myPct + 0.5)) or ""))
+        r.num:SetText(t.nextPct and Pct(t.nextPct) or "-")
     elseif t.myPct then
-        r.pct:SetText(string.format("you %d%%", math.floor(t.myPct + 0.5)))
-    elseif t.myStatus then
-        r.pct:SetText("you -")
+        r.num:SetText(Pct(t.myPct))
+    elseif t.myStatus or loose then
+        r.num:SetText("-")
     else
-        r.pct:SetText(t.unknown and "you ?" or "")
+        r.num:SetText(t.unknown and "?" or "")
     end
+    r.pct:SetText(loose and "LOOSE" or "")
     r:Show()
 end
 
@@ -377,7 +386,8 @@ local function DrawTest()
             SetLevel(r.level, f[7])
             SetMark(r.mark, f[2])
             r.holder:SetText(f[3])
-            r.pct:SetText(string.format("you %d%%", f[4]))
+            r.num:SetText(string.format("%d%%", f[4]))
+            r.pct:SetText("")
             Tint(r, f[5])
             r.hp:Show()
             r.hp:SetMinMaxValues(0, 1)
