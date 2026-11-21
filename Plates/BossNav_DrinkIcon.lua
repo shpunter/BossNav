@@ -13,6 +13,7 @@ local Plain                  = ns.ClassPlain
 
 local ICON     = "Interface\\Icons\\INV_Drink_07"
 local SIZE     = 14     -- icon size in pixels
+local GAP      = 18     -- pixels between the name and the cup (clears the role icon)
 local INTERVAL = 0.3    -- seconds between checks
 
 -- buff names that mean "drinking" (any buff whose name holds one of these)
@@ -89,14 +90,14 @@ local function Place(icon, nameText)
     w = okW and Plain(w)
     local okB, box = pcall(nameText.GetWidth, nameText)
     box = okB and Plain(box)
-    if type(w) == "number" and type(box) == "number" and w + SIZE + 2 <= box then
+    if type(w) == "number" and type(box) == "number" and w + SIZE + GAP <= box then
         local okJ, justify = pcall(nameText.GetJustifyH, nameText)
         if okJ and Plain(justify) == "LEFT" then
-            icon:SetPoint("LEFT", nameText, "LEFT", w + 2, 0)
+            icon:SetPoint("LEFT", nameText, "LEFT", w + GAP, 0)
             return
         end
     end
-    icon:SetPoint("LEFT", nameText, "RIGHT", 2, 0)
+    icon:SetPoint("LEFT", nameText, "RIGHT", GAP, 0)
 end
 
 local function Mark(frame, unit, i)
