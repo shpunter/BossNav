@@ -19,6 +19,8 @@ local PlayerFacing           = ns.PlayerFacing
 local PlayerMapID            = ns.PlayerMapID
 local PlayerPos              = ns.PlayerPos
 local PostLootSelected       = ns.PostLootSelected
+local ShowLootPopup          = ns.ShowLootPopup
+local ToggleLootPopup        = ns.ToggleLootPopup
 local Print                  = ns.Print
 local ProfCommand            = ns.ProfCommand
 local RefreshIfShown         = ns.RefreshIfShown
@@ -348,6 +350,8 @@ local function ShowHelp()
     Print("  /bnav prof debug      print every group spell cast the game reports, to see what is counted")
     Print("  /bnav loot post       post the selected item's rolls to party/raid chat (types ticked on the Loot tab)")
     Print("  /bnav loot auto       toggle the roll summary printed after each item is won")
+    Print("  /bnav loot popup      toggle the popup that shows Need / Greed / Pass live while an item is rolled")
+    Print("  /bnav loot show       open that popup with the newest item (to check it or drag it into place)")
     Print("  /bnav loot clear      forget the loot roll history")
     Print("  /bnav loot who        show how the addon sees your group (names and classes)")
     Print("  /bnav pos             print map diagnostics")
@@ -490,6 +494,10 @@ SlashCmdList["BOSSNAV"] = function(msg)
     elseif cmd == "loot" then
         if rest:lower() == "post" then
             PostLootSelected()
+        elseif rest:lower() == "popup" then
+            ToggleLootPopup()
+        elseif rest:lower() == "show" then
+            ShowLootPopup()
         else
             LootCommand(rest)
         end

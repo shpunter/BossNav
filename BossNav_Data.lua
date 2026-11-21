@@ -1,4 +1,6 @@
 -- Dungeon list, boss pins, trails and portraits.
+-- A boss row is { name, x, y, floor }; faction = "Horde" or "Alliance" marks a
+-- boss only that side can fight (BossNav_Kills.lua drops it for the other side).
 local ADDON, ns = ...
 -- from the files loaded before this one
 local FOREVER_IMG            = ns.FOREVER_IMG
@@ -250,6 +252,9 @@ local DUNGEONS = {
       bundled = FOREVER_IMG .. "RuinsOfLordaeron.tga", bundledAspect = 1.004, bosses = {
         {"Witherfang",71.6,48.6,1},{"The Baron (The Butcher)",57.6,71.5,1},{"The Abandoned",31.5,53.1,1},
         {"Bjork",33.7,32.0,1},{"Rath'mael",38.5,61.4,1},{"Viktor the Vile",27.2,63.3,1},
+        -- rare, may spawn in the west part once the others are dead; friendly to
+        -- the Alliance, so only Horde can kill it (guides on method.gg, icy-veins)
+        {"Lordaeron Captain", faction = "Horde"},
     } },
     { zones = {"Excavation Site: Wetlands","Excavation Site"}, floors = {1}, bosses = {
         {"Saltspine"},{"Shadetooth"},{"Highland Horror"},{"Relic Guardian"},

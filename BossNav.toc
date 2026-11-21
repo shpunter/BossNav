@@ -34,6 +34,7 @@ BossNav_AggroAlert.lua
 BossNav_Threat.lua
 BossNav_Loot.lua
 BossNav_LootPanel.lua
+BossNav_LootPopup.lua
 BossNav_Profs.lua
 BossNav_ProfsChat.lua
 BossNav_ProfsPanel.lua

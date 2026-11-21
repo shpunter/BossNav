@@ -10,12 +10,14 @@ local CheckTargetDead        = ns.CheckTargetDead
 local ClearLoot              = ns.ClearLoot
 local ClearProfs             = ns.ClearProfs
 local DB                     = ns.DB
+local DropOtherFactionBosses = ns.DropOtherFactionBosses
 local EnsureNameplates       = ns.EnsureNameplates
 local IsSecret               = ns.IsSecret
 local OnBossKilled           = ns.OnBossKilled
 local OnEncounterStart       = ns.OnEncounterStart
 local OnGroupRosterChanged   = ns.OnGroupRosterChanged
 local OnLootMessage          = ns.OnLootMessage
+local OnLootPopup            = ns.OnLootPopup
 local OnMoneyChanged         = ns.OnMoneyChanged
 local OnProfLootMessage      = ns.OnProfLootMessage
 local OnTradeSkillMessage    = ns.OnTradeSkillMessage
@@ -83,6 +85,7 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4, arg5)
         if arg1 == "BossNav" then
             DB()
             ApplySavedExtraBosses()
+            DropOtherFactionBosses()
             ApplySavedBossPins()
             ApplySavedPortraits()
             RestoreTravelTarget()
@@ -95,6 +98,7 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4, arg5)
             SetupWorldMapPins()   -- the map frame may not have existed at load time
             if DB().threat then EnsureNameplates() end   -- the threat window sees mobs through them
         end
+        DropOtherFactionBosses()   -- the faction may be unknown at ADDON_LOADED
         UpdateZone()
         OnMoneyChanged()   -- sets the purse baseline after a load or zone change
     elseif event == "GROUP_ROSTER_UPDATE" then
@@ -135,7 +139,8 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4, arg5)
         pcall(OnEncounterStart)
         pcall(LearnEncounterPortraits)
     elseif event == "CHAT_MSG_LOOT" then
-        pcall(OnLootMessage, arg1)
+        local ok, drop = pcall(OnLootMessage, arg1)
+        if ok and drop then pcall(OnLootPopup, drop) end
         pcall(OnProfLootMessage, arg1)
     elseif event == "CHAT_MSG_TRADESKILLS" then
         pcall(OnTradeSkillMessage, arg1)

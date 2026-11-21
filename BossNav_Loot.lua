@@ -265,7 +265,7 @@ local function OnLootMessage(msg)
                     e.kind = kind
                 end
                 RefreshIfShown()   -- the Loot tab, if open, shows the new roll at once
-                return
+                return it          -- the drop this line was about (the roll popup shows it)
             end
         end
     end

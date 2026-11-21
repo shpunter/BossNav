@@ -88,6 +88,18 @@ local function VisibleQuests()
     return list, cfg
 end
 
+-- True when you can pick the quest up right now: your faction, your class,
+-- your level reached, not done and not in your log. Ignores /bnav quest all.
+-- A check the client will not answer (faction, class, level) is skipped.
+local function CanTakeQuest(q)
+    local faction = PlayerFaction()
+    if faction and q.faction ~= "B" and q.faction:sub(1, 1) ~= faction:sub(1, 1) then return false end
+    if OtherClass(q, PlayerClass()) then return false end
+    local myLevel = PlayerLevel()
+    if myLevel and q.level and q.level > myLevel then return false end
+    return QuestStatus(q) == nil
+end
+
 -- Where a quest starts, in words.
 local function StartText(q)
     local who = q.giver or "unknown"
@@ -421,3 +433,4 @@ ns.QuestCommand = QuestCommand
 ns.SelectQuest = SelectQuest
 ns.RenderQuestTab = RenderQuestTab
 ns.VisibleQuests = VisibleQuests
+ns.CanTakeQuest = CanTakeQuest

@@ -86,6 +86,7 @@
 --   BossNav_Threat.lua     threat window: every mob in combat, who it attacks, your threat on it
 --   BossNav_Loot.lua       loot roll tracker (Need / Greed / Pass, rolls, winner)
 --   BossNav_LootPanel.lua  the Loot tab: item list and roll panel in the window
+--   BossNav_LootPopup.lua  popup that shows Need / Greed / Pass live while an item is rolled
 --   BossNav_Profs.lua      profession tracker (mines, herbs, skins, fish, crafts per member)
 --   BossNav_ProfsChat.lua  teammates' gathers and crafts read from loot / craft chat lines
 --   BossNav_ProfsPanel.lua the Profs tab: member list and profession table in the window

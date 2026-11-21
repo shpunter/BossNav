@@ -5,6 +5,7 @@ local DB                     = ns.DB
 local DUNGEONS               = ns.DUNGEONS
 local IsSecret               = ns.IsSecret
 local NamesMatch             = ns.NamesMatch
+local PlayerFaction          = ns.PlayerFaction
 local Norm                   = ns.Norm
 local Print                  = ns.Print
 local RefreshIfShown         = ns.RefreshIfShown
@@ -202,6 +203,24 @@ local function ApplySavedExtraBosses()
     end
 end
 
+-- Take the other faction's bosses out of every dungeon list, so the boss
+-- count and the "Killed n/m" lines are about the bosses you can fight.
+-- Runs once, as soon as the game says your faction.
+local factionApplied = false
+local function DropOtherFactionBosses()
+    if factionApplied then return end
+    local faction = PlayerFaction()
+    if not faction then return end
+    factionApplied = true
+    for _, cfg in ipairs(DUNGEONS) do
+        for i = #cfg.bosses, 1, -1 do
+            local side = cfg.bosses[i].faction
+            if side and side ~= faction then table.remove(cfg.bosses, i) end
+        end
+    end
+    if state.cfg and state.bossIdx > #state.cfg.bosses then state.bossIdx = math.max(1, #state.cfg.bosses) end
+end
+
 -- Called from the game's boss-kill events: mark the boss dead. When the
 -- game's name is not in the list: a near spelling of a listed boss, else the
 -- boss seen when the encounter started, else add it as a new extra boss.
@@ -234,5 +253,6 @@ end
 ns.AddBoss = AddBoss
 ns.ApplySavedExtraBosses = ApplySavedExtraBosses
 ns.CheckTargetDead = CheckTargetDead
+ns.DropOtherFactionBosses = DropOtherFactionBosses
 ns.OnBossKilled = OnBossKilled
 ns.RemoveBoss = RemoveBoss
