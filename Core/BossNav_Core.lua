@@ -83,6 +83,9 @@
 --   BossNav_Roster.lua     group roster: names, classes, class colours, group chat channel
 --   BossNav_Role.lua       is the player tanking: group role, spec, stance or Righteous Fury
 --   BossNav_ThreatPlates.lua threat label next to each enemy nameplate health bar
+--   BossNav_ClassColor.lua   paints a health bar in the class colour of the player it shows
+--   BossNav_ClassPlates.lua  that colour on nameplates and party / raid blocks
+--   BossNav_ClassFrames.lua  that colour on target, target of target and party frames
 --   BossNav_Threat.lua     threat window: every mob in combat, who it attacks, your threat on it
 --   BossNav_Loot.lua       loot roll tracker (Need / Greed / Pass, rolls, winner)
 --   BossNav_LootPanel.lua  the Loot tab: item list and roll panel in the window

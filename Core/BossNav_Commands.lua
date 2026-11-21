@@ -34,6 +34,7 @@ local SkullCommand           = ns.SkullCommand
 local PortraitCommand        = ns.PortraitCommand
 local TRAVEL                 = ns.TRAVEL
 local ThreatCommand          = ns.ThreatCommand
+local ToggleClassColors      = ns.ToggleClassColors
 local TouchProgress          = ns.TouchProgress
 local TravelMode             = ns.TravelMode
 local UpdateHUDVisibility    = ns.UpdateHUDVisibility
@@ -330,6 +331,7 @@ local function ShowHelp()
     Print("  /bnav threat tank     tank mode: auto (found from role, stance or Righteous Fury) -> always on -> off")
     Print("  /bnav threat alert    tank mode: warning and sound when a mob turns from you to someone else (on/off)")
     Print("  /bnav threat debug   print the raw threat values the game gives for each mob in view")
+    Print("  /bnav classplates     class colour on players' health bars: nameplates, target, target of target, party/raid (on/off)")
     Print("  /bnav minimap         toggle minimap icons (needs a position; this client hides it)")
     Print("  /bnav loot [n|all]    last 5 loot rolls (blue and better): who chose Need/Greed/Pass, their roll, the winner")
     Print("  /bnav quest [n]       Quests tab: the quests of this dungeon (outside: the one picked with /bnav go), who gives them and where")
@@ -537,6 +539,8 @@ SlashCmdList["BOSSNAV"] = function(msg)
         ns.QuestCommand(rest)
     elseif cmd == "threat" or cmd == "aggro" then
         ThreatCommand(rest)
+    elseif cmd == "classplates" or cmd == "classplate" or cmd == "classcolors" or cmd == "classcolor" then
+        Print("Class colours on player health bars " .. (ToggleClassColors() and "on" or "off") .. ".")
     elseif cmd == "pos" then
         Diagnostics()
     elseif cmd == "test" then
