@@ -30,6 +30,10 @@ Bosses\BossNav_Portraits.lua
 Core\BossNav_Roster.lua
 Core\BossNav_Role.lua
 Threat\BossNav_ThreatPlates.lua
+Plates\BossNav_ClassColor.lua
+Plates\BossNav_ClassPlates.lua
+Plates\BossNav_ClassFrames.lua
+Plates\BossNav_RangeFade.lua
 Threat\BossNav_AggroAlert.lua
 Threat\BossNav_Threat.lua
 Loot\BossNav_Loot.lua

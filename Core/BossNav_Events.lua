@@ -9,6 +9,8 @@ local LearnPortrait          = ns.LearnPortrait
 local CheckTargetDead        = ns.CheckTargetDead
 local ClearLoot              = ns.ClearLoot
 local ClearProfs             = ns.ClearProfs
+local ColorPlate             = ns.ColorPlate
+local ColorUnitFrames        = ns.ColorUnitFrames
 local DB                     = ns.DB
 local DropOtherFactionBosses = ns.DropOtherFactionBosses
 local EnsureNameplates       = ns.EnsureNameplates
@@ -63,7 +65,10 @@ events:RegisterEvent("GROUP_ROSTER_UPDATE")
 events:RegisterEvent("PLAYER_TARGET_CHANGED")
 events:RegisterEvent("UNIT_HEALTH")
 -- Auto skull mark: a boss becomes visible through its nameplate, your target, or the encounter.
+-- Class plates: a player's nameplate gets its class colour when it appears.
 events:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+-- Class frames: the target of your target changed (target / group changes use the events above).
+events:RegisterEvent("UNIT_TARGET")
 events:RegisterEvent("ENCOUNTER_START")
 events:RegisterEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT")
 -- Loot roll tracker: the game's own "X has selected Need for: [item]" chat lines.
@@ -97,12 +102,16 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4, arg5)
             if C_Timer and C_Timer.After then C_Timer.After(3, CheckLeftGroup) else CheckLeftGroup() end
             SetupWorldMapPins()   -- the map frame may not have existed at load time
             if DB().threat then EnsureNameplates() end   -- the threat window sees mobs through them
+            ColorUnitFrames()
         end
         DropOtherFactionBosses()   -- the faction may be unknown at ADDON_LOADED
         UpdateZone()
         OnMoneyChanged()   -- sets the purse baseline after a load or zone change
     elseif event == "GROUP_ROSTER_UPDATE" then
         CheckLeftGroup()
+        ColorUnitFrames()
+    elseif event == "UNIT_TARGET" then
+        if arg1 == "target" then ColorUnitFrames() end
     elseif event == "ZONE_CHANGED" or event == "ZONE_CHANGED_INDOORS" then
         if state.cfg and state.cfg.floorBySubzone and not state.floorOverride and not state.autoFloor then
             RefreshIfShown()
@@ -125,12 +134,14 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4, arg5)
     elseif event == "PLAYER_TARGET_CHANGED" or (event == "UNIT_HEALTH" and arg1 == "target") then
         pcall(CheckTargetDead)
         if event == "PLAYER_TARGET_CHANGED" then
+            ColorUnitFrames()
             pcall(TryMarkUnit, "target")
             pcall(LearnPortrait, "target")
         end
     elseif event == "NAME_PLATE_UNIT_ADDED" then
         pcall(TryMarkUnit, arg1)
         pcall(LearnPortrait, arg1)
+        pcall(ColorPlate, arg1)
     elseif event == "ENCOUNTER_START" then
         -- encounterID, encounterName, difficultyID, groupSize
         pcall(OnEncounterStart, arg2)
