@@ -368,7 +368,9 @@ local function ShowHelp()
     Print("  /bnav items next|prev|down|up  walk or page the item list (the Select Next / Previous Boss and Scroll keys do it too)")
     Print("  /bnav items all       drop the boss / trash filter: all the dungeon's loot ([show all] in the Items header)")
     Print("  /bnav items trash     loot of trash, rares and mini-bosses (the Trash row under the bosses)")
-    Print("  /bnav class name      tick / untick a class in the item filter under the map (all | none | mine); saved")
+    Print("  /bnav class name      tick / untick a class in the item filters under the map (all | none | mine); saved")
+    Print("  /bnav gear | weapon | wield name   the same for gear (helm, boots, ring...), weapon types (axe, staff...), wield (one-hand, two-hand...)")
+    Print("  /bnav filters [reset] list the item filters, or tick everything again")
     Print("  /bnav prof [n]        Profs tab: how often each member mined, skinned, gathered, fished or crafted; n lists member n's spells")
     Print("  /bnav prof post       post the profession counts to party/raid chat (/bnav prof list prints them to you)")
     Print("  /bnav prof clear      forget the profession counts (also done when you leave the group)")
@@ -566,7 +568,15 @@ SlashCmdList["BOSSNAV"] = function(msg)
         if not mapFrame:IsShown() then mapFrame:Show() end
         ns.ItemsCommand(rest)
     elseif cmd == "class" or cmd == "classes" then
-        ns.ClassCommand(rest)
+        ns.FilterCommand("class", rest)
+    elseif cmd == "gear" or cmd == "slot" or cmd == "slots" then
+        ns.FilterCommand("slot", rest)
+    elseif cmd == "weapon" or cmd == "weapons" then
+        ns.FilterCommand("weapon", rest)
+    elseif cmd == "wield" or cmd == "hand" or cmd == "hands" then
+        ns.FilterCommand("hand", rest)
+    elseif cmd == "filter" or cmd == "filters" then
+        ns.FiltersCommand(rest)
     elseif cmd == "threat" or cmd == "aggro" then
         ThreatCommand(rest)
     elseif cmd == "classplates" or cmd == "classplate" or cmd == "classcolors" or cmd == "classcolor" then

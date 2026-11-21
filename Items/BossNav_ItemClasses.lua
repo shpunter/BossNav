@@ -55,13 +55,14 @@ local function Plain(v)
     return v
 end
 
--- item class and subclass from the client's own item table (no server trip)
+-- item class, subclass and equip slot ("INVTYPE_HEAD"...) from the client's
+-- own item table (no server trip)
 local function ItemKind(id)
     local get = (C_Item and C_Item.GetItemInfoInstant) or GetItemInfoInstant
     if not get then return nil end
-    local ok, _, _, _, _, _, classID, subID = pcall(get, id)
+    local ok, _, _, _, equipLoc, _, classID, subID = pcall(get, id)
     if not ok then return nil end
-    return Plain(classID), Plain(subID)
+    return Plain(classID), Plain(subID), Plain(equipLoc)
 end
 
 local function ClassCanUse(class, classID, subID)
@@ -119,6 +120,14 @@ local function ClassFilterKey()
     return table.concat(t, ",")
 end
 
+-- true when fn(class) holds for at least one ticked class
+local function AnyTickedClass(fn)
+    for _, c in ipairs(CLASSES) do
+        if ClassTicked(c) and fn(c) then return true end
+    end
+    return false
+end
+
 -- true when at least one ticked class can use the item
 local function ItemForTickedClasses(id)
     if TickedCount() == #CLASSES then return true end
@@ -155,6 +164,8 @@ local function FindClass(word)
 end
 
 -- shared with the other BossNav files
+ns.AnyTickedClass = AnyTickedClass
+ns.ClassCanUse = ClassCanUse
 ns.ITEM_CLASSES = CLASSES
 ns.ClassFilterKey = ClassFilterKey
 ns.ClassHex = ClassHex
@@ -162,6 +173,7 @@ ns.ClassName = ClassName
 ns.ClassTicked = ClassTicked
 ns.FindClass = FindClass
 ns.ItemForTickedClasses = ItemForTickedClasses
+ns.ItemKind = ItemKind
 ns.OnlyMyClass = OnlyMyClass
 ns.SetAllClasses = SetAllClasses
 ns.SetClassTicked = SetClassTicked

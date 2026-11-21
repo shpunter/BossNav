@@ -31,9 +31,9 @@ local state                  = ns.state
 local statusText             = ns.statusText
 
 -- taller than the other lists: room between items, and the rounded box of
--- the selected row clears the square icon (17 rows fill the column)
+-- the selected row clears the square icon
 local ROW_H = 28
-local MAX_ROWS = 17
+local MAX_ROWS = 22         -- 22 x 28 px fits the column (taller since the item filters)
 local ICON = ROW_H - 8     -- 4 px above and below
 local TAG_W = 96           -- "who drops it" column at a row's right end
 local BIG_ICON = 52
@@ -130,6 +130,38 @@ local function GetItemRow(i)
     return b
 end
 
+-- An empty list says why, right in the column: nothing dropped there, or
+-- the filters under the map hide all of it (with a button to undo them).
+local emptyNote = itemCol:CreateFontString(nil, "OVERLAY", "GameFontDisable")
+emptyNote:SetPoint("TOPLEFT", itemAnchor, "TOPLEFT", 10, -8)
+emptyNote:SetPoint("RIGHT", itemCol, "RIGHT", -10, 0)
+emptyNote:SetJustifyH("LEFT")
+emptyNote:Hide()
+local resetBtn = CreateFrame("Button", nil, itemCol)
+resetBtn:SetSize(110, 20)
+resetBtn:SetPoint("TOPLEFT", emptyNote, "BOTTOMLEFT", -2, -6)
+resetBtn.text = resetBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+resetBtn.text:SetPoint("LEFT")
+resetBtn.text:SetText("[reset filters]")
+resetBtn:SetScript("OnClick", function() ns.ResetItemFilters() end)
+resetBtn:Hide()
+
+local function ShowEmptyNote(n, cfg, boss)
+    if n > 0 then
+        emptyNote:Hide()
+        resetBtn:Hide()
+        return
+    end
+    if ns.FiltersActive() then
+        emptyNote:SetText("No items match the filters under the map.")
+        resetBtn:Show()
+    else
+        emptyNote:SetText(cfg and ("No known loot for " .. (boss or cfg.name) .. ".") or "No loot data.")
+        resetBtn:Hide()
+    end
+    emptyNote:Show()
+end
+
 local function HideRows(from)
     for i = from, #rows do rows[i]:Hide() end
 end
@@ -137,8 +169,13 @@ end
 --------------------------------------------------------------------------
 -- Item card over the map
 --------------------------------------------------------------------------
+-- It covers the map and runs on down to the item filters, over the
+-- navigation and help lines (they have nothing to say about an item), so a
+-- long tooltip and its comparison fit.
 local panel = CreateFrame("Frame", nil, canvas)
-panel:SetAllPoints()
+panel:SetPoint("TOPLEFT", canvas, "TOPLEFT", 0, 0)
+panel:SetPoint("RIGHT", canvas, "RIGHT", 0, 0)
+panel:SetPoint("BOTTOM", ns.filterPanel, "TOP", 0, 8)
 panel:SetFrameLevel(canvas:GetFrameLevel() + 6)   -- above the map tiles and pins
 local panelBg = panel:CreateTexture(nil, "BACKGROUND")
 panelBg:SetAllPoints()
@@ -187,7 +224,13 @@ local function ShowTip(id)
     tip:SetPoint("TOPLEFT", iconEdge, "BOTTOMLEFT", -4, -10)
     local ok = pcall(tip.SetItemByID, tip, id)
     if not ok then ok = pcall(tip.SetHyperlink, tip, "item:" .. id) end
-    if ok then tip:Show() else tip:Hide() end
+    if ok then
+        tip:Show()
+        ns.ShowItemCompare(tip, panel, id)   -- what you wear in that slot
+    else
+        tip:Hide()
+        ns.HideItemCompare()
+    end
 end
 
 local function SourceText(e, cfg)
@@ -226,6 +269,7 @@ end
 local function ShowEmpty(text)
     for _, r in ipairs({ iconEdge, bigIcon, title, source, facts }) do r:Hide() end
     tip:Hide()
+    ns.HideItemCompare()
     empty:SetText(text)
     empty:Show()
 end
@@ -238,11 +282,13 @@ local function RenderItemTab()
     if not (ns.InDungeonsSection and ns.InDungeonsSection()) then
         panel:Hide()
         tip:Hide()
+        ns.HideItemCompare()
         HideRows(1)
-        ns.HideClassBar()
+        ShowEmptyNote(1)
+        ns.HideFilterPanel()
         return false
     end
-    ns.ShowClassBar()
+    ns.ShowFilterPanel()
     local focused = (state.tab == "item")
 
     local list, cfg, boss = FilteredItems()
@@ -257,9 +303,7 @@ local function RenderItemTab()
 
     if focused then
         headerText:SetText("|cffffd100Items|r  |cff888888" .. (cfg and cfg.name or "every dungeon") .. "|r")
-        local ticked = ns.TickedCount()
-        local classNote = (ticked < #ns.ITEM_CLASSES)
-            and string.format("  |cff888888(%d of %d classes ticked below the map)|r", ticked, #ns.ITEM_CLASSES) or ""
+        local classNote = ns.FiltersActive() and "  |cff888888(some hidden by the filters under the map)|r" or ""
         statusText:SetText(string.format("%d item%s%s%s", n, n == 1 and "" or "s",
             boss and ("  |cff888888from|r " .. boss .. "  |cff888888([show all] or /bnav items all shows all the dungeon's loot)|r")
             or (cfg and "  |cff888888from every boss and trash (pick one in Bosses to filter)|r" or ""),
@@ -269,6 +313,7 @@ local function RenderItemTab()
     else
         panel:Hide()
         tip:Hide()
+        ns.HideItemCompare()
     end
 
     local shown = 0
@@ -290,10 +335,11 @@ local function RenderItemTab()
         r:Show()
     end
     HideRows(shown + 1)
+    ShowEmptyNote(n, cfg, boss)
 
     if not focused then return false end
-    if n == 0 and ns.TickedCount() < #ns.ITEM_CLASSES then
-        ShowEmpty("Nothing here for the classes ticked under the map.\nTick more classes, or /bnav class all.")
+    if n == 0 and ns.FiltersActive() then
+        ShowEmpty("Nothing here for the filters ticked under the map.\nTick more boxes, or /bnav filters reset.")
     elseif n == 0 then
         ShowEmpty(cfg and ("No known loot for " .. (boss or cfg.name) .. " in Forever Atlas.")
             or "No loot data.")

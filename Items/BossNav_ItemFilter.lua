@@ -8,6 +8,8 @@
 --            non-boss source instead: trash, rares, mini-bosses.
 --   classes  the class boxes under the map: an item stays when at least one
 --            ticked class can use it (BossNav_ItemClasses.lua).
+--   slot, weapon type, hand: the other boxes under the map
+--            (BossNav_ItemSlots.lua).
 -- More filters go here later: each is one more test in Passes().
 local ADDON, ns = ...
 -- from the files loaded before this one
@@ -15,6 +17,8 @@ local DUNGEONS               = ns.DUNGEONS
 local ClassFilterKey         = ns.ClassFilterKey
 local ITEM_SOURCES           = ns.ITEM_SOURCES
 local ItemForTickedClasses   = ns.ItemForTickedClasses
+local ItemForTickedSlots     = ns.ItemForTickedSlots
+local SlotFilterKey          = ns.SlotFilterKey
 local SelectedDungeon        = ns.SelectedDungeon
 local TravelMode             = ns.TravelMode
 local state                  = ns.state
@@ -95,7 +99,7 @@ local function AddDungeon(list, cfg, boss)
         if Passes(src, boss) then
             for i, id in ipairs(src.items) do
                 local chance = src.chance[i]
-                if ItemForTickedClasses(id) then
+                if ItemForTickedClasses(id) and ItemForTickedSlots(id) then
                     list[#list + 1] = {
                         id = id, boss = src.boss, dungeon = cfg.name, extra = src.extra,
                         chance = (chance and chance > 0) and chance or nil,
@@ -110,7 +114,7 @@ local cache = { key = nil, list = nil }
 local function FilteredItems()
     local cfg = ItemDungeon()
     local boss = ItemBoss()
-    local key = (cfg and cfg.name or "*") .. "|" .. (boss or "*") .. "|" .. ClassFilterKey()
+    local key = (cfg and cfg.name or "*") .. "|" .. (boss or "*") .. "|" .. ClassFilterKey() .. "|" .. SlotFilterKey()
     if cache.key == key then return cache.list, cfg, boss end
     local list = {}
     if cfg then

@@ -16,7 +16,10 @@ ns.renderedMapID = nil   -- uiMapID when native art is shown, else nil
 -- Map window
 --------------------------------------------------------------------------
 local mapFrame = CreateFrame("Frame", "BossNavMapFrame", UIParent)
-mapFrame:SetSize(12 + CANVAS_W + 10 + SIDEBAR_W + 12, CANVAS_H + 246)
+-- FILTER_H: room under the map for the item filters (BossNav_FilterPanel.lua)
+-- and for a tall item card with its comparison (BossNav_ItemsPanel.lua)
+local FILTER_H = 140
+mapFrame:SetSize(12 + CANVAS_W + 10 + SIDEBAR_W + 12, CANVAS_H + 246 + FILTER_H)
 mapFrame:SetPoint("CENTER")
 mapFrame:SetFrameStrata("HIGH")
 mapFrame:SetClampedToScreen(true)
@@ -67,7 +70,7 @@ helpText:SetText(HELP_BOSS)
 
 -- Sidebar boss list
 local sidebar = CreateFrame("Frame", nil, mapFrame)
-sidebar:SetSize(SIDEBAR_W, CANVAS_H + 184)   -- runs down to the window bottom so 20 tall rows fit under the tab rows
+sidebar:SetSize(SIDEBAR_W, CANVAS_H + 184 + FILTER_H)   -- runs down to the window bottom so 20 tall rows fit under the tab rows
 sidebar:SetPoint("TOPLEFT", canvas, "TOPRIGHT", 10, 0)
 local sidebarBg = sidebar:CreateTexture(nil, "BACKGROUND")
 sidebarBg:SetAllPoints()
@@ -84,7 +87,7 @@ local WIDE_W = NARROW_W + COL_GAP + BOSS_COL_W + COL_GAP + ITEM_COL_W
 
 local function NewColumn(width, leftOf)
     local col = CreateFrame("Frame", nil, mapFrame)
-    col:SetSize(width, CANVAS_H + 184)
+    col:SetSize(width, CANVAS_H + 184 + FILTER_H)
     col:SetPoint("TOPLEFT", leftOf, "TOPRIGHT", COL_GAP, 0)
     local colBg = col:CreateTexture(nil, "BACKGROUND")
     colBg:SetAllPoints()

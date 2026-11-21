@@ -51,9 +51,11 @@ Quests\BossNav_QuestsPanel.lua
 Quests\BossNav_QuestMapPins.lua
 Items\BossNav_ItemData.lua
 Items\BossNav_ItemClasses.lua
+Items\BossNav_ItemSlots.lua
 Items\BossNav_ItemFilter.lua
 Items\BossNav_ItemInfo.lua
-Items\BossNav_ClassBar.lua
+Items\BossNav_ItemCompare.lua
+Items\BossNav_FilterPanel.lua
 Items\BossNav_ItemsPanel.lua
 Core\BossNav_Zone.lua
 Core\BossNav_Commands.lua

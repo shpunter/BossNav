@@ -248,7 +248,9 @@ local function HeaderTexts()
     local cfg, killed = ColumnsDungeon()
     local bossText = "Bosses" .. (cfg and ("  " .. KillText(cfg, killed or {})) or "")
     local boss = ns.ItemBoss and ns.ItemBoss()
-    local itemText = "Items  |cff888888" .. (boss or (cfg and "all loot" or "every dungeon")) .. "|r"
+    local filtered = ns.FiltersActive and ns.FiltersActive()
+    local itemText = "Items  |cff888888" .. (boss or (cfg and "all loot" or "every dungeon"))
+        .. (filtered and ", filtered" or "") .. "|r"
     return {
         travel = Outside() and "Dungeons" or "Dungeons  |cff888888(you are inside)|r",
         boss = bossText,
