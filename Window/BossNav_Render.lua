@@ -114,7 +114,7 @@ local function DrawTrashRow(cfg, i, picked)
     r.travelIdx = nil
     r.trashCfg = cfg
     r:SetMapButton(false)
-    r.mark:SetText(picked and ns.SELECTED_MARK or "")
+    ns.SetRowActive(r, picked)
     r.mark:Show()
     SetBossIcon(r.icon, nil, false)
     r.icon:SetTexture(TRASH_ICON)
@@ -123,21 +123,26 @@ local function DrawTrashRow(cfg, i, picked)
     r:Show()
 end
 
--- The boss column (middle of the three Dungeons columns).
-local function DrawBossRows(cfg, bossIdx, killed)
+-- The boss column (middle of the three Dungeons columns). The highlighted
+-- row is the boss the Items column is filtered to - none after picking a
+-- dungeon, which lists all its loot. targetIdx (inside a dungeon only) is the
+-- boss the arrow leads to; its name is gold.
+local function DrawBossRows(cfg, targetIdx, killed)
     local trash = ns.TrashPicked and ns.TrashPicked(cfg)
+    local picked = ns.ItemBoss and ns.ItemBoss()
     for i, b in ipairs(cfg.bosses) do
         if i > MAX_ROWS then break end
         local r = GetBossRow(i)
         local dead = killed[b[1]]
-        local color = dead and "|cff777777" or ((i == bossIdx) and "|cffffd100" or "|cffffffff")
+        local active = (picked == b[1])
+        local color = dead and "|cff777777" or ((active or i == targetIdx) and "|cffffd100" or "|cffffffff")
         local tag = dead and " |cff777777[DEAD]|r" or ""
         if not b[2] then tag = tag .. " |cff666666(no pin)|r" end
         r.bossIdx = i
         r.travelIdx = nil
         r.trashCfg = nil
         r:SetMapButton(false)
-        r.mark:SetText((i == bossIdx and not trash) and ns.SELECTED_MARK or "")
+        ns.SetRowActive(r, active)
         r.mark:Show()
         SetBossIcon(r.icon, b[1], dead)
         r.text:SetText(color .. b[1] .. "|r" .. tag)
@@ -151,6 +156,7 @@ local function DrawBossRows(cfg, bossIdx, killed)
         last:SetMapButton(false)
         last.icon:Hide()
         last.mark:Hide()
+        ns.SetRowActive(last, false)
         last.text:SetText("|cff888888... and " .. (#cfg.bosses - MAX_ROWS + 1) .. " more|r")
     elseif ns.HasTrash and ns.HasTrash(cfg) and #cfg.bosses < MAX_ROWS then
         DrawTrashRow(cfg, #cfg.bosses + 1, trash)
@@ -164,8 +170,10 @@ local function DrawBossColumn()
         if state.cfg then DrawBossRows(state.cfg, state.bossIdx, state.killed) end
         return
     end
-    local cfg, idx = ns.PreviewState and ns.PreviewState()
-    if cfg then DrawBossRows(cfg, idx, ns.SavedKilled(cfg)) end
+    if not ns.PreviewState then return end
+    -- outside there is no arrow target among the bosses
+    local cfg = ns.PreviewState()
+    if cfg then DrawBossRows(cfg, nil, ns.SavedKilled(cfg)) end
 end
 
 --------------------------------------------------------------------------

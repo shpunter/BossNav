@@ -52,7 +52,9 @@ local function CyclePreviewBoss(step)
     local cfg = PreviewCfg()
     local n = cfg and #cfg.bosses or 0
     if n == 0 then return false end
-    local nxt = ns.StepBossColumn(cfg, previewIdx, step)
+    -- start from the boss the Items column is filtered to (none after a dungeon pick)
+    local cur = cfg.bosses[previewIdx] and ns.ItemBoss() == cfg.bosses[previewIdx][1] and previewIdx or nil
+    local nxt = ns.StepBossColumn(cfg, cur, step)
     if nxt == "trash" then
         ns.PickTrash(cfg)
         RefreshIfShown()

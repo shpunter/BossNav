@@ -19,7 +19,6 @@ local ItemQualityWord        = ns.ItemQualityWord
 local MARK_W                 = ns.MARK_W
 local NAME_FONT_SIZE         = ns.NAME_FONT_SIZE
 local Print                  = ns.Print
-local SELECTED_MARK          = ns.SELECTED_MARK
 local ITEM_COL_W             = ns.ITEM_COL_W
 local SetFontSize            = ns.SetFontSize
 local canvas                 = ns.canvas
@@ -31,9 +30,11 @@ local navText                = ns.navText
 local state                  = ns.state
 local statusText             = ns.statusText
 
-local ROW_H = 24
-local MAX_ROWS = 20
-local ICON = 20
+-- taller than the other lists: room between items, and the rounded box of
+-- the selected row clears the square icon (17 rows fill the column)
+local ROW_H = 28
+local MAX_ROWS = 17
+local ICON = ROW_H - 8     -- 4 px above and below
 local TAG_W = 96           -- "who drops it" column at a row's right end
 local BIG_ICON = 52
 
@@ -95,9 +96,7 @@ local function GetItemRow(i)
     local b = CreateFrame("Button", nil, itemCol)
     b:SetSize(ITEM_COL_W - 8, ROW_H)
     b:SetPoint("TOPLEFT", itemAnchor, "TOPLEFT", 4, -(i - 1) * ROW_H)
-    b.hl = b:CreateTexture(nil, "HIGHLIGHT")
-    b.hl:SetAllPoints()
-    b.hl:SetColorTexture(1, 0.82, 0, 0.15)
+    ns.AddRoundHover(b)   -- rounded mouse-over box
     b.mark = b:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     b.mark:SetPoint("LEFT", b, "LEFT", 6, 0)
     b.mark:SetWidth(MARK_W)
@@ -105,7 +104,7 @@ local function GetItemRow(i)
     SetFontSize(b.mark, NAME_FONT_SIZE)
     b.icon = b:CreateTexture(nil, "ARTWORK")
     b.icon:SetSize(ICON, ICON)
-    b.icon:SetPoint("LEFT", b, "LEFT", 4 + MARK_W + 4, 0)
+    b.icon:SetPoint("LEFT", b, "LEFT", MARK_W, 0)   -- 6 px left padding
     b.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)   -- trim the icon's own border
     b.tag = b:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     b.tag:SetPoint("RIGHT", b, "RIGHT", -8, 0)
@@ -240,8 +239,10 @@ local function RenderItemTab()
         panel:Hide()
         tip:Hide()
         HideRows(1)
+        ns.HideClassBar()
         return false
     end
+    ns.ShowClassBar()
     local focused = (state.tab == "item")
 
     local list, cfg, boss = FilteredItems()
@@ -256,9 +257,13 @@ local function RenderItemTab()
 
     if focused then
         headerText:SetText("|cffffd100Items|r  |cff888888" .. (cfg and cfg.name or "every dungeon") .. "|r")
-        statusText:SetText(string.format("%d item%s%s", n, n == 1 and "" or "s",
-            boss and ("  |cff888888from|r " .. boss .. "  |cff888888([all bosses] or /bnav items all shows every boss)|r")
-            or (cfg and "  |cff888888from every boss (pick one in Bosses to filter)|r" or "")))
+        local ticked = ns.TickedCount()
+        local classNote = (ticked < #ns.ITEM_CLASSES)
+            and string.format("  |cff888888(%d of %d classes ticked below the map)|r", ticked, #ns.ITEM_CLASSES) or ""
+        statusText:SetText(string.format("%d item%s%s%s", n, n == 1 and "" or "s",
+            boss and ("  |cff888888from|r " .. boss .. "  |cff888888([show all] or /bnav items all shows all the dungeon's loot)|r")
+            or (cfg and "  |cff888888from every boss and trash (pick one in Bosses to filter)|r" or ""),
+            classNote))
         navText:SetText("")
         panel:Show()
     else
@@ -274,7 +279,9 @@ local function RenderItemTab()
         local r = GetItemRow(shown)
         r.itemIdx = i
         r.link = info.link
-        r.mark:SetText(i == state.itemIdx and SELECTED_MARK or "")
+        -- highlighted only while its card is shown (Items column focused);
+        -- with the map up nothing in this list is "open"
+        ns.SetRowActive(r, focused and i == state.itemIdx)
         r.icon:SetTexture(info.icon)
         r.text:SetText("|cff" .. ItemQualityHex(info.quality) .. info.name .. "|r")
         -- with one boss picked the column has nothing new to say: show the slot
@@ -285,7 +292,9 @@ local function RenderItemTab()
     HideRows(shown + 1)
 
     if not focused then return false end
-    if n == 0 then
+    if n == 0 and ns.TickedCount() < #ns.ITEM_CLASSES then
+        ShowEmpty("Nothing here for the classes ticked under the map.\nTick more classes, or /bnav class all.")
+    elseif n == 0 then
         ShowEmpty(cfg and ("No known loot for " .. (boss or cfg.name) .. " in Forever Atlas.")
             or "No loot data.")
     else
@@ -302,7 +311,7 @@ local function ItemsCommand(rest)
     local n = tonumber(arg)
     if arg == "all" then
         ClearItemBoss()
-        Print("Items: every boss of the dungeon.")
+        Print("Items: all the dungeon's loot (bosses and trash).")
     elseif arg == "trash" then
         local cfg = ns.ItemDungeon()
         if cfg and ns.HasTrash(cfg) then

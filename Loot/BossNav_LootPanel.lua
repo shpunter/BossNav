@@ -85,9 +85,7 @@ local function GetLootRow(i)
         local b = CreateFrame("Button", nil, sidebar)
         b:SetSize(SIDEBAR_W - 8, ROW_H)
         b:SetPoint("TOPLEFT", listAnchor, "TOPLEFT", 4, -(i - 1) * ROW_H)
-        b.hl = b:CreateTexture(nil, "HIGHLIGHT")
-        b.hl:SetAllPoints()
-        b.hl:SetColorTexture(1, 0.82, 0, 0.15)
+        ns.AddRoundHover(b)   -- rounded mouse-over box
         b.num = b:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         b.num:SetPoint("LEFT", b, "LEFT", 4, 0)
         b.num:SetWidth(22)
@@ -108,8 +106,8 @@ local function GetLootRow(i)
             end
         end)
         -- hovering a row previews that item; leaving goes back to the selected one
-        b:SetScript("OnEnter", function(self) ShowLinkTip(self.link) end)
-        b:SetScript("OnLeave", function() ShowLinkTip(selectedLink) end)
+        b:HookScript("OnEnter", function(self) ShowLinkTip(self.link) end)   -- keeps the hover box
+        b:HookScript("OnLeave", function() ShowLinkTip(selectedLink) end)
         lootRows[i] = b
     end
     return lootRows[i]

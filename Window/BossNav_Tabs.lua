@@ -215,13 +215,14 @@ local viewHint = itemCol:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall"
 viewHint:SetPoint("TOPRIGHT", itemCol, "TOPRIGHT", -6, HEAD_Y - 4)
 viewHint:SetJustifyH("RIGHT")
 
--- "all bosses" button in the Items header while a boss filter is on
+-- "show all" button in the Items header while a boss or Trash filter is on:
+-- drops the filter, back to all the dungeon's loot (bosses and trash)
 local allBtn = CreateFrame("Button", nil, itemHeader)
 allBtn:SetSize(64, HEAD_H)
 allBtn:SetFrameLevel(itemHeader:GetFrameLevel() + 2)
 allBtn.text = allBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 allBtn.text:SetPoint("CENTER")
-allBtn.text:SetText("[all bosses]")
+allBtn.text:SetText("[show all]")
 allBtn:SetScript("OnClick", function()
     if ns.ClearItemBoss then ns.ClearItemBoss() end
     BossNav_RefreshMap()
@@ -247,7 +248,7 @@ local function HeaderTexts()
     local cfg, killed = ColumnsDungeon()
     local bossText = "Bosses" .. (cfg and ("  " .. KillText(cfg, killed or {})) or "")
     local boss = ns.ItemBoss and ns.ItemBoss()
-    local itemText = "Items  |cff888888" .. (boss or (cfg and "all bosses" or "every dungeon")) .. "|r"
+    local itemText = "Items  |cff888888" .. (boss or (cfg and "all loot" or "every dungeon")) .. "|r"
     return {
         travel = Outside() and "Dungeons" or "Dungeons  |cff888888(you are inside)|r",
         boss = bossText,

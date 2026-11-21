@@ -6,11 +6,15 @@
 --            dungeon drops it; /bnav items all drops it by hand. The Trash
 --            row under the bosses (or /bnav items trash) picks every
 --            non-boss source instead: trash, rares, mini-bosses.
+--   classes  the class boxes under the map: an item stays when at least one
+--            ticked class can use it (BossNav_ItemClasses.lua).
 -- More filters go here later: each is one more test in Passes().
 local ADDON, ns = ...
 -- from the files loaded before this one
 local DUNGEONS               = ns.DUNGEONS
+local ClassFilterKey         = ns.ClassFilterKey
 local ITEM_SOURCES           = ns.ITEM_SOURCES
+local ItemForTickedClasses   = ns.ItemForTickedClasses
 local SelectedDungeon        = ns.SelectedDungeon
 local TravelMode             = ns.TravelMode
 local state                  = ns.state
@@ -65,12 +69,13 @@ local function PickTrash(cfg)
 end
 
 -- Where a Next / Previous key press lands in the Bosses column: a boss index,
--- or "trash" for the Trash row after the last boss. idx is the current boss.
+-- or "trash" for the Trash row after the last boss. idx is the current boss;
+-- nil when none is picked, so Next lands on the first row, Previous on the last.
 local function StepBossColumn(cfg, idx, step)
     local n = #cfg.bosses
     local slots = n + (HasTrash(cfg) and 1 or 0)
     if slots == 0 then return nil end
-    local pos = TrashPicked(cfg) and (n + 1) or (idx or 1)
+    local pos = TrashPicked(cfg) and (n + 1) or idx or ((step > 0) and 0 or (slots + 1))
     local nxt = ((pos - 1 + step) % slots) + 1
     if nxt > n then return "trash" end
     return nxt
@@ -90,10 +95,12 @@ local function AddDungeon(list, cfg, boss)
         if Passes(src, boss) then
             for i, id in ipairs(src.items) do
                 local chance = src.chance[i]
-                list[#list + 1] = {
-                    id = id, boss = src.boss, dungeon = cfg.name, extra = src.extra,
-                    chance = (chance and chance > 0) and chance or nil,
-                }
+                if ItemForTickedClasses(id) then
+                    list[#list + 1] = {
+                        id = id, boss = src.boss, dungeon = cfg.name, extra = src.extra,
+                        chance = (chance and chance > 0) and chance or nil,
+                    }
+                end
             end
         end
     end
@@ -103,7 +110,7 @@ local cache = { key = nil, list = nil }
 local function FilteredItems()
     local cfg = ItemDungeon()
     local boss = ItemBoss()
-    local key = (cfg and cfg.name or "*") .. "|" .. (boss or "*")
+    local key = (cfg and cfg.name or "*") .. "|" .. (boss or "*") .. "|" .. ClassFilterKey()
     if cache.key == key then return cache.list, cfg, boss end
     local list = {}
     if cfg then

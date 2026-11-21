@@ -15,7 +15,6 @@ local QuestLevelColor        = ns.QuestLevelColor
 local QuestLevelRGB          = ns.QuestLevelRGB
 local QuestStatus            = ns.QuestStatus
 local QUEST_STATUS_WORD      = ns.QUEST_STATUS_WORD
-local SELECTED_MARK          = ns.SELECTED_MARK
 local listAnchor             = ns.listAnchor
 local SIDEBAR_W              = ns.SIDEBAR_W
 local SelectedDungeon        = ns.SelectedDungeon
@@ -173,9 +172,7 @@ local function GetQuestRow(i)
         local b = CreateFrame("Button", nil, sidebar)
         b:SetSize(SIDEBAR_W - 8, ROW_H)
         b:SetPoint("TOPLEFT", listAnchor, "TOPLEFT", 4, -(i - 1) * ROW_H)
-        b.hl = b:CreateTexture(nil, "HIGHLIGHT")
-        b.hl:SetAllPoints()
-        b.hl:SetColorTexture(1, 0.82, 0, 0.15)
+        ns.AddRoundHover(b)   -- rounded mouse-over box
         -- "Show on the map" button at the right end of the row
         local m = CreateFrame("Button", nil, b)
         m:SetSize(18, 18)
@@ -205,8 +202,8 @@ local function GetQuestRow(i)
         b.mark:SetWordWrap(false)
         SetFontSize(b.mark, NAME_FONT_SIZE)
         b.text = b:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        b.text:SetPoint("LEFT", b, "LEFT", 4 + MARK_W + 4, 0)
-        b.text:SetWidth(SIDEBAR_W - 8 - (4 + MARK_W + 4) - 24)
+        b.text:SetPoint("LEFT", b, "LEFT", MARK_W, 0)   -- 6 px left padding
+        b.text:SetWidth(SIDEBAR_W - 8 - MARK_W - 24)
         b.text:SetJustifyH("LEFT")
         b.text:SetWordWrap(false)
         -- Line through a done / in-log quest (font strings cannot strike through)
@@ -323,10 +320,10 @@ local function RenderQuestTab()
         shown = shown + 1
         local r = GetQuestRow(shown)
         r.questIdx = i
-        -- selected like a dungeon row: the ">" marker, colours unchanged
+        -- selected like a dungeon row: the gold band, colours unchanged
         -- only while a quest (not the dungeon) is the selection
         local questSel = ns.QuestSelected and ns.QuestSelected()
-        r.mark:SetText((questSel and i == state.questIdx) and SELECTED_MARK or "")
+        ns.SetRowActive(r, questSel and i == state.questIdx)
         -- level and name coloured like the dungeon list: red / grey / green;
         -- a done or in-log quest is crossed out and tagged instead of the place
         local status = QuestStatus(q)

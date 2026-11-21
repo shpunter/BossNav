@@ -146,11 +146,65 @@ end
 local bossRows = {}
 local MAX_ROWS = 20
 local ROW_H = 24
-local ICON_SIZE = 22
+-- Row padding, as in CSS: the icon sits PAD_X from the row's left edge and
+-- PAD_Y from its top and bottom (so it is ROW_H - 2 * PAD_Y tall).
+local PAD_X, PAD_Y = 6, 4
+local ICON_SIZE = ROW_H - 2 * PAD_Y
 local NAME_FONT_SIZE = 14
-local MARK_W = 12   -- width of the ">" selection marker column
--- The marker every sidebar list puts in front of its selected row
-local SELECTED_MARK = "|cffffd100>|r"
+local MARK_W = PAD_X   -- the old ">" marker column, now just the left padding
+
+-- The selected row of a list, styled like the active item of a web page menu:
+-- a soft gold box with rounded corners and a thin gold outline. The rounding
+-- comes from the game's tooltip border art. Works on any list row (the box is
+-- made on first use) and clears the old ">" marker.
+local ACTIVE_BACKDROP = {
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    edgeSize = 12,
+}
+-- A gold box with rounded corners behind a row; fillA / edgeA: how strong
+-- the fill and the outline are.
+local function NewRoundBox(r, fillA, edgeA)
+    local box = CreateFrame("Frame", nil, r, BackdropTemplateMixin and "BackdropTemplate" or nil)
+    box:SetAllPoints()
+    -- under the row's icon and text (a child frame is drawn above them otherwise)
+    box:SetFrameLevel(math.max(0, r:GetFrameLevel() - 1))
+    -- The gold fill, kept inside the rounded corners. It is drawn by the row
+    -- itself (bottom layer, under the icon and text), not by the box: the box
+    -- sits one level down, level with the column's dark background, and the
+    -- game may draw that background over anything of the box but its outline.
+    local fill = r:CreateTexture(nil, "BACKGROUND")
+    fill:SetPoint("TOPLEFT", r, "TOPLEFT", 3, -3)
+    fill:SetPoint("BOTTOMRIGHT", r, "BOTTOMRIGHT", -3, 3)
+    fill:SetColorTexture(1, 0.82, 0, fillA)
+    fill:Hide()
+    box.fill = fill
+    if box.SetBackdrop then
+        box:SetBackdrop(ACTIVE_BACKDROP)
+        box:SetBackdropBorderColor(1, 0.82, 0, edgeA)
+    end
+    box:Hide()
+    return box
+end
+
+-- outline and fill together
+local function ShowRoundBox(box, on)
+    if on then box:Show() box.fill:Show() else box:Hide() box.fill:Hide() end
+end
+
+-- Mouse-over look of a list row: the same rounded box, fainter than the
+-- selected one. Replaces the square highlight a row used to have.
+local function AddRoundHover(r)
+    r.hoverBg = NewRoundBox(r, 0.10, 0.35)
+    r:HookScript("OnEnter", function(self) ShowRoundBox(self.hoverBg, true) end)
+    r:HookScript("OnLeave", function(self) ShowRoundBox(self.hoverBg, false) end)
+    r:HookScript("OnHide", function(self) ShowRoundBox(self.hoverBg, false) end)
+end
+
+local function SetRowActive(r, on)
+    if on and not r.activeBg then r.activeBg = NewRoundBox(r, 0.32, 0.95) end
+    if r.activeBg then ShowRoundBox(r.activeBg, on and true or false) end
+    if r.mark and r.mark.SetText then r.mark:SetText("") end
+end
 
 -- Bump a font string to a given point size, keeping its face and outline.
 local function SetFontSize(fs, size)
@@ -163,9 +217,7 @@ local function NewRow(col, anchor, colW, i)
     local b = CreateFrame("Button", nil, col)
     b:SetSize(colW - 8, ROW_H)
     b:SetPoint("TOPLEFT", anchor, "TOPLEFT", 4, -(i - 1) * ROW_H)
-    b.hl = b:CreateTexture(nil, "HIGHLIGHT")
-    b.hl:SetAllPoints()
-    b.hl:SetColorTexture(1, 0.82, 0, 0.15)
+    AddRoundHover(b)
     -- layout: ">" | portrait | name
     b.mark = b:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     -- pushed right so the ">" sits just in front of what it points at
@@ -176,11 +228,11 @@ local function NewRow(col, anchor, colW, i)
     SetFontSize(b.mark, NAME_FONT_SIZE)
     b.icon = b:CreateTexture(nil, "ARTWORK")
     b.icon:SetSize(ICON_SIZE, ICON_SIZE)
-    b.icon:SetPoint("LEFT", b, "LEFT", 4 + MARK_W + 4, 0)
+    b.icon:SetPoint("LEFT", b, "LEFT", PAD_X, 0)
     RoundIcon(b.icon)
     b.text = b:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    b.text:SetPoint("LEFT", b, "LEFT", 4 + MARK_W + 4 + ICON_SIZE + 6, 0)
-    local textW = colW - (4 + MARK_W + 4 + ICON_SIZE + 6) - 8
+    b.text:SetPoint("LEFT", b, "LEFT", PAD_X + ICON_SIZE + 6, 0)
+    local textW = colW - 8 - (PAD_X + ICON_SIZE + 6) - PAD_X
     b.text:SetWidth(textW)
     b.text:SetJustifyH("LEFT")
     b.text:SetWordWrap(false)
@@ -217,11 +269,12 @@ local function NewRow(col, anchor, colW, i)
             self.text:SetWidth(textW)
         end
     end
-    -- picks the dungeon or boss and gives its column the focus
+    -- picks the dungeon (focus unchanged) or the boss (Bosses column focused)
     b:SetScript("OnClick", function(self)
         if self.travelIdx then
+            -- only a filter for the Bosses and Items columns: the map area
+            -- stays as it is (the map button on the row shows the map)
             BossNav_SelectDungeon(self.travelIdx)
-            if ns.SetTab then ns.SetTab("travel") end
         elseif self.bossIdx then
             BossNav_SelectBoss(self.bossIdx)
             if ns.SetTab then ns.SetTab("boss") end
@@ -387,7 +440,8 @@ ns.NAME_FONT_SIZE = NAME_FONT_SIZE
 ns.ROW_H = ROW_H
 ns.Place = Place
 ns.RoundIcon = RoundIcon
-ns.SELECTED_MARK = SELECTED_MARK
+ns.SetRowActive = SetRowActive
+ns.AddRoundHover = AddRoundHover
 ns.SetBossIcon = SetBossIcon
 ns.SetDrawRect = SetDrawRect
 ns.SetFontSize = SetFontSize

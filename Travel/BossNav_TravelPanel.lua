@@ -192,7 +192,7 @@ local function DrawSelector()
         end
         r.bossIdx = nil
         r.travelIdx = i
-        r.mark:SetText(selected and ns.SELECTED_MARK or "")
+        ns.SetRowActive(r, selected)
         r.mark:Show()
         SetEntranceIcon(r.icon)
         local levelColor = LevelColor(e, myLevel)

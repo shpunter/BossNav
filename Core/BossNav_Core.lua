@@ -97,8 +97,10 @@
 --   BossNav_QuestsPanel.lua the Quests tab: a dungeon's quests and where to take them
 --   BossNav_QuestMapPins.lua quest givers of the selected dungeon on the game's world map
 --   BossNav_ItemData.lua   loot per dungeon boss, generated from Forever Atlas by Tools/export_items.js
+--   BossNav_ItemClasses.lua which class can use an item; the saved class ticks
 --   BossNav_ItemFilter.lua which items the Items column lists (the dungeon and boss you picked)
 --   BossNav_ItemInfo.lua   item name, icon, quality and level from the game client
+--   BossNav_ClassBar.lua   the class boxes under the map and /bnav class
 --   BossNav_ItemsPanel.lua the Items column: item list with icons and an item card over the map
 --   BossNav_Zone.lua       zone changes
 --   BossNav_Commands.lua   keybind actions, slash commands, help
