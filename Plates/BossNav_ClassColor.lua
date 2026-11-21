@@ -9,8 +9,19 @@ local ADDON, ns = ...
 local DB                     = ns.DB
 local IsSecret               = ns.IsSecret
 
-local painted    = {}   -- bar -> { r, g, b, desaturated } the game had before painting
+local painted    = {}   -- bar -> { r, g, b, desaturated, texture, atlas } the game had before painting
 local refreshers = {}   -- functions that repaint every bar they look after
+
+-- a light grey bar made for tinting: the class colour shows at full brightness.
+-- (greying out the game's green bar art dimmed every colour, so mage, shaman
+-- and warlock all came out the same dull blue)
+local PAINT_TEXTURE = "Interface\\TargetingFrame\\UI-StatusBar"
+
+-- the game's warlock lavender sits too close to mage cyan on a thin bar;
+-- a deeper violet keeps the three blue-ish classes apart
+local OVERRIDES = {
+    WARLOCK = { r = 0.58, g = 0.30, b = 0.95 },
+}
 
 local function Enabled()
     return DB().classPlates ~= false
@@ -38,12 +49,13 @@ local function ClassColor(unit)
     classFile = okC and Plain(classFile)
     if type(classFile) ~= "string" then return nil end
     local c = (CUSTOM_CLASS_COLORS and CUSTOM_CLASS_COLORS[classFile])
+        or OVERRIDES[classFile]
         or (RAID_CLASS_COLORS and RAID_CLASS_COLORS[classFile])
     if not c then return nil end
     return c.r, c.g, c.b
 end
 
--- the bar's fill texture; desaturated so a green bar art takes the colour cleanly
+-- the bar's fill texture
 local function Fill(bar)
     local ok, t = pcall(bar.GetStatusBarTexture, bar)
     if ok and type(t) == "table" and t.SetDesaturated then return t end
@@ -61,9 +73,17 @@ local function Unpaint(bar)
     if type(cr) == "number" and type(cg) == "number" and type(cb) == "number" then
         r, g, b = cr, cg, cb
     end
-    pcall(bar.SetStatusBarColor, bar, r, g, b)
     local t = Fill(bar)
-    if t then pcall(t.SetDesaturated, t, o[4] and true or false) end
+    if t then
+        -- the game's own bar art back
+        if type(o[6]) == "string" and t.SetAtlas then
+            pcall(t.SetAtlas, t, o[6])
+        elseif o[5] ~= nil and t.SetTexture then
+            pcall(t.SetTexture, t, o[5])
+        end
+        pcall(t.SetDesaturated, t, o[4] and true or false)
+    end
+    pcall(bar.SetStatusBarColor, bar, r, g, b)
 end
 
 -- bar: a health StatusBar; unit: the unit it shows ("target", "party2", "nameplate5"...)
@@ -75,20 +95,33 @@ local function PaintBar(bar, unit)
     local t = Fill(bar)
     if not painted[bar] then
         local ok, or_, og, ob = pcall(bar.GetStatusBarColor, bar)
-        local desat = false
+        local desat, tex, atlas = false, nil, nil
         if t and t.IsDesaturated then
             local okD, d = pcall(t.IsDesaturated, t)
             desat = okD and Plain(d) == true
+        end
+        if t and t.GetAtlas then
+            local okA, a = pcall(t.GetAtlas, t)
+            a = okA and Plain(a)
+            if type(a) == "string" and a ~= "" then atlas = a end
+        end
+        if t and t.GetTexture then
+            local okT, x = pcall(t.GetTexture, t)
+            x = okT and Plain(x)
+            if type(x) == "string" or type(x) == "number" then tex = x end
         end
         painted[bar] = {
             ok and type(Plain(or_)) == "number" and or_ or 0,
             ok and type(Plain(og)) == "number" and og or 1,
             ok and type(Plain(ob)) == "number" and ob or 0,
-            desat,
+            desat, tex, atlas,
         }
     end
+    if t then
+        pcall(t.SetTexture, t, PAINT_TEXTURE)
+        pcall(t.SetDesaturated, t, false)
+    end
     pcall(bar.SetStatusBarColor, bar, r, g, b)
-    if t then pcall(t.SetDesaturated, t, true) end
 end
 
 -- each painter file hands in a function that repaints all of its bars
