@@ -59,7 +59,8 @@ events:RegisterEvent("PLAYER_MONEY")
 -- Travel list: dungeons above your level are red, so a level-up redraws it.
 events:RegisterEvent("PLAYER_LEVEL_UP")
 -- Quests tab: taking, handing in or dropping a quest changes what is crossed out.
-for _, ev in ipairs({ "QUEST_ACCEPTED", "QUEST_TURNED_IN", "QUEST_REMOVED" }) do
+-- Objective progress (the "?" turns yellow when a quest is ready to hand in).
+for _, ev in ipairs({ "QUEST_ACCEPTED", "QUEST_TURNED_IN", "QUEST_REMOVED", "UNIT_QUEST_LOG_CHANGED" }) do
     pcall(events.RegisterEvent, events, ev)
 end
 events:RegisterEvent("GROUP_ROSTER_UPDATE")
@@ -125,6 +126,10 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4, arg5)
         if event == "QUEST_TURNED_IN" then OnQuestTurnedIn(arg1) end
         -- the quest log settles a moment after these events
         if C_Timer and C_Timer.After then C_Timer.After(0.5, RefreshIfShown) else RefreshIfShown() end
+    elseif event == "UNIT_QUEST_LOG_CHANGED" then
+        if arg1 == "player" and state.tab == "quest" then
+            if C_Timer and C_Timer.After then C_Timer.After(0.5, RefreshIfShown) else RefreshIfShown() end
+        end
     elseif event == "ENCOUNTER_END" then
         -- encounterID, encounterName, difficultyID, groupSize, success
         if not IsSecret(arg2) and not IsSecret(arg5) and type(arg2) == "string" and (arg5 == 1 or arg5 == true) then

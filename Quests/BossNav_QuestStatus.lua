@@ -4,6 +4,8 @@
 local ADDON, ns = ...
 -- from the files loaded before this one
 local IsSecret               = ns.IsSecret
+local QuestLogIndex          = ns.QuestLogIndex
+local QuestRealID            = ns.QuestRealID
 
 -- Quests handed in this session. The game can be a moment late flagging a
 -- quest complete, so the turn-in event is remembered here as well.
@@ -28,28 +30,19 @@ local function IsDone(id)
     return Ask({ QL.IsQuestFlaggedCompleted, IsQuestFlaggedCompleted }, id) == true
 end
 
--- In the log: the modern lookup by quest ID, else walk the classic log.
-local function IsActive(id)
-    local idx = Ask({ QL.GetLogIndexForQuestID }, id)
-    if type(idx) == "number" and idx > 0 then return true end
-    if Ask({ QL.IsOnQuest }, id) == true then return true end
-    if GetNumQuestLogEntries and GetQuestLogTitle then
-        local ok, n = pcall(GetNumQuestLogEntries)
-        if ok and type(n) == "number" then
-            for i = 1, n do
-                local ok2, _, _, _, isHeader, _, _, _, qid = pcall(GetQuestLogTitle, i)
-                if ok2 and not isHeader and qid == id then return true end
-            end
-        end
-    end
-    return false
+-- In the log: by quest ID, else by quest name (BossNav_QuestLog.lua).
+local function IsActive(q)
+    if Ask({ QL.IsOnQuest }, QuestRealID(q)) == true then return true end
+    return QuestLogIndex(q) ~= nil
 end
 
--- "done", "active" or nil for a quest row.
+-- "done", "active" or nil for a quest row. The log is checked first, so a
+-- name match can teach the real ID before the "done" check needs it.
 local function QuestStatus(q)
     if not (q and q.id) then return nil end
-    if IsDone(q.id) then return "done" end
-    if IsActive(q.id) then return "active" end
+    local active = IsActive(q)
+    if IsDone(QuestRealID(q)) or IsDone(q.id) then return "done" end
+    if active then return "active" end
     return nil
 end
 

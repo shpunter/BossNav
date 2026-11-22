@@ -97,6 +97,7 @@
 --   Profs/BossNav_Profs.lua           profession tracker (mines, herbs, skins, fish, crafts per member)
 --   Profs/BossNav_ProfsChat.lua       teammates' gathers and crafts read from loot / craft chat lines
 --   Profs/BossNav_ProfsPanel.lua      the Profs tab: member list and profession table in the window
+--   Quests/BossNav_QuestLog.lua       finds a quest in your log by ID or by name; learns the game's real ID
 --   Quests/BossNav_QuestStatus.lua    whether you already did a quest or have it in your log
 --   Quests/BossNav_QuestText.lua      built-in quest text and rewards for the quests in BossNav_QuestData.lua
 --   Quests/BossNav_QuestLogInfo.lua   quest text and rewards read from your quest log when you have the quest

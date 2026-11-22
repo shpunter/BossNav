@@ -299,7 +299,7 @@ end
 
 -- The quest's text and rewards: your quest log first, then the table.
 local function QuestInfo(q)
-    local live = ReadQuestLog and ReadQuestLog(q.id)
+    local live = ReadQuestLog and ReadQuestLog(q)
     local known = QUEST_TEXT[q.id] or {}
     if not live then return known, false end
     -- the log may leave a part empty: fill it from the table

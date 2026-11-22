@@ -5,6 +5,8 @@
 local ADDON, ns = ...
 -- from the files loaded before this one
 local IsSecret               = ns.IsSecret
+local QuestLogIndex          = ns.QuestLogIndex
+local QuestRealID            = ns.QuestRealID
 
 local QL = C_QuestLog or {}
 
@@ -19,19 +21,6 @@ end
 local function Safe(fn, ...)
     if type(fn) ~= "function" then return nil end
     return Pass(pcall(fn, ...))
-end
-
--- Quest log line of a quest ID, or nil when it is not in the log.
-local function LogIndex(id)
-    local idx = Safe(QL.GetLogIndexForQuestID, id)
-    if type(idx) == "number" and idx > 0 then return idx end
-    local n = Safe(GetNumQuestLogEntries)
-    if type(n) ~= "number" then return nil end
-    for i = 1, n do
-        local _, _, _, isHeader, _, _, _, qid = Safe(GetQuestLogTitle, i)
-        if not isHeader and qid == id then return i end
-    end
-    return nil
 end
 
 local function ItemID(link)
@@ -58,14 +47,13 @@ end
 -- { d = description, o = objectives, c = choice items, r = items,
 --   m = money } for a quest in your log; nil when it is not there or the
 -- client will not say. Items here carry name and icon already.
-local function ReadQuestLog(id)
-    if not id then return nil end
-    local idx = LogIndex(id)
+local function ReadQuestLog(q)
+    local idx = QuestLogIndex(q)
     if not idx then return nil end
     -- the quest log answers about its selected line; select, read, put back
     local old = Safe(GetQuestLogSelection)
     if SelectQuestLogEntry then Safe(SelectQuestLogEntry, idx)
-    else Safe(QL.SetSelectedQuest, id) end
+    else Safe(QL.SetSelectedQuest, QuestRealID(q)) end
     local info = {}
     info.d, info.o = Safe(GetQuestLogQuestText, idx)
     if not info.d then info.d, info.o = Safe(GetQuestLogQuestText) end

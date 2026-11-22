@@ -237,6 +237,8 @@ local function ShowQuestOnWorldMap(idx)
     local list = VisibleQuests()
     local q = list[idx]
     if not q then ns.Print("No quest " .. tostring(idx) .. " in the list.") return end
+    -- a quest ready to hand in: whoever takes it back
+    if ns.QuestNavSpot then q = ns.QuestNavSpot(q) end
     if q.inside or not (q.zone and q.x and q.y) then
         ns.Print(q.name .. ": no spot on the world map (" .. (q.inside and "taken inside the dungeon" or "place unknown") .. ").")
         return

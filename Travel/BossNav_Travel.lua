@@ -442,8 +442,11 @@ local function UpdateTravelLive(skipRefresh)
     end
 
     local yards = math.sqrt(dxE * dxE + dyS * dyS)
-    -- At the quest giver: done, the arrow goes back to the dungeon (if any)
-    if entry.isQuest and leg.kind == "entrance" and yards < 10 then
+    -- At the quest giver: done, the arrow goes back to the dungeon (if any).
+    -- Only after you walked there: a giver picked while standing next to
+    -- it stays the target (else the pick would undo itself at once).
+    if entry.isQuest and yards >= 20 then entry.walking = true end
+    if entry.isQuest and entry.walking and leg.kind == "entrance" and yards < 10 then
         Print("Arrived at " .. entry.name .. "." .. (SelectedDungeon() and (" Back to " .. SelectedDungeon().name .. ".") or ""))
         ClearQuestTarget(true)
         return

@@ -42,6 +42,20 @@ local function FactionIcons(q, size)
     return a .. h
 end
 
+-- The game's quest-giver mark in front of a row: "!" not started yet,
+-- yellow "?" in your log and ready to hand in, nothing otherwise (in your
+-- log and not finished, or handed in).
+local function QuestIcon(status, ready)
+    if status == nil then return "Interface\\GossipFrame\\AvailableQuestIcon" end
+    if ready then return "Interface\\GossipFrame\\ActiveQuestIcon" end
+    return nil
+end
+
+-- Sidebar row columns, in pixels from the row's left edge (after MARK_W).
+local ICON_COL = { quest = 0, alliance = 18, horde = 33, text = 51 }
+local CREST_A = "Interface\\FriendsFrame\\PlusManz-Alliance"
+local CREST_H = "Interface\\FriendsFrame\\PlusManz-Horde"
+
 --------------------------------------------------------------------------
 -- Which quests to show
 --------------------------------------------------------------------------
@@ -127,6 +141,23 @@ local function TurninText(q)
     return q.turnin .. (q.tzone and (", " .. q.tzone) or "")
 end
 
+-- In your log with every objective done.
+local function IsReady(q)
+    return QuestStatus(q) == "active" and ns.QuestLogComplete ~= nil and ns.QuestLogComplete(q) == true
+end
+
+-- Where the arrow and the map button lead for a quest: the giver, or once
+-- the quest is ready to hand in, whoever takes it back (the giver when the
+-- data names no one else). Shaped like a quest row so the same code uses it.
+local function NavSpot(q)
+    if not (q.turnin and IsReady(q)) then return q end
+    return {
+        id = tostring(q.id) .. ":turnin", name = q.name, level = q.level,
+        giver = q.turnin, zone = q.tzone, x = q.tx, y = q.ty, inside = q.tinside,
+        handIn = true,
+    }
+end
+
 --------------------------------------------------------------------------
 -- Picking a quest: select it and lead the arrow to its giver
 --------------------------------------------------------------------------
@@ -140,7 +171,7 @@ local function NavigateToQuest(q)
     elseif q.inside and ns.SetQuestInside then
         -- the dungeon entrance wears the quest icon while this quest is picked
         ns.SetQuestInside(SelectedDungeon())
-        Print(q.name .. ": taken inside the dungeon"
+        Print(q.name .. (q.handIn and ": hand it in inside the dungeon" or ": taken inside the dungeon")
             .. (SelectedDungeon() and (", navigating to " .. SelectedDungeon().name .. ".") or "."))
     elseif (state.questTarget or state.questInside) and ns.ClearQuestTarget then
         ns.ClearQuestTarget(true)
@@ -155,7 +186,7 @@ local function SelectQuest(idx)
     local q = list[idx]
     if not q then return end
     state.questIdx = idx
-    NavigateToQuest(q)
+    NavigateToQuest(NavSpot(q))
     -- the quest is the selection now, even when its giver place is unknown
     if state.selKind ~= "quest" then
         state.selKind = "quest"
@@ -188,7 +219,7 @@ local function GetQuestRow(i)
         m:SetScript("OnEnter", function(self)
             if not GameTooltip then return end
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-            GameTooltip:AddLine("Show on the map", 1, 0.82, 0)
+            GameTooltip:AddLine(b.ready and "Show where to hand it in" or "Show on the map", 1, 0.82, 0)
             GameTooltip:Show()
         end)
         m:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
@@ -201,12 +232,25 @@ local function GetQuestRow(i)
         b.mark:SetJustifyH("RIGHT")
         b.mark:SetWordWrap(false)
         SetFontSize(b.mark, NAME_FONT_SIZE)
+        -- fixed icon columns, so the level starts at the same spot on every
+        -- row: "!" / "?", then the Alliance crest, then the Horde crest
+        local function Icon(x, size)
+            local t = b:CreateTexture(nil, "OVERLAY")
+            t:SetSize(size, size)
+            t:SetPoint("LEFT", b, "LEFT", MARK_W + x, 0)
+            return t
+        end
+        b.qicon = Icon(ICON_COL.quest, 16)
+        b.allianceIcon = Icon(ICON_COL.alliance, 14)
+        b.allianceIcon:SetTexture(CREST_A)
+        b.hordeIcon = Icon(ICON_COL.horde, 14)
+        b.hordeIcon:SetTexture(CREST_H)
         b.text = b:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        b.text:SetPoint("LEFT", b, "LEFT", MARK_W, 0)   -- 6 px left padding
-        b.text:SetWidth(SIDEBAR_W - 8 - MARK_W - 24)
+        b.text:SetPoint("LEFT", b, "LEFT", MARK_W + ICON_COL.text, 0)
+        b.text:SetWidth(SIDEBAR_W - 8 - MARK_W - ICON_COL.text - 24)
         b.text:SetJustifyH("LEFT")
         b.text:SetWordWrap(false)
-        -- Line through a done / in-log quest (font strings cannot strike through)
+        -- Line through a handed-in quest (font strings cannot strike through)
         b.strike = b:CreateTexture(nil, "OVERLAY", nil, 7)
         b.strike:SetHeight(1.5)
         b.strike:SetPoint("LEFT", b.text, "LEFT", 0, 0)
@@ -327,20 +371,32 @@ local function RenderQuestTab()
         -- level and name coloured like the dungeon list: red / grey / green;
         -- a done or in-log quest is crossed out and tagged instead of the place
         local status = QuestStatus(q)
-        -- the map button only when the giver has a spot on the world map
-        -- and the quest is still to be picked up (not done, not in the log)
-        if q.zone and q.x and not q.inside and not status then r.mapBtn:Show() else r.mapBtn:Hide() end
+        local ready = status == "active" and IsReady(q)
+        r.ready = ready
+        -- the map button while the quest is still to be picked up (the
+        -- giver) or ready to hand in (whoever takes it back), when that one
+        -- has a spot on the world map
+        local spot = NavSpot(q)
+        if (status == nil or ready) and spot.zone and spot.x and not spot.inside then
+            r.mapBtn:Show()
+        else
+            r.mapBtn:Hide()
+        end
         local lvlColor = QuestLevelColor(q, myLevel) or "|cff888888"
         local nameColor = QuestLevelColor(q, myLevel) or "|cffffffff"
-        local main = string.format("%s %s[%d]|r %s%s|r", FactionIcons(q, 14), lvlColor, q.level, nameColor, q.name)
-        local tag = status and QUEST_STATUS_WORD[status] or PlaceTag(q)
+        local qtex = QuestIcon(status, ready)
+        if qtex then r.qicon:SetTexture(qtex); r.qicon:Show() else r.qicon:Hide() end
+        r.allianceIcon:SetShown(q.faction ~= "H")
+        r.hordeIcon:SetShown(q.faction ~= "A")
+        local main = string.format("%s[%d]|r %s%s|r", lvlColor, q.level, nameColor, q.name)
+        local tag = ready and "ready to hand in" or (status and QUEST_STATUS_WORD[status]) or PlaceTag(q)
         r.text:SetText(main)
         local strikeW = math.min(r.text:GetStringWidth() or 0, r.text:GetWidth())
         r.text:SetText(main .. " |cff666666(" .. tag .. ")|r")
-        if status and strikeW > 0 then
+        -- only a handed-in quest is crossed out
+        if status == "done" and strikeW > 0 then
             r.strike:SetWidth(strikeW)
-            if status == "done" then r.strike:SetColorTexture(0.85, 0.85, 0.85, 0.9)
-            else r.strike:SetColorTexture(1.0, 0.82, 0.0, 0.9) end
+            r.strike:SetColorTexture(0.85, 0.85, 0.85, 0.9)
             r.strike:Show()
         else
             r.strike:Hide()
@@ -444,3 +500,4 @@ ns.SelectQuest = SelectQuest
 ns.RenderQuestTab = RenderQuestTab
 ns.VisibleQuests = VisibleQuests
 ns.CanTakeQuest = CanTakeQuest
+ns.QuestNavSpot = NavSpot
