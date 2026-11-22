@@ -1,5 +1,6 @@
--- The window outside a dungeon: your zone map with the entrance pin, and the
--- scrollable dungeon selector in the sidebar.
+-- The dungeon list (first of the three Dungeons columns, drawn on every
+-- Dungeons view, inside too) and, outside a dungeon while that column has
+-- the focus, your zone map with the entrance pin.
 local ADDON, ns = ...
 -- from the files loaded before this one
 local CurrentLeg             = ns.CurrentLeg
@@ -56,8 +57,17 @@ local function ClampScroll(first)
     return math.max(1, math.min(first, MaxFirst()))
 end
 
+-- Inside a dungeon: the row of the dungeon you are in.
+local function HereIdx()
+    if TravelMode() or not state.cfg then return nil end
+    for i, e in ipairs(TRAVEL) do
+        if e.cfg == state.cfg then return i end
+    end
+    return nil
+end
+
 local function KeepSelectionVisible()
-    local sel = state.travelIdx
+    local sel = HereIdx() or state.travelIdx
     if not sel then return end
     if sel < scrollFirst then
         scrollFirst = sel
@@ -75,7 +85,7 @@ end
 
 sidebar:EnableMouseWheel(true)
 sidebar:SetScript("OnMouseWheel", function(_, delta)
-    if TravelMode() and state.tab == "travel" then TravelScrollBy(-delta * 3) end
+    if ns.InDungeonsSection and ns.InDungeonsSection() then TravelScrollBy(-delta * 3) end
 end)
 
 -- Scrollbar on the right edge of the sidebar: a track and a thumb
@@ -165,6 +175,7 @@ end
 -- red above you, grey when outgrown, green when in range.
 local function DrawSelector()
     KeepSelectionVisible()
+    local here = HereIdx()
     local myLevel = PlayerLevel()
     local myFaction = PlayerFaction()
     for row = 1, MAX_ROWS do
@@ -173,10 +184,15 @@ local function DrawSelector()
         if not e then break end
         local r = GetRow(row)
         -- only while the dungeon (not a quest) is the selection
-        local selected = (i == state.travelIdx) and not (ns.QuestSelected and ns.QuestSelected())
+        local selected
+        if here then
+            selected = (i == here)
+        else
+            selected = (i == state.travelIdx) and not (ns.QuestSelected and ns.QuestSelected())
+        end
         r.bossIdx = nil
         r.travelIdx = i
-        r.mark:SetText(selected and ns.SELECTED_MARK or "")
+        ns.SetRowActive(r, selected)
         r.mark:Show()
         SetEntranceIcon(r.icon)
         local levelColor = LevelColor(e, myLevel)
@@ -185,6 +201,7 @@ local function DrawSelector()
         if e.faction and myFaction and e.faction ~= myFaction then
             tag = tag .. " |cff666666(" .. e.faction .. " city)|r"
         end
+        if i == here then tag = " |cffffd100(you are here)|r" end
         r.text:SetText(string.format("%s%s|r  %s%s|r%s", color, e.name, levelColor or "|cff888888", e.levels, tag))
         -- the map button only when the entrance has a spot on the world map
         r:SetMapButton(HasEntrance(e))
@@ -193,8 +210,9 @@ local function DrawSelector()
     DrawScrollbar()
 end
 
--- Draws the whole window in travel mode. Returns false inside a dungeon or
--- in preview mode so the boss view is drawn instead.
+-- Draws the map area in travel mode while the dungeon list has the focus.
+-- Returns false inside a dungeon or in preview mode so the boss view is
+-- drawn instead.
 local function RenderTravelTab()
     if not TravelMode() or state.tab ~= "travel" then return false end
 
@@ -226,7 +244,6 @@ local function RenderTravelTab()
         statusText:SetText("No dungeon picked. /bnav go picks the next one; /bnav go name or number picks one.")
     end
 
-    DrawSelector()
     helpText:SetText(HELP_TRAVEL)
     ShowRouteToggle()
     BossNav_UpdateLive(true)
@@ -234,6 +251,7 @@ local function RenderTravelTab()
 end
 
 -- shared with the other BossNav files
+ns.DrawDungeonColumn = DrawSelector
 ns.HideTravelWidgets = HideTravelWidgets
 ns.RenderTravelTab = RenderTravelTab
 ns.TravelScrollBy = TravelScrollBy

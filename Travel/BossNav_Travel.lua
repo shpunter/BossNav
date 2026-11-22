@@ -146,6 +146,8 @@ function BossNav_SelectDungeon(idx)
     local e = TRAVEL[idx]
     if not e then return end
     state.travelIdx = idx
+    -- a dungeon pick filters by dungeon only: no boss picked, all its loot
+    if ns.ClearItemBoss then ns.ClearItemBoss() end
     state.navFocus = "dungeon"
     state.selKind = "dungeon"
     DB().travel = { key = e.key }

@@ -1,12 +1,12 @@
--- The Bosses tab while you are outside every dungeon: the map, boss pins and
--- boss list of the dungeon picked on the Travel tab, so you can read up on a
--- dungeon before you walk in. Kills come from the saved progress of your
+-- The map area while you are outside every dungeon and the Bosses column has
+-- the focus: the map and boss pins of the dungeon picked in the dungeon list,
+-- so you can read up on a dungeon before you walk in. (The boss column itself
+-- is drawn by BossNav_Render.lua.) Kills come from the saved progress of your
 -- current run there, if it is still fresh.
 local ADDON, ns = ...
 -- from the files loaded before this one
 local DrawBossArt            = ns.DrawBossArt
 local DrawBossPins           = ns.DrawBossPins
-local DrawBossRows           = ns.DrawBossRows
 local DrawWaypoints          = ns.DrawWaypoints
 local FloorName              = ns.FloorName
 local RefreshIfShown         = ns.RefreshIfShown
@@ -26,7 +26,7 @@ local NO_VISITS = {}
 
 local previewIdx, previewKey = 1, nil
 
--- The dungeon this tab shows: the one picked on the Travel tab.
+-- The dungeon this shows: the one picked in the dungeon list.
 local function PreviewCfg()
     local e = SelectedDungeon()
     local cfg = e and e.cfg or nil
@@ -41,16 +41,26 @@ local function SelectPreviewBoss(idx)
     local cfg = PreviewCfg()
     if not cfg or not cfg.bosses[idx] then return false end
     previewIdx = idx
+    if ns.PickItemBoss then ns.PickItemBoss(cfg, cfg.bosses[idx][1]) end
     RefreshIfShown()
     return true
 end
 
--- step 1 / -1; false when there is no list to walk
+-- step 1 / -1; false when there is no list to walk. The Trash row after the
+-- last boss is one more stop.
 local function CyclePreviewBoss(step)
     local cfg = PreviewCfg()
     local n = cfg and #cfg.bosses or 0
     if n == 0 then return false end
-    return SelectPreviewBoss(((previewIdx - 1 + step) % n) + 1)
+    -- start from the boss the Items column is filtered to (none after a dungeon pick)
+    local cur = cfg.bosses[previewIdx] and ns.ItemBoss() == cfg.bosses[previewIdx][1] and previewIdx or nil
+    local nxt = ns.StepBossColumn(cfg, cur, step)
+    if nxt == "trash" then
+        ns.PickTrash(cfg)
+        RefreshIfShown()
+        return true
+    end
+    return SelectPreviewBoss(nxt)
 end
 
 -- Draws the whole window; false inside a dungeon or on another tab.
@@ -64,7 +74,7 @@ local function RenderBossPreview()
         headerText:SetText("|cffffd100Bosses|r")
         statusText:SetText("")
         navText:SetText("")
-        noArtText:SetText("Pick a dungeon on the Travel tab (or /bnav go name)\nand its bosses show up here.")
+        noArtText:SetText("Pick a dungeon in the Dungeons column (or /bnav go name)\nand its bosses show up here.")
         noArtText:Show()
         return true
     end
@@ -89,14 +99,19 @@ local function RenderBossPreview()
 
     DrawBossPins(cfg, floor, previewIdx, killed)
     DrawWaypoints(cfg, boss, floor, NO_VISITS)
-    DrawBossRows(cfg, previewIdx, killed)
 
-    navText:SetText("You are outside. The Travel tab leads you to the entrance.")
+    navText:SetText("You are outside. The arrow leads you to the entrance.")
     BossNav_UpdateLive(true)
     return true
 end
 
+-- The dungeon and boss the boss column shows while you are outside.
+local function PreviewState()
+    return PreviewCfg(), previewIdx
+end
+
 -- shared with the other BossNav files
 ns.CyclePreviewBoss = CyclePreviewBoss
+ns.PreviewState = PreviewState
 ns.RenderBossPreview = RenderBossPreview
 ns.SelectPreviewBoss = SelectPreviewBoss

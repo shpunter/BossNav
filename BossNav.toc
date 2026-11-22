@@ -1,6 +1,6 @@
 ## Interface: 16001
 ## Title: BossNav
-## Notes: Dungeon boss navigator: real dungeon map with boss pins, live position, direction HUD, kill tracking, auto skull mark on bosses, a loot roll tracker, a per-member profession tracker, dungeon quests with giver locations per faction and a travel arrow to any dungeon entrance
+## Notes: Dungeon boss navigator: real dungeon map with boss pins, live position, direction HUD, kill tracking, auto skull mark on bosses, a loot roll tracker, a per-member profession tracker, dungeon quests with giver locations per faction, the loot of every dungeon boss and a travel arrow to any dungeon entrance
 ## Version: 2.9
 ## SavedVariables: BossNavDB
 Core\BossNav_Core.lua
@@ -35,6 +35,7 @@ Plates\BossNav_ClassPlates.lua
 Plates\BossNav_ClassFrames.lua
 Plates\BossNav_RangeFade.lua
 Plates\BossNav_DrinkIcon.lua
+Plates\BossNav_PartyDistance.lua
 Threat\BossNav_AggroAlert.lua
 Threat\BossNav_Threat.lua
 Loot\BossNav_Loot.lua
@@ -49,6 +50,14 @@ Quests\BossNav_QuestLogInfo.lua
 Quests\BossNav_QuestInfo.lua
 Quests\BossNav_QuestsPanel.lua
 Quests\BossNav_QuestMapPins.lua
+Items\BossNav_ItemData.lua
+Items\BossNav_ItemClasses.lua
+Items\BossNav_ItemSlots.lua
+Items\BossNav_ItemFilter.lua
+Items\BossNav_ItemInfo.lua
+Items\BossNav_ItemCompare.lua
+Items\BossNav_FilterPanel.lua
+Items\BossNav_ItemsPanel.lua
 Core\BossNav_Zone.lua
 Core\BossNav_Commands.lua
 Core\BossNav_Events.lua
