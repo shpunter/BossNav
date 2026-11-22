@@ -18,6 +18,21 @@ local state                  = ns.state
 local function SelectNextAlive()
     local cfg = state.cfg
     if not cfg then return end
+    -- a split dungeon: the next boss of the wing you are in comes first
+    local part = ns.CurrentPart and ns.CurrentPart(cfg)
+    if part then
+        local inPart = {}
+        for _, b in ipairs(part.bosses) do inPart[b[1]] = true end
+        for step = 1, #cfg.bosses do
+            local idx = ((state.bossIdx - 1 + step) % #cfg.bosses) + 1
+            local name = cfg.bosses[idx][1]
+            if inPart[name] and not state.killed[name] then
+                state.bossIdx = idx
+                return
+            end
+        end
+        return   -- the whole wing is done: stay on its last boss
+    end
     for step = 1, #cfg.bosses do
         local idx = ((state.bossIdx - 1 + step) % #cfg.bosses) + 1
         if not state.killed[cfg.bosses[idx][1]] then
@@ -35,6 +50,7 @@ local function MarkKilled(name)
         if NamesMatch(b[1], name) and not state.killed[b[1]] then
             state.killed[b[1]] = true
             hit = true
+            if b[4] then state.partFloor = b[4] end   -- the wing you are in
             Print("|cff888888" .. b[1] .. " defeated.|r")
             if i == state.bossIdx then SelectNextAlive() end
         end

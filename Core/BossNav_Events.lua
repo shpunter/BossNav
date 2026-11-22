@@ -8,6 +8,8 @@ local LearnEncounterPortraits = ns.LearnEncounterPortraits
 local LearnPortrait          = ns.LearnPortrait
 local CheckInstanceCopy      = ns.CheckInstanceCopy
 local CheckRare              = ns.CheckRare
+local NoteBossPart           = ns.NoteBossPart
+local OnResetMessage         = ns.OnResetMessage
 local CheckTargetDead        = ns.CheckTargetDead
 local ClearLoot              = ns.ClearLoot
 local ClearProfs             = ns.ClearProfs
@@ -81,6 +83,8 @@ events:RegisterEvent("CHAT_MSG_LOOT")
 events:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 -- ...and for teammates, whose cast spells the client hides: "Bob creates [X]."
 events:RegisterEvent("CHAT_MSG_TRADESKILLS")
+-- Dungeon reset: the game's "X has been reset." line (mob GUIDs can be secret)
+events:RegisterEvent("CHAT_MSG_SYSTEM")
 -- (blocked calls are reported by BossNav_BlockReport.lua)
 
 events:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4, arg5)
@@ -139,12 +143,14 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4, arg5)
             ColorUnitFrames()
             SafeCall(CheckInstanceCopy, "target")
             SafeCall(CheckRare, "target")
+            SafeCall(NoteBossPart, "target")
             SafeCall(TryMarkUnit, "target")
             SafeCall(LearnPortrait, "target")
         end
     elseif event == "NAME_PLATE_UNIT_ADDED" then
         SafeCall(CheckInstanceCopy, arg1)
         SafeCall(CheckRare, arg1)
+        SafeCall(NoteBossPart, arg1)
         SafeCall(TryMarkUnit, arg1)
         SafeCall(LearnPortrait, arg1)
         SafeCall(ColorPlate, arg1)
@@ -161,6 +167,8 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4, arg5)
         SafeCall(OnProfLootMessage, arg1)
     elseif event == "CHAT_MSG_TRADESKILLS" then
         SafeCall(OnTradeSkillMessage, arg1)
+    elseif event == "CHAT_MSG_SYSTEM" then
+        SafeCall(OnResetMessage, arg1)
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
         SafeCall(OnUnitSpellcast, arg1, arg2, arg3, arg4, arg5)
     end
