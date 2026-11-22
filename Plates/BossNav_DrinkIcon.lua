@@ -152,5 +152,11 @@ local function ToggleDrinkIcon()
     return DB().drinkIcon
 end
 
+-- /bnav drinkicon
+ns.AddCommand({ "drinkicon", "drink" }, function()
+    ns.Print("Drinking icon on party/raid frames " .. (ToggleDrinkIcon() and "on" or "off") .. ".")
+end, {
+    "  /bnav drinkicon       cup icon next to the name of a group member who is drinking (on/off)",
+})
+
 -- shared with the other BossNav files
-ns.ToggleDrinkIcon = ToggleDrinkIcon

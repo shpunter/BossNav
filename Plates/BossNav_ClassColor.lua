@@ -136,9 +136,15 @@ local function ToggleClassColors()
     return DB().classPlates
 end
 
+-- /bnav classplates
+ns.AddCommand({ "classplates", "classplate", "classcolors", "classcolor" }, function()
+    ns.Print("Class colours on player health bars " .. (ToggleClassColors() and "on" or "off") .. ".")
+end, {
+    "  /bnav classplates     class colour on players' health bars: nameplates, target, target of target, party/raid (on/off)",
+})
+
 -- shared with the other BossNav files
 ns.ClassForbidden = Forbidden
 ns.ClassPaintBar = PaintBar
 ns.ClassPlain = Plain
 ns.OnClassColorRefresh = OnClassColorRefresh
-ns.ToggleClassColors = ToggleClassColors

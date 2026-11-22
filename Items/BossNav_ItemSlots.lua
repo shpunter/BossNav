@@ -241,7 +241,6 @@ ns.ArmorFilter = armorGroup
 ns.GoodsFilter = goodsGroup
 ns.HandFilter = handGroup
 ns.ItemForTickedSlots = ItemForTickedSlots
-ns.NewFilterGroup = NewGroup
 ns.SlotFilter = slotGroup
 ns.SlotFilterKey = SlotFilterKey
 ns.SlotFiltersActive = SlotFiltersActive

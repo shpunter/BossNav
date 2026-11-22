@@ -110,8 +110,13 @@ local function PortraitCommand(rest)
     end
 end
 
+-- /bnav portrait [list|clear]
+ns.AddCommand({ "portrait", "portraits", "icon", "icons" }, PortraitCommand, {
+    "  /bnav portrait        learn the portrait of the boss you target (also happens by itself)",
+    "  /bnav portrait list   which boss portraits were learned in game; 'clear' forgets them",
+})
+
 -- shared with the other BossNav files
 ns.ApplySavedPortraits = ApplySavedPortraits
 ns.LearnEncounterPortraits = LearnEncounterPortraits
 ns.LearnPortrait = LearnPortrait
-ns.PortraitCommand = PortraitCommand

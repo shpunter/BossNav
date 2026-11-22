@@ -238,7 +238,27 @@ local function ShowLootPopup()
     DB().lootPopup = was
 end
 
+-- /bnav loot: post and popup here, the rest in BossNav_Loot.lua
+ns.AddCommand("loot", function(rest)
+    local arg = rest:lower()
+    if arg == "post" then
+        ns.PostLootSelected()
+    elseif arg == "popup" then
+        ToggleLootPopup()
+    elseif arg == "show" then
+        ShowLootPopup()
+    else
+        ns.LootCommand(rest)
+    end
+end, {
+    "  /bnav loot [n|all]    last 5 loot rolls (blue and better): who chose Need/Greed/Pass, their roll, the winner",
+    "  /bnav loot post       post the selected item's rolls to party/raid chat (types ticked on the Loot tab)",
+    "  /bnav loot auto       toggle the roll summary printed after each item is won",
+    "  /bnav loot popup      toggle the popup that shows Need / Greed / Pass live while an item is rolled",
+    "  /bnav loot show       open that popup with the newest item (to check it or drag it into place)",
+    "  /bnav loot clear      forget the loot roll history",
+    "  /bnav loot who        show how the addon sees your group (names and classes)",
+})
+
 -- shared with the other BossNav files
 ns.OnLootPopup = OnLootPopup
-ns.ShowLootPopup = ShowLootPopup
-ns.ToggleLootPopup = ToggleLootPopup

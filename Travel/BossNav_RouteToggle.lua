@@ -91,7 +91,13 @@ local function RouteCommand(rest)
     end
 end
 
+-- /bnav route foot|fly, and the short forms /bnav walk, foot, fly
+ns.AddCommand("route", RouteCommand, {
+    "  /bnav route foot|fly  outside: walk zone to zone, or use flight masters where a path is known at both ends (the boxes under the map; no word flips it)",
+})
+ns.AddCommand({ "walk", "foot" }, function() RouteCommand("foot") end)
+ns.AddCommand("fly", function() RouteCommand("fly") end)
+
 -- shared with the other BossNav files
 ns.HideRouteToggle = HideRouteToggle
-ns.RouteCommand = RouteCommand
 ns.ShowRouteToggle = ShowRouteToggle
