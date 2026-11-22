@@ -27,6 +27,7 @@ Travel\BossNav_TravelPanel.lua
 Bosses\BossNav_BossPreview.lua
 Travel\BossNav_WorldMap.lua
 Bosses\BossNav_Kills.lua
+Bosses\BossNav_InstanceReset.lua
 Bosses\BossNav_Marker.lua
 Bosses\BossNav_Portraits.lua
 Core\BossNav_Roster.lua
