@@ -55,7 +55,7 @@ local function TouchProgress()
     if not cfg or state.testMode then return end
     local rec = DB().progress[cfg.key]
     if not rec or rec.killed ~= state.killed then
-        rec = { killed = state.killed, visited = state.visited }
+        rec = { killed = state.killed, visited = state.visited, copies = rec and rec.copies }
         DB().progress[cfg.key] = rec
     end
     rec.bossIdx = state.bossIdx
@@ -63,13 +63,17 @@ local function TouchProgress()
     rec.time = time()
 end
 
+-- Keeps the dungeon copy IDs (BossNav_InstanceReset.lua): clearing marks by
+-- hand does not make a new copy of the dungeon.
 local function ClearProgress(cfg)
+    local old = cfg and DB().progress[cfg.key]
+    local copies = old and old.copies
     state.killed = {}
     state.visited = {}
     state.gold = 0
     if cfg then DB().progress[cfg.key] = nil end
     if cfg and not state.testMode then
-        DB().progress[cfg.key] = { killed = state.killed, visited = state.visited, gold = 0, bossIdx = state.bossIdx, time = time() }
+        DB().progress[cfg.key] = { killed = state.killed, visited = state.visited, gold = 0, bossIdx = state.bossIdx, time = time(), copies = copies }
     end
 end
 

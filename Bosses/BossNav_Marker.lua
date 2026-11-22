@@ -211,7 +211,17 @@ ns.AddCommand("skull", SkullCommand, {
     "  /bnav skull test      explain why your target was or was not marked",
 })
 
+-- Skull on any unit (used for rares): only when auto skull is on, you may
+-- mark, and the unit carries no mark yet. Returns true when marked.
+local function SkullUnit(unit)
+    if not DB().skull or not CanMark() then return false end
+    local okIdx, idx = pcall(GetRaidTargetIndex, unit)
+    if not okIdx or IsSecret(idx) or idx then return false end
+    return (pcall(SetRaidTarget, unit, SKULL))
+end
+
 -- shared with the other BossNav files
+ns.SkullUnit = SkullUnit
 ns.IdentifyBoss = IdentifyBoss
 ns.OnEncounterStart = OnEncounterStart
 ns.TryMarkUnit = TryMarkUnit
