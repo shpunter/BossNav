@@ -349,6 +349,7 @@ local function ShowHelp()
     Print("  /bnav classplates     class colour on players' health bars: nameplates, target, target of target, party/raid (on/off)")
     Print("  /bnav rangefade       fade party/raid frames of group members farther than 30 yards (on/off)")
     Print("  /bnav drinkicon       cup icon next to the name of a group member who is drinking (on/off)")
+    Print("  /bnav distance        how far each group member is, under their frame (on/off; 'test' shows every check)")
     Print("  /bnav minimap         toggle minimap icons (needs a position; this client hides it)")
     Print("  /bnav loot [n|all]    last 5 loot rolls (blue and better): who chose Need/Greed/Pass, their roll, the winner")
     Print("  /bnav quest [n]       Quests tab: the quests of this dungeon (outside: the one picked with /bnav go), who gives them and where")
@@ -369,8 +370,9 @@ local function ShowHelp()
     Print("  /bnav items all       drop the boss / trash filter: all the dungeon's loot ([show all] in the Items header)")
     Print("  /bnav items trash     loot of trash, rares and mini-bosses (the Trash row under the bosses)")
     Print("  /bnav class name      tick / untick a class in the item filters under the map (all | none | mine); saved")
-    Print("  /bnav gear | weapon | wield name   the same for gear (helm, boots, ring...), weapon types (axe, staff...), wield (one-hand, two-hand...)")
-    Print("  /bnav filters [reset] list the item filters, or tick everything again")
+    Print("  /bnav armor | gear | weapon | wield name   the same for armour type (cloth, plate...), gear (helm, boots, ring...), weapon types (axe, staff...), wield (one-hand, two-hand...)")
+    Print("  /bnav other name      the same for everything else, by auction house category (recipe, trade goods, consumable...)")
+    Print("  /bnav filters [reset | next]  list the item filters, tick everything again, or open the next filter tab")
     Print("  /bnav prof [n]        Profs tab: how often each member mined, skinned, gathered, fished or crafted; n lists member n's spells")
     Print("  /bnav prof post       post the profession counts to party/raid chat (/bnav prof list prints them to you)")
     Print("  /bnav prof clear      forget the profession counts (also done when you leave the group)")
@@ -569,6 +571,10 @@ SlashCmdList["BOSSNAV"] = function(msg)
         ns.ItemsCommand(rest)
     elseif cmd == "class" or cmd == "classes" then
         ns.FilterCommand("class", rest)
+    elseif cmd == "other" or cmd == "goods" then
+        ns.FilterCommand("other", rest)
+    elseif cmd == "armor" or cmd == "armour" then
+        ns.FilterCommand("armor", rest)
     elseif cmd == "gear" or cmd == "slot" or cmd == "slots" then
         ns.FilterCommand("slot", rest)
     elseif cmd == "weapon" or cmd == "weapons" then
@@ -581,6 +587,12 @@ SlashCmdList["BOSSNAV"] = function(msg)
         ThreatCommand(rest)
     elseif cmd == "classplates" or cmd == "classplate" or cmd == "classcolors" or cmd == "classcolor" then
         Print("Class colours on player health bars " .. (ToggleClassColors() and "on" or "off") .. ".")
+    elseif cmd == "distance" or cmd == "dist" then
+        if rest:lower() == "test" then
+            ns.DistanceReport(Print)
+        else
+            Print("Distance under party/raid frames " .. (ns.TogglePartyDistance() and "on" or "off") .. ".")
+        end
     elseif cmd == "drinkicon" or cmd == "drink" then
         Print("Drinking icon on party/raid frames " .. (ToggleDrinkIcon() and "on" or "off") .. ".")
     elseif cmd == "rangefade" or cmd == "range" then

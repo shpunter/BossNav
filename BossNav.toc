@@ -35,6 +35,7 @@ Plates\BossNav_ClassPlates.lua
 Plates\BossNav_ClassFrames.lua
 Plates\BossNav_RangeFade.lua
 Plates\BossNav_DrinkIcon.lua
+Plates\BossNav_PartyDistance.lua
 Threat\BossNav_AggroAlert.lua
 Threat\BossNav_Threat.lua
 Loot\BossNav_Loot.lua

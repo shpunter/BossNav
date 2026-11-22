@@ -1,23 +1,27 @@
--- The item filters under the map on the Dungeons tab: four groups of boxes,
--- all ticked at first. Unticking a box hides the matching items from the
--- Items column; the ticks are saved, so they are still there next session.
+-- The item filters under the map on the Dungeons tab, as tabs: one tab per
+-- group, the open tab's boxes below it. Every box is ticked at first;
+-- unticking one hides the matching items from the Items column. The ticks
+-- and the open tab are saved, so they are still there next session.
 --
---   Item filters                                     [reset]   /bnav filters
---   Class    [x] Warrior [x] Paladin [x] Hunter ...
---   Gear     [x] Helm    [x] Neck    [x] Shoulders ...
---   Weapon   [x] Axe     [x] Mace    [x] Sword ...
---   Wield    [x] One-Hand [x] Two-Hand ...
+--   [Class] [Armor*] [Gear] [Weapon] [Wield] [Other]               [reset]
+--   ---------------------------------------------------------------
+--   [x] Cloth  [x] Leather  [ ] Mail  [ ] Plate  [x] Miscellaneous
 --
--- Clicking a group's name ticks all its boxes, or unticks them all when they
--- are all ticked already. The rules live in BossNav_ItemClasses.lua (class)
--- and BossNav_ItemSlots.lua (slot, weapon, hand).
+-- Armor, Weapon and the boxes under Armor and Other are named by the client, the way its auction house names
+-- those categories. A tab with an unticked box carries a "*". Clicking the
+-- open tab again ticks all its boxes, or unticks them all when they are all
+-- ticked already. The rules live in BossNav_ItemClasses.lua (class) and
+-- BossNav_ItemSlots.lua (armour type, slot, weapon, hand).
 local ADDON, ns = ...
 -- from the files loaded before this one
+local ArmorFilter            = ns.ArmorFilter
 local CANVAS_W               = ns.CANVAS_W
 local ClassHex               = ns.ClassHex
 local ClassName              = ns.ClassName
 local ClassTicked            = ns.ClassTicked
+local DB                     = ns.DB
 local FindClass              = ns.FindClass
+local GoodsFilter            = ns.GoodsFilter
 local HandFilter             = ns.HandFilter
 local ITEM_CLASSES           = ns.ITEM_CLASSES
 local OnlyMyClass            = ns.OnlyMyClass
@@ -43,42 +47,54 @@ local ClassFilter = {
     Find = FindClass,
 }
 
-local GROUPS = { ClassFilter, SlotFilter, WeaponFilter, HandFilter }
+local GROUPS = { ClassFilter, ArmorFilter, SlotFilter, WeaponFilter, HandFilter, GoodsFilter }
+local BY_ID = { class = ClassFilter, armor = ArmorFilter, slot = SlotFilter, weapon = WeaponFilter, hand = HandFilter, other = GoodsFilter }
+-- what the commands call them
+local COMMAND = { class = "class", armor = "armor", slot = "gear", weapon = "weapon", hand = "wield", other = "other" }
 
 local function FiltersActive()
     return TickedCount() < #ITEM_CLASSES or SlotFiltersActive()
 end
 
+-- the open tab, saved
+local function OpenId()
+    local id = DB().filterTab
+    return BY_ID[id] and id or "class"
+end
+
 --------------------------------------------------------------------------
 -- Layout
 --------------------------------------------------------------------------
-local LABEL_W = 58          -- group name column
-local PER_ROW = 7
-local CELL_W = math.floor((CANVAS_W - LABEL_W) / PER_ROW)
+local TAB_H = 22
+local TAB_GAP = 4
+local PER_ROW = 6
+local CELL_W = math.floor(CANVAS_W / PER_ROW)
 local BOX = 18
-local ROW_H = 19
-local GROUP_GAP = 5
-local TITLE_H = 18
+local ROW_H = 20
+local BODY_TOP = TAB_H + 6
 
-local function RowsOf(g) return math.ceil(#g.entries / PER_ROW) end
+local GOLD = { 1, 0.82, 0 }
+local EDGE = { 0.75, 0.62, 0.20, 1 }    -- the gold line the tabs sit on
+local PANEL = { 0.06, 0.06, 0.08, 1 }   -- the open tab: the window's dark colour
+local IDLE = { 0.13, 0.13, 0.16, 1 }    -- a closed tab
 
-local height = TITLE_H + 2
-for _, g in ipairs(GROUPS) do height = height + RowsOf(g) * ROW_H + GROUP_GAP end
+local maxRows = 1
+for _, g in ipairs(GROUPS) do maxRows = math.max(maxRows, math.ceil(#g.entries / PER_ROW)) end
 
 local panel = CreateFrame("Frame", nil, mapFrame)
-panel:SetSize(CANVAS_W, height)
+panel:SetSize(CANVAS_W, BODY_TOP + maxRows * ROW_H + 4)
 panel:SetPoint("BOTTOMLEFT", mapFrame, "BOTTOMLEFT", 12, 10)
 panel:Hide()
 
-local title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-title:SetPoint("TOPLEFT", panel, "TOPLEFT", 0, 0)
-title:SetText("Item filters")
+local edge = panel:CreateTexture(nil, "ARTWORK")
+edge:SetHeight(1)
+edge:SetPoint("TOPLEFT", panel, "TOPLEFT", 0, -TAB_H)
+edge:SetPoint("TOPRIGHT", panel, "TOPRIGHT", 0, -TAB_H)
+edge:SetColorTexture(unpack(EDGE))
 
-local hint = panel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-hint:SetPoint("TOPRIGHT", panel, "TOPRIGHT", 0, -3)
-hint:SetText("/bnav class | gear | weapon | wield  name | all | none")
-
-local boxes = {}            -- { group, key, cb }
+local tabs = {}             -- id -> tab button
+local pages = {}            -- id -> frame holding that group's boxes
+local boxes = {}            -- { group, key, cb, usable }
 
 -- Ticks from the saved choice; a box no ticked class can use (guns with
 -- only druids ticked) is greyed out and cannot be clicked. Its tick stays
@@ -94,11 +110,38 @@ local function SyncBoxes()
     end
 end
 
--- after any change: boxes in step, the item list starts at the top again
+-- tabs: the open one joined to the boxes below, "*" on a filtering one
+local function PaintTabs()
+    local open = OpenId()
+    for _, g in ipairs(GROUPS) do
+        local b, on = tabs[g.id], (g.id == open)
+        b.text:SetText(g.title .. (g.AllTicked() and "" or " |cffff8040*|r"))
+        b.bg:SetColorTexture(unpack(on and PANEL or IDLE))
+        b:SetHeight(on and TAB_H + 1 or TAB_H)
+        b.top:SetShown(on)
+        if on then b.text:SetTextColor(GOLD[1], GOLD[2], GOLD[3]) else b.text:SetTextColor(0.6, 0.6, 0.6) end
+        pages[g.id]:SetShown(on)
+    end
+end
+
+-- after any change: boxes and tabs in step, the item list starts at the top
 local function Changed()
     SyncBoxes()
+    PaintTabs()
     state.itemIdx = 1
     BossNav_RefreshMap()
+end
+
+local function OpenTab(id)
+    if OpenId() == id then
+        -- the open tab clicked again: all on / all off
+        local g = BY_ID[id]
+        g.SetAll(not g.AllTicked())
+        Changed()
+        return
+    end
+    DB().filterTab = id
+    PaintTabs()
 end
 
 local function ResetAll()
@@ -106,37 +149,45 @@ local function ResetAll()
     Changed()
 end
 
-local reset = CreateFrame("Button", nil, panel)
-reset:SetSize(50, TITLE_H)
-reset:SetPoint("LEFT", title, "RIGHT", 10, 0)
-reset.text = reset:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-reset.text:SetPoint("CENTER")
-reset.text:SetText("[reset]")
-reset:SetScript("OnClick", ResetAll)
-
-local y = -(TITLE_H + 2)
+local x = 0
 for _, g in ipairs(GROUPS) do
-    -- the group name: a button that ticks or unticks the whole group
-    local name = CreateFrame("Button", nil, panel)
-    name:SetSize(LABEL_W - 4, ROW_H)
-    name:SetPoint("TOPLEFT", panel, "TOPLEFT", 0, y)
-    name.text = name:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    name.text:SetPoint("LEFT")
-    name.text:SetText(g.title)
-    name:SetScript("OnClick", function()
-        g.SetAll(not g.AllTicked())
-        Changed()
-    end)
-    -- a short group (Wield) spreads its boxes wider so the names fit
-    local cellW = (#g.entries <= 5) and math.floor((CANVAS_W - LABEL_W) / 5) or CELL_W
+    local b = CreateFrame("Button", nil, panel)
+    b:SetFrameLevel(panel:GetFrameLevel() + 2)   -- over the edge line
+    b.bg = b:CreateTexture(nil, "BACKGROUND")
+    b.bg:SetAllPoints()
+    b.top = b:CreateTexture(nil, "BORDER")         -- gold edge on top of the open tab
+    b.top:SetHeight(2)
+    b.top:SetPoint("TOPLEFT")
+    b.top:SetPoint("TOPRIGHT")
+    b.top:SetColorTexture(unpack(EDGE))
+    b.hl = b:CreateTexture(nil, "HIGHLIGHT")
+    b.hl:SetAllPoints()
+    b.hl:SetColorTexture(1, 0.82, 0, 0.12)
+    b.text = b:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    b.text:SetPoint("CENTER", 0, -1)
+    b.text:SetText(g.title .. " *")                -- widest it gets
+    local w = math.max(60, math.ceil(b.text:GetStringWidth() or 0) + 16)
+    b:SetSize(w, TAB_H)
+    b:SetPoint("TOPLEFT", panel, "TOPLEFT", x, 0)
+    x = x + w + TAB_GAP
+    local id = g.id
+    b:SetScript("OnClick", function() OpenTab(id) end)
+    tabs[id] = b
+
+    -- the boxes of this group
+    local page = CreateFrame("Frame", nil, panel)
+    page:SetPoint("TOPLEFT", panel, "TOPLEFT", 0, -BODY_TOP)
+    page:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", 0, 0)
+    page:Hide()
+    pages[id] = page
     for i, e in ipairs(g.entries) do
         local col, row = (i - 1) % PER_ROW, math.floor((i - 1) / PER_ROW)
-        local cb = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+        local cb = CreateFrame("CheckButton", nil, page, "UICheckButtonTemplate")
         cb:SetSize(BOX, BOX)
-        cb:SetPoint("TOPLEFT", panel, "TOPLEFT", LABEL_W + col * cellW - 3, y - row * ROW_H)
-        cb.label = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        cb:SetPoint("TOPLEFT", page, "TOPLEFT", col * CELL_W - 3, -row * ROW_H)
+        cb.label = page:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         cb.label:SetPoint("LEFT", cb, "RIGHT", 0, 0)
-        cb.label:SetWidth(cellW - BOX)
+        cb.label:SetWidth(CELL_W - BOX)
         cb.label:SetJustifyH("LEFT")
         cb.label:SetWordWrap(false)
         cb.label:SetText(e.hex and ("|cff" .. e.hex .. e.label .. "|r") or e.label)
@@ -147,11 +198,19 @@ for _, g in ipairs(GROUPS) do
         end)
         boxes[#boxes + 1] = { group = g, key = key, cb = cb, usable = e.usable }
     end
-    y = y - RowsOf(g) * ROW_H - GROUP_GAP
 end
+
+local reset = CreateFrame("Button", nil, panel)
+reset:SetSize(50, TAB_H)
+reset:SetPoint("TOPRIGHT", panel, "TOPRIGHT", 0, 0)
+reset.text = reset:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+reset.text:SetPoint("CENTER")
+reset.text:SetText("[reset]")
+reset:SetScript("OnClick", ResetAll)
 
 local function ShowFilterPanel()
     SyncBoxes()
+    PaintTabs()
     panel:Show()
 end
 
@@ -160,14 +219,11 @@ local function HideFilterPanel()
 end
 
 --------------------------------------------------------------------------
--- /bnav class | gear | weapon | wield  [name | all | none]
--- A name flips that box; /bnav class mine keeps only your class;
--- /bnav filters reset ticks everything.
+-- /bnav class | armor | gear | weapon | wield | other  [name | all | none]
+-- A name flips that box (and opens that tab); /bnav class mine keeps only
+-- your class; /bnav filters reset ticks everything; /bnav filters next
+-- opens the next tab.
 --------------------------------------------------------------------------
-local BY_ID = { class = ClassFilter, slot = SlotFilter, weapon = WeaponFilter, hand = HandFilter }
--- what the commands call them
-local COMMAND = { class = "class", slot = "gear", weapon = "weapon", hand = "wield" }
-
 local function Ticks(g)
     if g.AllTicked() then return "all" end
     local t = {}
@@ -197,15 +253,24 @@ local function FilterCommand(groupId, rest)
         end
         g.SetTicked(key, not g.Ticked(key))
     end
+    DB().filterTab = g.id
     Print(g.title .. " filter: " .. Ticks(g) .. ".")
     if mapFrame:IsShown() then Changed() end
 end
 
 local function FiltersCommand(rest)
-    if (rest or ""):lower():match("reset") then
+    local word = (rest or ""):lower()
+    if word:match("reset") then
         for _, g in ipairs(GROUPS) do g.SetAll(true) end
         Print("Item filters reset: everything ticked.")
         if mapFrame:IsShown() then Changed() end
+        return
+    end
+    if word:match("next") then
+        local open, pos = OpenId(), 1
+        for i, g in ipairs(GROUPS) do if g.id == open then pos = i end end
+        DB().filterTab = GROUPS[(pos % #GROUPS) + 1].id
+        PaintTabs()
         return
     end
     for _, g in ipairs(GROUPS) do Print(g.title .. ": " .. Ticks(g)) end
