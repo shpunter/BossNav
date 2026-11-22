@@ -56,57 +56,64 @@
 --
 -- Files (loaded in the order listed in BossNav.toc; each file shares with
 -- the others only through the addon namespace table `ns`):
---   BossNav_Core.lua       constants, helpers, shared state
---   BossNav_Data.lua       dungeon list, boss pins, trails, portrait IDs
---   BossNav_QuestData.lua  quests per dungeon: giver, place, faction, level
---   BossNav_Progress.lua   saved per-dungeon progress
---   BossNav_Gold.lua       gold earned in the current dungeon
---   BossNav_MapAPI.lua     guarded access to the client's map API
---   BossNav_Entrances.lua  dungeon entrances in the open world, travel list by level
---   BossNav_Routes.lua     zone-to-zone routing: which exit or flight master leads toward a dungeon
---   BossNav_Window.lua     map window frames, sidebar rows, pins
---   BossNav_Tabs.lua       section tabs (Dungeons / Quests / Loot / Profs), the Dungeons column headers (Dungeons / Bosses / Items) and switching
---   BossNav_MapArt.lua     map art renderers
---   BossNav_Waypoints.lua  boss selection, floors, waypoints
---   BossNav_Render.lua     drawing the whole map window
---   BossNav_HUD.lua        top-of-screen direction HUD
---   BossNav_Minimap.lua    minimap boss icons
---   BossNav_Live.lua       periodic live update
---   BossNav_Travel.lua     travel mode: arrow, distance and minimap pin to a dungeon entrance
---   BossNav_RouteToggle.lua the "By foot" / "Flying" boxes under the map and /bnav route
---   BossNav_TravelPanel.lua the dungeon list column, and outside a dungeon the zone map with the entrance pin
---   BossNav_BossPreview.lua outside a dungeon, Bosses column focused: the picked dungeon's map and boss pins
---   BossNav_WorldMap.lua   dungeon entrance marks on the game's world map
---   BossNav_Kills.lua      kill tracking and extra bosses
---   BossNav_Marker.lua     skull raid mark on a boss as soon as it is seen
---   BossNav_Portraits.lua  boss portraits learned in game for bosses without a known one
---   BossNav_Roster.lua     group roster: names, classes, class colours, group chat channel
---   BossNav_Role.lua       is the player tanking: group role, spec, stance or Righteous Fury
---   BossNav_ThreatPlates.lua threat label next to each enemy nameplate health bar
---   BossNav_ClassColor.lua   paints a health bar in the class colour of the player it shows
---   BossNav_ClassPlates.lua  that colour on nameplates and party / raid blocks
---   BossNav_ClassFrames.lua  that colour on target, target of target and party frames
---   BossNav_Threat.lua     threat window: every mob in combat, who it attacks, your threat on it
---   BossNav_Loot.lua       loot roll tracker (Need / Greed / Pass, rolls, winner)
---   BossNav_LootPanel.lua  the Loot tab: item list and roll panel in the window
---   BossNav_LootPopup.lua  popup that shows Need / Greed / Pass live while an item is rolled
---   BossNav_Profs.lua      profession tracker (mines, herbs, skins, fish, crafts per member)
---   BossNav_ProfsChat.lua  teammates' gathers and crafts read from loot / craft chat lines
---   BossNav_ProfsPanel.lua the Profs tab: member list and profession table in the window
---   BossNav_QuestStatus.lua whether you already did a quest or have it in your log
---   BossNav_QuestsPanel.lua the Quests tab: a dungeon's quests and where to take them
---   BossNav_QuestMapPins.lua quest givers of the selected dungeon on the game's world map
---   BossNav_ItemData.lua   loot per dungeon boss, generated from Forever Atlas by Tools/export_items.js
---   BossNav_ItemClasses.lua which class can use an item; the saved class ticks
---   BossNav_ItemSlots.lua  slot, weapon type and hand of an item; the saved ticks
---   BossNav_ItemFilter.lua which items the Items column lists (the dungeon and boss you picked)
---   BossNav_ItemInfo.lua   item name, icon, quality and level from the game client
---   BossNav_ItemCompare.lua the item card's comparison with the item you wear in that slot
---   BossNav_FilterPanel.lua the item filter boxes under the map (class, slot, weapon, hand) and their commands
---   BossNav_ItemsPanel.lua the Items column: item list with icons and an item card over the map
---   BossNav_Zone.lua       zone changes
---   BossNav_Commands.lua   keybind actions, slash commands, help
---   BossNav_Events.lua     event wiring
+--   Core/BossNav_Core.lua             constants, helpers, shared state
+--   Core/BossNav_Data.lua             dungeon list, boss pins, trails, portrait IDs
+--   Quests/BossNav_QuestData.lua      quests per dungeon: giver, place, faction, level
+--   Window/BossNav_Progress.lua       saved per-dungeon progress
+--   Loot/BossNav_Gold.lua             gold earned in the current dungeon
+--   Core/BossNav_MapAPI.lua           guarded access to the client's map API
+--   Bosses/BossNav_Entrances.lua      dungeon entrances in the open world, travel list by level
+--   Travel/BossNav_Routes.lua         zone-to-zone routing: which exit or flight master leads toward a dungeon
+--   Window/BossNav_Window.lua         map window frames, sidebar rows, pins
+--   Window/BossNav_Tabs.lua           section tabs (Dungeons / Quests / Loot / Profs), the Dungeons column headers (Dungeons / Bosses / Items) and switching
+--   Bosses/BossNav_MapArt.lua         map art renderers
+--   Core/BossNav_Waypoints.lua        boss selection, floors, waypoints
+--   Window/BossNav_Render.lua         drawing the whole map window
+--   Window/BossNav_HUD.lua            top-of-screen direction HUD
+--   Window/BossNav_Minimap.lua        minimap boss icons
+--   Bosses/BossNav_Live.lua           periodic live update
+--   Travel/BossNav_Travel.lua         travel mode: arrow, distance and minimap pin to a dungeon entrance
+--   Travel/BossNav_RouteToggle.lua    the "By foot" / "Flying" boxes under the map and /bnav route
+--   Travel/BossNav_TravelPanel.lua    the dungeon list column, and outside a dungeon the zone map with the entrance pin
+--   Bosses/BossNav_BossPreview.lua    outside a dungeon, Bosses column focused: the picked dungeon's map and boss pins
+--   Travel/BossNav_WorldMap.lua       dungeon entrance marks on the game's world map
+--   Bosses/BossNav_Kills.lua          kill tracking and extra bosses
+--   Bosses/BossNav_Marker.lua         skull raid mark on a boss as soon as it is seen
+--   Bosses/BossNav_Portraits.lua      boss portraits learned in game for bosses without a known one
+--   Core/BossNav_Roster.lua           group roster: names, classes, class colours, group chat channel
+--   Core/BossNav_Role.lua             is the player tanking: group role, spec, stance or Righteous Fury
+--   Threat/BossNav_ThreatPlates.lua   threat label next to each enemy nameplate health bar
+--   Plates/BossNav_ClassColor.lua     paints a health bar in the class colour of the player it shows
+--   Plates/BossNav_ClassPlates.lua    that colour on nameplates and party / raid blocks
+--   Plates/BossNav_ClassFrames.lua    that colour on target, target of target and party frames
+--   Plates/BossNav_RangeFade.lua      fades party and raid frames of members farther than ~30 yards
+--   Plates/BossNav_DrinkIcon.lua      cup icon next to a group member who is drinking
+--   Plates/BossNav_PartyDistance.lua  how far each group member is, on party and raid frames
+--   Threat/BossNav_AggroAlert.lua     tank alert: a mob that was attacking you turns to someone else
+--   Threat/BossNav_Threat.lua         threat window: every mob in combat, who it attacks, your threat on it
+--   Loot/BossNav_Loot.lua             loot roll tracker (Need / Greed / Pass, rolls, winner)
+--   Loot/BossNav_LootPanel.lua        the Loot tab: item list and roll panel in the window
+--   Loot/BossNav_LootPopup.lua        popup that shows Need / Greed / Pass live while an item is rolled
+--   Profs/BossNav_Profs.lua           profession tracker (mines, herbs, skins, fish, crafts per member)
+--   Profs/BossNav_ProfsChat.lua       teammates' gathers and crafts read from loot / craft chat lines
+--   Profs/BossNav_ProfsPanel.lua      the Profs tab: member list and profession table in the window
+--   Quests/BossNav_QuestStatus.lua    whether you already did a quest or have it in your log
+--   Quests/BossNav_QuestText.lua      built-in quest text and rewards for the quests in BossNav_QuestData.lua
+--   Quests/BossNav_QuestLogInfo.lua   quest text and rewards read from your quest log when you have the quest
+--   Quests/BossNav_QuestInfo.lua      the selected quest drawn like the game's quest window
+--   Quests/BossNav_QuestsPanel.lua    the Quests tab: a dungeon's quests and where to take them
+--   Quests/BossNav_QuestMapPins.lua   quest givers of the selected dungeon on the game's world map
+--   Items/BossNav_ItemData.lua        loot per dungeon boss, generated from Forever Atlas by Tools/export_items.js
+--   Items/BossNav_ItemClasses.lua     which class can use an item; the saved class ticks
+--   Items/BossNav_ItemSlots.lua       slot, weapon type and hand of an item; the saved ticks
+--   Items/BossNav_ItemFilter.lua      which items the Items column lists (the dungeon and boss you picked)
+--   Items/BossNav_ItemInfo.lua        item name, icon, quality and level from the game client
+--   Items/BossNav_ItemCompare.lua     the item card's comparison with the item you wear in that slot
+--   Items/BossNav_FilterPanel.lua     the item filter boxes under the map (class, slot, weapon, hand) and their commands
+--   Items/BossNav_ItemsPanel.lua      the Items column: item list with icons and an item card over the map
+--   Core/BossNav_Zone.lua             zone changes
+--   Core/BossNav_Commands.lua         keybind actions, slash commands, help
+--   Core/BossNav_Events.lua           event wiring
 --------------------------------------------------------------------------
 
 -- Constants, helpers and shared state.
@@ -145,6 +152,48 @@ local function Print(msg)
     DEFAULT_CHAT_FRAME:AddMessage("|cff00ff00[BossNav]|r " .. tostring(msg))
 end
 
+-- Runs fn(...) like pcall, but prints an error the first time it happens,
+-- so a broken feature says why instead of quietly stopping. Each distinct
+-- error is printed once per session. For BossNav's own functions; a game
+-- call that may fail on purpose (secret values) keeps a plain pcall.
+local reportedErrors = {}
+local function ReportError(ok, ...)
+    if not ok then
+        local err = tostring((...))
+        if not reportedErrors[err] then
+            reportedErrors[err] = true
+            Print("|cffff4444error:|r " .. err .. "  (please report this line)")
+        end
+    end
+    return ok, ...
+end
+local function SafeCall(fn, ...)
+    return ReportError(pcall(fn, ...))
+end
+
+--------------------------------------------------------------------------
+-- /bnav subcommands: each feature file registers its own words and help
+-- lines here; BossNav_Commands.lua reads them when you type /bnav.
+--------------------------------------------------------------------------
+local commands = {}       -- [word] = function(rest, word)
+local commandHelp = {}    -- help lines in the order the files registered them
+
+-- AddCommand("loot", fn, { "  /bnav loot ...  what it does" })
+-- AddCommand({ "prof", "profs" }, fn, help): several words for one command.
+local function AddCommand(words, fn, help)
+    if type(words) == "string" then words = { words } end
+    for _, word in ipairs(words) do commands[word] = fn end
+    for _, line in ipairs(help or {}) do commandHelp[#commandHelp + 1] = line end
+end
+
+local function FindCommand(word)
+    return commands[word]
+end
+
+local function CommandHelp()
+    return commandHelp
+end
+
 local function Norm(name)
     if not name then return nil end
     local s = tostring(name):lower()
@@ -170,16 +219,21 @@ local function NamesMatch(cfgName, unitName)
     return false
 end
 
+-- Settings that are on unless you turned them off.
+local ON_BY_DEFAULT = { "hud", "minimap", "skull", "worldmap", "flightmap", "questmap", "threat" }
+
+-- The saved settings, with defaults filled in. The defaults are filled once
+-- per table: the game swaps in the saved table after this file loads, so a
+-- new table gets them again.
+local preparedDB
 local function DB()
+    if BossNavDB == preparedDB then return BossNavDB end
     BossNavDB.routes = BossNavDB.routes or {}
     BossNavDB.progress = BossNavDB.progress or {}
-    if BossNavDB.hud == nil then BossNavDB.hud = true end
-    if BossNavDB.minimap == nil then BossNavDB.minimap = true end
-    if BossNavDB.skull == nil then BossNavDB.skull = true end
-    if BossNavDB.worldmap == nil then BossNavDB.worldmap = true end
-    if BossNavDB.flightmap == nil then BossNavDB.flightmap = true end
-    if BossNavDB.questmap == nil then BossNavDB.questmap = true end
-    if BossNavDB.threat == nil then BossNavDB.threat = true end
+    for _, key in ipairs(ON_BY_DEFAULT) do
+        if BossNavDB[key] == nil then BossNavDB[key] = true end
+    end
+    preparedDB = BossNavDB
     return BossNavDB
 end
 
@@ -216,7 +270,10 @@ local state = {
 }
 
 -- shared with the other BossNav files
+ns.AddCommand = AddCommand
 ns.CANVAS_H = CANVAS_H
+ns.CommandHelp = CommandHelp
+ns.FindCommand = FindCommand
 ns.CANVAS_W = CANVAS_W
 ns.DB = DB
 ns.FOREVER_IMG = FOREVER_IMG
@@ -228,6 +285,7 @@ ns.Norm = Norm
 ns.Print = Print
 ns.SIDEBAR_W = SIDEBAR_W
 ns.SKULL_TEX = SKULL_TEX
+ns.SafeCall = SafeCall
 ns.WAYPOINT_RADIUS = WAYPOINT_RADIUS
 ns.atan2 = atan2
 ns.state = state

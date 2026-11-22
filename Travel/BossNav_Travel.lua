@@ -500,12 +500,23 @@ local function TravelOnZone(prevCfg)
     end
 end
 
+-- /bnav nav [quest|dungeon|off]: which target the arrow follows
+ns.AddCommand("nav", function(rest)
+    local arg = rest:lower()
+    if arg == "off" or arg == "clear" then ClearQuestTarget()
+    elseif arg == "quest" or arg == "q" then SwitchNav("quest")
+    elseif arg == "dungeon" or arg == "d" then SwitchNav("dungeon")
+    else SwitchNav() end
+end, {
+    "  /bnav nav             switch the arrow between the quest giver and the dungeon (also a keybind)",
+    "  /bnav nav quest|dungeon  follow that one; /bnav nav off forgets the quest giver target",
+})
+
 -- shared with the other BossNav files
 ns.ClearQuestTarget = ClearQuestTarget
 ns.ClearTravelTarget = ClearTravelTarget
 ns.SetQuestTarget = SetQuestTarget
 ns.SetQuestInside = SetQuestInside
-ns.SwitchNav = SwitchNav
 ns.CurrentLeg = CurrentLeg
 ns.LevelColor = LevelColor
 ns.LevelRGB = LevelRGB

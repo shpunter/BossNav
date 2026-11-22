@@ -63,7 +63,5 @@ local function GoldText()
 end
 
 -- shared with the other BossNav files
-ns.GoldEarned = GoldEarned
 ns.GoldText = GoldText
-ns.MoneyText = MoneyText
 ns.OnMoneyChanged = OnMoneyChanged

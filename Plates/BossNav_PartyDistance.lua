@@ -307,6 +307,15 @@ local function DistanceReport(print)
     end
 end
 
+-- /bnav distance [test]
+ns.AddCommand({ "distance", "dist" }, function(rest)
+    if rest:lower() == "test" then
+        DistanceReport(ns.Print)
+    else
+        ns.Print("Distance under party/raid frames " .. (TogglePartyDistance() and "on" or "off") .. ".")
+    end
+end, {
+    "  /bnav distance        how far each group member is, under their frame (on/off; 'test' shows every check)",
+})
+
 -- shared with the other BossNav files
-ns.DistanceReport = DistanceReport
-ns.TogglePartyDistance = TogglePartyDistance

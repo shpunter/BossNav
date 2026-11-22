@@ -326,8 +326,6 @@ end
 
 -- shared with the other BossNav files
 ns.InDungeonsSection = InDungeonsSection
-ns.IsTab = IsTab
-ns.NextSection = NextSection
 ns.NextTab = NextSection
 ns.NextView = NextView
 ns.SetTab = SetTab

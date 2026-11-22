@@ -116,6 +116,15 @@ local function UpdateMinimapPins(mapID, px, py, facing)
     HideMinimapPinsFrom(shown + 1)
 end
 
+-- /bnav minimap
+ns.AddCommand("minimap", function()
+    DB().minimap = not DB().minimap
+    ns.Print("Minimap boss icons " .. (DB().minimap and "on" or "off") .. ".")
+    if not DB().minimap then HideMinimapPins() end
+end, {
+    "  /bnav minimap         toggle minimap icons (needs a position; this client hides it)",
+})
+
 -- shared with the other BossNav files
 ns.GetMinimapPin = GetMinimapPin
 ns.HideMinimapPins = HideMinimapPins

@@ -204,9 +204,14 @@ local function SkullCommand(rest)
     Print("Auto skull mark on bosses " .. (DB().skull and "on" or "off") .. ".")
 end
 
+-- /bnav skull [now|test]
+ns.AddCommand("skull", SkullCommand, {
+    "  /bnav skull           toggle the auto skull mark on bosses",
+    "  /bnav skull now       put a skull on a boss in view, no target needed (also a keybind)",
+    "  /bnav skull test      explain why your target was or was not marked",
+})
+
 -- shared with the other BossNav files
 ns.IdentifyBoss = IdentifyBoss
-ns.MarkNearbyBoss = MarkNearbyBoss
 ns.OnEncounterStart = OnEncounterStart
-ns.SkullCommand = SkullCommand
 ns.TryMarkUnit = TryMarkUnit

@@ -187,7 +187,6 @@ function BossNav_RefreshMap()
     playerPin:Hide()
     noArtText:Hide()
     if ns.HideTravelWidgets then ns.HideTravelWidgets() end
-    if ns.HideStartPin then ns.HideStartPin() end
 
     -- Loot / Profs / Quests / Items tabs: their panel covers the map and fills the
     -- sidebar instead. All are always called so the ones not shown hide themselves.
@@ -254,6 +253,5 @@ end
 -- shared with the other BossNav files
 ns.DrawBossArt = DrawBossArt
 ns.DrawBossPins = DrawBossPins
-ns.DrawBossRows = DrawBossRows
 ns.DrawWaypoints = DrawWaypoints
 ns.RefreshIfShown = RefreshIfShown

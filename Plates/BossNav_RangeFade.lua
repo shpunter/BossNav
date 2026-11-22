@@ -156,5 +156,10 @@ local function ToggleRangeFade()
     return DB().rangeFade
 end
 
+ns.AddCommand({ "rangefade", "range" }, function()
+    ns.Print("Fading group members beyond 30 yards " .. (ToggleRangeFade() and "on" or "off") .. ".")
+end, {
+    "  /bnav rangefade       fade party/raid frames of group members farther than 30 yards (on/off)",
+})
+
 -- shared with the other BossNav files
-ns.ToggleRangeFade = ToggleRangeFade

@@ -13,8 +13,8 @@ local Place                  = ns.Place
 local PlayerFacing           = ns.PlayerFacing
 local PlayerMapID            = ns.PlayerMapID
 local PlayerPos              = ns.PlayerPos
-local Print                  = ns.Print
 local RefreshIfShown         = ns.RefreshIfShown
+local SafeCall               = ns.SafeCall
 local SelectedBoss           = ns.SelectedBoss
 local SetBossIcon            = ns.SetBossIcon
 local TouchProgress          = ns.TouchProgress
@@ -174,10 +174,6 @@ ticker:SetScript("OnUpdate", function(_, dt)
     local minimapActive = state.inInstance and state.cfg and BossNavDB.minimap
     local travelActive = ns.TravelActive and ns.TravelActive()
     if mapFrame:IsShown() or hud:IsShown() or minimapActive or travelActive then
-        local ok, err = pcall(BossNav_UpdateLive)
-        if not ok and not state.liveErrorShown then
-            state.liveErrorShown = true
-            Print("live update error: " .. tostring(err))
-        end
+        SafeCall(BossNav_UpdateLive)
     end
 end)

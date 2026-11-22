@@ -512,6 +512,16 @@ local function ThreatCommand(rest)
     end
 end
 
+-- /bnav threat [test|reset|plates|tank|alert|debug]
+ns.AddCommand({ "threat", "aggro" }, ThreatCommand, {
+    "  /bnav threat          toggle the threat window: every mob in combat, who it attacks, your threat % (also a keybind)",
+    "  /bnav threat test     show the threat window with made-up mobs for 30 seconds; drag it with the mouse to move it",
+    "  /bnav threat reset    put the threat window back at its starting spot",
+    "  /bnav threat plates   turn the threat label next to each enemy health bar on or off",
+    "  /bnav threat tank     tank mode: auto (found from role, stance or Righteous Fury) -> always on -> off",
+    "  /bnav threat alert    tank mode: warning and sound when a mob turns from you to someone else (on/off)",
+    "  /bnav threat debug    print the raw threat values the game gives for each mob in view",
+})
+
 -- shared with the other BossNav files
 ns.EnsureNameplates = EnsureNameplates
-ns.ThreatCommand = ThreatCommand
