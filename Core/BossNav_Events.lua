@@ -7,6 +7,7 @@ local ApplySavedPortraits    = ns.ApplySavedPortraits
 local LearnEncounterPortraits = ns.LearnEncounterPortraits
 local LearnPortrait          = ns.LearnPortrait
 local CheckInstanceCopy      = ns.CheckInstanceCopy
+local CheckRare              = ns.CheckRare
 local CheckTargetDead        = ns.CheckTargetDead
 local ClearLoot              = ns.ClearLoot
 local ClearProfs             = ns.ClearProfs
@@ -137,11 +138,13 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4, arg5)
         if event == "PLAYER_TARGET_CHANGED" then
             ColorUnitFrames()
             SafeCall(CheckInstanceCopy, "target")
+            SafeCall(CheckRare, "target")
             SafeCall(TryMarkUnit, "target")
             SafeCall(LearnPortrait, "target")
         end
     elseif event == "NAME_PLATE_UNIT_ADDED" then
         SafeCall(CheckInstanceCopy, arg1)
+        SafeCall(CheckRare, arg1)
         SafeCall(TryMarkUnit, arg1)
         SafeCall(LearnPortrait, arg1)
         SafeCall(ColorPlate, arg1)
