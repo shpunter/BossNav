@@ -312,10 +312,25 @@ local function ShowDungeonOnWorldMap(idx)
     if ns.mapFrame and ns.mapFrame:IsShown() then BossNav_RefreshMap() end
 end
 
+-- /bnav worldmap, /bnav flights
+ns.AddCommand("worldmap", function()
+    DB().worldmap = not DB().worldmap
+    ns.Print("Dungeon entrance marks on the world map " .. (DB().worldmap and "on" or "off") .. ".")
+    pcall(RefreshWorldMapPins)
+end, {
+    "  /bnav worldmap        toggle the dungeon entrance marks on the game's world map",
+})
+ns.AddCommand({ "flights", "flight", "taxi" }, function()
+    DB().flightmap = not DB().flightmap
+    ns.Print("Flight masters on the world map " .. (DB().flightmap and "on" or "off") .. ".")
+    pcall(RefreshWorldMapPins)
+end, {
+    "  /bnav flights         toggle the flight masters on the game's world map (faded = not discovered yet)",
+})
+
 -- shared with the other BossNav files
 ns.OpenWorldMapAt = OpenWorldMapAt
 ns.ShowDungeonOnWorldMap = ShowDungeonOnWorldMap
-ns.HideWorldMapPins = HideWorldMapPins
 ns.RefreshWorldMapPins = RefreshWorldMapPins
 ns.SetupWorldMapPins = SetupWorldMapPins
 ns.WorldMapCanvas = Canvas

@@ -28,6 +28,7 @@ local OnUnitSpellcast        = ns.OnUnitSpellcast
 local Print                  = ns.Print
 local RefreshIfShown         = ns.RefreshIfShown
 local RestoreTravelTarget    = ns.RestoreTravelTarget
+local SafeCall               = ns.SafeCall
 local SetupWorldMapPins      = ns.SetupWorldMapPins
 local TryMarkUnit            = ns.TryMarkUnit
 local UpdateZone             = ns.UpdateZone
@@ -43,7 +44,7 @@ local function CheckLeftGroup()
     ClearProfs()
     Print("Left the group: dungeon progress, loot rolls and profession counts reset.")
     RefreshIfShown()
-    pcall(BossNav_UpdateLive, true)
+    SafeCall(BossNav_UpdateLive, true)
 end
 
 local events = CreateFrame("Frame")
@@ -132,30 +133,30 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4, arg5)
     elseif event == "BOSS_KILL" then
         if not IsSecret(arg2) and type(arg2) == "string" then OnBossKilled(arg2) end
     elseif event == "PLAYER_TARGET_CHANGED" or (event == "UNIT_HEALTH" and arg1 == "target") then
-        pcall(CheckTargetDead)
+        SafeCall(CheckTargetDead)
         if event == "PLAYER_TARGET_CHANGED" then
             ColorUnitFrames()
-            pcall(TryMarkUnit, "target")
-            pcall(LearnPortrait, "target")
+            SafeCall(TryMarkUnit, "target")
+            SafeCall(LearnPortrait, "target")
         end
     elseif event == "NAME_PLATE_UNIT_ADDED" then
-        pcall(TryMarkUnit, arg1)
-        pcall(LearnPortrait, arg1)
-        pcall(ColorPlate, arg1)
+        SafeCall(TryMarkUnit, arg1)
+        SafeCall(LearnPortrait, arg1)
+        SafeCall(ColorPlate, arg1)
     elseif event == "ENCOUNTER_START" then
         -- encounterID, encounterName, difficultyID, groupSize
-        pcall(OnEncounterStart, arg2)
-        pcall(LearnEncounterPortraits)
+        SafeCall(OnEncounterStart, arg2)
+        SafeCall(LearnEncounterPortraits)
     elseif event == "INSTANCE_ENCOUNTER_ENGAGE_UNIT" then
-        pcall(OnEncounterStart)
-        pcall(LearnEncounterPortraits)
+        SafeCall(OnEncounterStart)
+        SafeCall(LearnEncounterPortraits)
     elseif event == "CHAT_MSG_LOOT" then
-        local ok, drop = pcall(OnLootMessage, arg1)
-        if ok and drop then pcall(OnLootPopup, drop) end
-        pcall(OnProfLootMessage, arg1)
+        local ok, drop = SafeCall(OnLootMessage, arg1)
+        if ok and drop then SafeCall(OnLootPopup, drop) end
+        SafeCall(OnProfLootMessage, arg1)
     elseif event == "CHAT_MSG_TRADESKILLS" then
-        pcall(OnTradeSkillMessage, arg1)
+        SafeCall(OnTradeSkillMessage, arg1)
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
-        pcall(OnUnitSpellcast, arg1, arg2, arg3, arg4, arg5)
+        SafeCall(OnUnitSpellcast, arg1, arg2, arg3, arg4, arg5)
     end
 end)

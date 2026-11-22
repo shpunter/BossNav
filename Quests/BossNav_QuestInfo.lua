@@ -228,10 +228,11 @@ local function FillPlaceholders(s)
 end
 
 --------------------------------------------------------------------------
--- Money: gold / silver / copper with coin icons
+-- Money: gold / silver / copper with coin icons, styled like the game's
+-- quest window (BossNav_Gold.lua has a brighter one for the dark window)
 --------------------------------------------------------------------------
 local COIN = "|TInterface\\MoneyFrame\\UI-%sIcon:0:0:2:0|t"
-local function MoneyText(copper)
+local function RewardMoneyText(copper)
     if GetCoinTextureString then
         local ok, s = pcall(GetCoinTextureString, copper)
         if ok and type(s) == "string" then return s end
@@ -359,7 +360,7 @@ local function ShowQuestInfo(q, titleText, infoLines)
         end
         if money > 0 then
             Put("body", ((#choices + #items > 0 or info.sp) and "You will also receive:  " or "You will receive:  ")
-                .. MoneyText(money), 8)
+                .. RewardMoneyText(money), 8)
         end
         if hasRep then
             local parts = {}

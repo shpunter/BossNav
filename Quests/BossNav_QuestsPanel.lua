@@ -424,9 +424,22 @@ local function QuestCommand(rest)
     ns.SetTab("quest")
 end
 
+-- /bnav quest ...
+ns.AddCommand({ "quest", "quests", "q" }, function(rest)
+    if not ns.mapFrame:IsShown() then ns.mapFrame:Show() end
+    QuestCommand(rest)
+end, {
+    "  /bnav quest [n]       Quests tab: the quests of this dungeon (outside: the one picked with /bnav go), who gives them and where",
+    "  /bnav quest next|prev pick the next / previous quest (the Select Next / Previous Boss keys do it too on that tab)",
+    "  /bnav quest all       show every faction's and class's quests, or only yours again",
+    "  /bnav quest list      print the quest list and giver places to your chat",
+    "  /bnav quest down|up|top  scroll the quest text and rewards (also keybinds)",
+    "  /bnav quest show [n]  navigate to the selected (or n-th) quest's giver and show it zoomed in on the world map",
+    "  /bnav quest map       toggle the quest givers of the selected dungeon on the game's world map",
+})
+
 -- shared with the other BossNav files
 ns.CycleQuest = CycleQuest
-ns.QuestCommand = QuestCommand
 ns.SelectQuest = SelectQuest
 ns.RenderQuestTab = RenderQuestTab
 ns.VisibleQuests = VisibleQuests

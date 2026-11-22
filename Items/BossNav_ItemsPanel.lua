@@ -379,6 +379,8 @@ local function ItemsCommand(rest)
 end
 
 -- The Scroll Quest Text keys page the item list while it is shown.
+-- This wraps the quest page's BossNav_ScrollQuest, so BossNav_QuestInfo.lua
+-- must stay above this file in BossNav.toc.
 local ScrollQuest = BossNav_ScrollQuest
 function BossNav_ScrollQuest(step)
     if state.tab == "item" and mapFrame:IsShown() then
@@ -388,7 +390,17 @@ function BossNav_ScrollQuest(step)
     end
 end
 
+-- /bnav items ...
+ns.AddCommand({ "items", "item" }, function(rest)
+    if not mapFrame:IsShown() then mapFrame:Show() end
+    ItemsCommand(rest)
+end, {
+    "  /bnav items [n]       Items column: loot of the dungeon (and of the boss you picked in Bosses), icon, drop chance and stats",
+    "  /bnav items next|prev|down|up  walk or page the item list (the Select Next / Previous Boss and Scroll keys do it too)",
+    "  /bnav items all       drop the boss / trash filter: all the dungeon's loot ([show all] in the Items header)",
+    "  /bnav items trash     loot of trash, rares and mini-bosses (the Trash row under the bosses)",
+})
+
 -- shared with the other BossNav files
 ns.CycleItem = CycleItem
-ns.ItemsCommand = ItemsCommand
 ns.RenderItemTab = RenderItemTab

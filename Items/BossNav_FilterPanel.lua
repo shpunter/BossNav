@@ -276,11 +276,26 @@ local function FiltersCommand(rest)
     for _, g in ipairs(GROUPS) do Print(g.title .. ": " .. Ticks(g)) end
 end
 
+-- /bnav class | armor | gear | weapon | wield | other name, /bnav filters
+local function FilterWords(group, words)
+    ns.AddCommand(words, function(rest) FilterCommand(group, rest) end)
+end
+FilterWords("class", { "class", "classes" })
+FilterWords("other", { "other", "goods" })
+FilterWords("armor", { "armor", "armour" })
+FilterWords("slot", { "gear", "slot", "slots" })
+FilterWords("weapon", { "weapon", "weapons" })
+FilterWords("hand", { "wield", "hand", "hands" })
+ns.AddCommand({ "filter", "filters" }, FiltersCommand, {
+    "  /bnav class name      tick / untick a class in the item filters under the map (all | none | mine); saved",
+    "  /bnav armor | gear | weapon | wield name   the same for armour type (cloth, plate...), gear (helm, boots, ring...), weapon types (axe, staff...), wield (one-hand, two-hand...)",
+    "  /bnav other name      the same for everything else, by auction house category (recipe, trade goods, consumable...)",
+    "  /bnav filters [reset | next]  list the item filters, tick everything again, or open the next filter tab",
+})
+
 -- shared with the other BossNav files
-ns.FilterCommand = FilterCommand
 ns.ResetItemFilters = ResetAll
 ns.FiltersActive = FiltersActive
-ns.FiltersCommand = FiltersCommand
 ns.HideFilterPanel = HideFilterPanel
 ns.filterPanel = panel
 ns.ShowFilterPanel = ShowFilterPanel

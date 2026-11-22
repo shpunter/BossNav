@@ -9,8 +9,6 @@ local DB                     = ns.DB
 local DUNGEONS               = ns.DUNGEONS
 local EditableWaypoints      = ns.EditableWaypoints
 local FloorName              = ns.FloorName
-local HideMinimapPins        = ns.HideMinimapPins
-local LootCommand            = ns.LootCommand
 local MapName                = ns.MapName
 local MapWorldSize           = ns.MapWorldSize
 local NextTab                = ns.NextTab
@@ -18,25 +16,14 @@ local Norm                   = ns.Norm
 local PlayerFacing           = ns.PlayerFacing
 local PlayerMapID            = ns.PlayerMapID
 local PlayerPos              = ns.PlayerPos
-local PostLootSelected       = ns.PostLootSelected
-local ShowLootPopup          = ns.ShowLootPopup
-local ToggleLootPopup        = ns.ToggleLootPopup
 local Print                  = ns.Print
-local ProfCommand            = ns.ProfCommand
 local RefreshIfShown         = ns.RefreshIfShown
 local RemoveBoss             = ns.RemoveBoss
-local RouteCommand           = ns.RouteCommand
 local SaveEntrance           = ns.SaveEntrance
 local SelectedBoss           = ns.SelectedBoss
 local SelectedDungeon        = ns.SelectedDungeon
 local SetTab                 = ns.SetTab
-local SkullCommand           = ns.SkullCommand
-local PortraitCommand        = ns.PortraitCommand
 local TRAVEL                 = ns.TRAVEL
-local ThreatCommand          = ns.ThreatCommand
-local ToggleClassColors      = ns.ToggleClassColors
-local ToggleDrinkIcon        = ns.ToggleDrinkIcon
-local ToggleRangeFade        = ns.ToggleRangeFade
 local TouchProgress          = ns.TouchProgress
 local TravelMode             = ns.TravelMode
 local UpdateHUDVisibility    = ns.UpdateHUDVisibility
@@ -312,307 +299,201 @@ local function Diagnostics()
         state.cfg and state.cfg.name or "none", tostring(state.shownFloor or state.autoFloor or "-")))
 end
 
+--------------------------------------------------------------------------
+-- Core /bnav commands: map, bosses, floors, waypoints. Feature commands
+-- (loot, quests, items, threat, plates...) are registered by their own files
+-- with ns.AddCommand.
+--------------------------------------------------------------------------
+local AddCommand = ns.AddCommand
+
+-- printed before the feature files' help lines
+local CORE_HELP = {
+    "  /bnav                 toggle the dungeon map (Esc closes it); outside a dungeon it shows the dungeon selector",
+    "  /bnav go [n|name|off] outside: pick the dungeon to walk to (HUD arrow, yards, minimap pin to its entrance)",
+    "  /bnav go up | down    scroll the dungeon list a page (the mouse wheel over the list scrolls it too)",
+    "  /bnav go show [n]     pick the selected (or n-th) dungeon and show its entrance zoomed in on the world map",
+    "  /bnav entrance [X Y]  outside: record the chosen dungeon's entrance at your feet (or X% across, Y% down the zone map)",
+    "  /bnav boss [n|name]   select next boss, or boss number / name (outside: same as /bnav go)",
+    "  /bnav prev            select previous boss",
+    "  /bnav floor [n]       switch map floor (multi-floor dungeons)",
+    "  /bnav kill            toggle [DEAD] on the selected boss",
+    "  /bnav reset           clear all [DEAD] marks",
+    "  /bnav mark X Y [note] add a numbered dot at X% across, Y% down the map",
+    "  /bnav undo | clear    remove the last / all dots of this boss",
+    "  /bnav restore         bring back the built-in trail of this boss",
+    "  /bnav markboss X Y    place the selected boss pin at X% across, Y% down",
+    "  /bnav addboss Name [X Y]  add a boss missing from the list (kills add them automatically)",
+    "  /bnav delboss [Name]  remove an added boss",
+    "  /bnav hud             toggle the top-screen boss bar",
+    "  /bnav tab              next section: Dungeons / Quests / Loot / Profs (the Switch Section key)",
+    "  /bnav tab view         Dungeons: focus the next column, Dungeons / Bosses / Items (the Switch Column key);",
+    "                         the Select Next / Previous Boss keys walk the focused column",
+    "  /bnav tab [travel|boss|item|quest|loot|prof|n] open that column or section; a number n picks item n on the Loot or Profs tab",
+    "  /bnav pos             print map diagnostics",
+    "  /bnav test            preview Wailing Caverns anywhere",
+}
+
 local function ShowHelp()
     Print("Commands:")
-    Print("  /bnav                 toggle the dungeon map (Esc closes it); outside a dungeon it shows the dungeon selector")
-    Print("  /bnav go [n|name|off] outside: pick the dungeon to walk to (HUD arrow, yards, minimap pin to its entrance)")
-    Print("  /bnav go up | down    scroll the dungeon list a page (the mouse wheel over the list scrolls it too)")
-    Print("  /bnav go show [n]     pick the selected (or n-th) dungeon and show its entrance zoomed in on the world map")
-    Print("  /bnav route foot|fly  outside: walk zone to zone, or use flight masters where a path is known at both ends (the boxes under the map; no word flips it)")
-    Print("  /bnav worldmap        toggle the dungeon entrance marks on the game's world map")
-    Print("  /bnav flights         toggle the flight masters on the game's world map (faded = not discovered yet)")
-    Print("  /bnav entrance [X Y]  outside: record the chosen dungeon's entrance at your feet (or X% across, Y% down the zone map)")
-    Print("  /bnav boss [n|name]   select next boss, or boss number / name (outside: same as /bnav go)")
-    Print("  /bnav prev            select previous boss")
-    Print("  /bnav floor [n]       switch map floor (multi-floor dungeons)")
-    Print("  /bnav kill            toggle [DEAD] on the selected boss")
-    Print("  /bnav reset           clear all [DEAD] marks")
-    Print("  /bnav mark X Y [note] add a numbered dot at X% across, Y% down the map")
-    Print("  /bnav undo | clear    remove the last / all dots of this boss")
-    Print("  /bnav restore         bring back the built-in trail of this boss")
-    Print("  /bnav markboss X Y    place the selected boss pin at X% across, Y% down")
-    Print("  /bnav addboss Name [X Y]  add a boss missing from the list (kills add them automatically)")
-    Print("  /bnav delboss [Name]  remove an added boss")
-    Print("  /bnav hud             toggle the top-screen boss bar")
-    Print("  /bnav skull           toggle the auto skull mark on bosses")
-    Print("  /bnav skull now       put a skull on a boss in view, no target needed (also a keybind)")
-    Print("  /bnav skull test      explain why your target was or was not marked")
-    Print("  /bnav portrait        learn the portrait of the boss you target (also happens by itself)")
-    Print("  /bnav portrait list   which boss portraits were learned in game; 'clear' forgets them")
-    Print("  /bnav threat          toggle the threat window: every mob in combat, who it attacks, your threat % (also a keybind)")
-    Print("  /bnav threat test     show the threat window with made-up mobs for 30 seconds; drag it with the mouse to move it")
-    Print("  /bnav threat reset    put the threat window back at its starting spot")
-    Print("  /bnav threat plates   turn the threat label next to each enemy health bar on or off")
-    Print("  /bnav threat tank     tank mode: auto (found from role, stance or Righteous Fury) -> always on -> off")
-    Print("  /bnav threat alert    tank mode: warning and sound when a mob turns from you to someone else (on/off)")
-    Print("  /bnav threat debug   print the raw threat values the game gives for each mob in view")
-    Print("  /bnav classplates     class colour on players' health bars: nameplates, target, target of target, party/raid (on/off)")
-    Print("  /bnav rangefade       fade party/raid frames of group members farther than 30 yards (on/off)")
-    Print("  /bnav drinkicon       cup icon next to the name of a group member who is drinking (on/off)")
-    Print("  /bnav distance        how far each group member is, under their frame (on/off; 'test' shows every check)")
-    Print("  /bnav minimap         toggle minimap icons (needs a position; this client hides it)")
-    Print("  /bnav loot [n|all]    last 5 loot rolls (blue and better): who chose Need/Greed/Pass, their roll, the winner")
-    Print("  /bnav quest [n]       Quests tab: the quests of this dungeon (outside: the one picked with /bnav go), who gives them and where")
-    Print("  /bnav quest next|prev pick the next / previous quest (the Select Next / Previous Boss keys do it too on that tab)")
-    Print("  /bnav quest all       show every faction's and class's quests, or only yours again")
-    Print("  /bnav quest list      print the quest list and giver places to your chat")
-    Print("  /bnav quest down|up|top  scroll the quest text and rewards (also keybinds)")
-    Print("  /bnav quest show [n]  navigate to the selected (or n-th) quest's giver and show it zoomed in on the world map")
-    Print("  /bnav nav             switch the arrow between the quest giver and the dungeon (also a keybind)")
-    Print("  /bnav nav quest|dungeon  follow that one; /bnav nav off forgets the quest giver target")
-    Print("  /bnav quest map       toggle the quest givers of the selected dungeon on the game's world map")
-    Print("  /bnav tab              next section: Dungeons / Quests / Loot / Profs (the Switch Section key)")
-    Print("  /bnav tab view         Dungeons: focus the next column, Dungeons / Bosses / Items (the Switch Column key);")
-    Print("                         the Select Next / Previous Boss keys walk the focused column")
-    Print("  /bnav tab [travel|boss|item|quest|loot|prof|n] open that column or section; a number n picks item n on the Loot or Profs tab")
-    Print("  /bnav items [n]       Items column: loot of the dungeon (and of the boss you picked in Bosses), icon, drop chance and stats")
-    Print("  /bnav items next|prev|down|up  walk or page the item list (the Select Next / Previous Boss and Scroll keys do it too)")
-    Print("  /bnav items all       drop the boss / trash filter: all the dungeon's loot ([show all] in the Items header)")
-    Print("  /bnav items trash     loot of trash, rares and mini-bosses (the Trash row under the bosses)")
-    Print("  /bnav class name      tick / untick a class in the item filters under the map (all | none | mine); saved")
-    Print("  /bnav armor | gear | weapon | wield name   the same for armour type (cloth, plate...), gear (helm, boots, ring...), weapon types (axe, staff...), wield (one-hand, two-hand...)")
-    Print("  /bnav other name      the same for everything else, by auction house category (recipe, trade goods, consumable...)")
-    Print("  /bnav filters [reset | next]  list the item filters, tick everything again, or open the next filter tab")
-    Print("  /bnav prof [n]        Profs tab: how often each member mined, skinned, gathered, fished or crafted; n lists member n's spells")
-    Print("  /bnav prof post       post the profession counts to party/raid chat (/bnav prof list prints them to you)")
-    Print("  /bnav prof clear      forget the profession counts (also done when you leave the group)")
-    Print("  /bnav prof debug      print every group spell cast the game reports, to see what is counted")
-    Print("  /bnav loot post       post the selected item's rolls to party/raid chat (types ticked on the Loot tab)")
-    Print("  /bnav loot auto       toggle the roll summary printed after each item is won")
-    Print("  /bnav loot popup      toggle the popup that shows Need / Greed / Pass live while an item is rolled")
-    Print("  /bnav loot show       open that popup with the newest item (to check it or drag it into place)")
-    Print("  /bnav loot clear      forget the loot roll history")
-    Print("  /bnav loot who        show how the addon sees your group (names and classes)")
-    Print("  /bnav pos             print map diagnostics")
-    Print("  /bnav test            preview Wailing Caverns anywhere")
+    for _, line in ipairs(CORE_HELP) do Print(line) end
+    for _, line in ipairs(ns.CommandHelp()) do Print(line) end
     Print("Keybinds: Esc > Key Bindings > BossNav")
 end
 
-SLASH_BOSSNAV1 = "/bnav"
-SlashCmdList["BOSSNAV"] = function(msg)
-    msg = msg or ""
-    local cmd, rest = msg:match("^%s*(%S*)%s*(.-)%s*$")
-    cmd = (cmd or ""):lower()
-    rest = rest or ""
-    local cfg = state.cfg
+AddCommand({ "go", "travel", "dungeon" }, GoCommand)
+AddCommand("entrance", MarkEntranceHere)
 
-    if cmd == "" then
-        BossNav_ToggleMap()
-    elseif cmd == "go" or cmd == "travel" or cmd == "dungeon" then
-        GoCommand(rest)
-    elseif cmd == "nav" then
-        -- /bnav nav [quest|dungeon|off]: which target the arrow follows
-        local arg = rest:lower()
-        if arg == "off" or arg == "clear" then ns.ClearQuestTarget()
-        elseif arg == "quest" or arg == "q" then ns.SwitchNav("quest")
-        elseif arg == "dungeon" or arg == "d" then ns.SwitchNav("dungeon")
-        else ns.SwitchNav() end
-    elseif cmd == "entrance" then
-        MarkEntranceHere(rest)
-    elseif cmd == "route" then
-        RouteCommand(rest)
-    elseif cmd == "walk" or cmd == "foot" then
-        RouteCommand("foot")
-    elseif cmd == "fly" then
-        RouteCommand("fly")
-    elseif (cmd == "boss" or cmd == "next") and TravelMode() then
-        GoCommand(rest)
-    elseif cmd == "boss" or cmd == "next" then
-        if rest ~= "" and cfg then
-            local n = tonumber(rest)
-            if n then
-                BossNav_SelectBoss(n)
-            else
-                local needle = rest:lower()
-                for i, b in ipairs(cfg.bosses) do
-                    if b[1]:lower():find(needle, 1, true) then BossNav_SelectBoss(i) return end
-                end
-                Print("No boss matching '" .. rest .. "'.")
-            end
-        else
-            BossNav_CycleBoss()
-        end
-    elseif cmd == "prev" then
-        BossNav_PrevBoss()
-    elseif cmd == "floor" then
-        local n = tonumber(rest)
-        if n and cfg then
-            state.floorOverride = n
-            if not mapFrame:IsShown() then mapFrame:Show() end
-            BossNav_RefreshMap()
-        else
-            BossNav_NextFloor()
-        end
-    elseif cmd == "kill" then
-        local boss = SelectedBoss()
-        if boss then
-            state.killed[boss[1]] = (not state.killed[boss[1]]) or nil
-            Print(boss[1] .. (state.killed[boss[1]] and " marked [DEAD]." or " marked alive."))
-            TouchProgress()
-            RefreshIfShown()
-            pcall(BossNav_UpdateLive, true)
-        end
-    elseif cmd == "reset" then
-        ClearProgress(state.cfg)
-        Print("Kill marks cleared.")
-        RefreshIfShown()
-    elseif cmd == "mark" then
-        BossNav_MarkWaypoint(rest)
-    elseif cmd == "markboss" then
-        MarkBossHere(rest)
-    elseif cmd == "addboss" then
-        local cfg = state.cfg
-        if not cfg then Print("Enter a known dungeon first.") return end
-        local name, tx, ty = (rest or ""):match("^(.-)%s+(%d+%.?%d*)%s+(%d+%.?%d*)%s*$")
-        name = name or rest
-        name = (name or ""):gsub("^%s+", ""):gsub("%s+$", "")
-        if name == "" then Print("Usage: /bnav addboss Boss Name [X Y]") return end
-        local x, y = tonumber(tx), tonumber(ty)
-        local floor = (x and y) and (state.shownFloor or cfg.floors[1]) or nil
-        if not AddBoss(cfg, name, x, y, floor) then Print(name .. " is already in the list.") end
-    elseif cmd == "delboss" then
-        local cfg = state.cfg
-        if not cfg then Print("Enter a known dungeon first.") return end
-        local name = (rest ~= "" and rest) or (SelectedBoss() and SelectedBoss()[1])
-        if not name then Print("Usage: /bnav delboss [Boss Name]") return end
-        if RemoveBoss(cfg, name) then
-            Print(name .. " removed.")
-        else
-            Print(name .. " is a built-in boss or not in the list; only added bosses can be removed.")
-        end
-    elseif cmd == "undo" or cmd == "clear" or cmd == "restore" then
-        local boss = SelectedBoss()
-        if not (cfg and boss) then
-            Print("Select a boss first (/bnav boss).")
-        elseif cmd == "restore" then
-            if DB().routes[cfg.key] then DB().routes[cfg.key][boss[1]] = nil end
-            Print("Built-in trail restored for " .. boss[1] .. ".")
-            RefreshIfShown()
-        else
-            local wps = EditableWaypoints(cfg, boss)
-            if #wps == 0 then
-                Print("No waypoints for this boss.")
-            elseif cmd == "undo" then
-                table.remove(wps)
-                Print("Last waypoint removed for " .. boss[1] .. ".")
-                RefreshIfShown()
-            else
-                for i = #wps, 1, -1 do wps[i] = nil end
-                Print("Waypoints cleared for " .. boss[1] .. ". /bnav restore brings the built-in trail back.")
-                RefreshIfShown()
-            end
-        end
-    elseif cmd == "hud" then
-        BossNav_ToggleHUD()
-    elseif cmd == "skull" then
-        SkullCommand(rest)
-    elseif cmd == "portrait" or cmd == "portraits" or cmd == "icon" or cmd == "icons" then
-        PortraitCommand(rest)
-    elseif cmd == "minimap" then
-        DB().minimap = not DB().minimap
-        Print("Minimap boss icons " .. (DB().minimap and "on" or "off") .. ".")
-        if not DB().minimap then HideMinimapPins() end
-    elseif cmd == "worldmap" then
-        DB().worldmap = not DB().worldmap
-        Print("Dungeon entrance marks on the world map " .. (DB().worldmap and "on" or "off") .. ".")
-        if ns.RefreshWorldMapPins then pcall(ns.RefreshWorldMapPins) end
-    elseif cmd == "flights" or cmd == "flight" or cmd == "taxi" then
-        DB().flightmap = not DB().flightmap
-        Print("Flight masters on the world map " .. (DB().flightmap and "on" or "off") .. ".")
-        if ns.RefreshWorldMapPins then pcall(ns.RefreshWorldMapPins) end
-    elseif cmd == "loot" then
-        if rest:lower() == "post" then
-            PostLootSelected()
-        elseif rest:lower() == "popup" then
-            ToggleLootPopup()
-        elseif rest:lower() == "show" then
-            ShowLootPopup()
-        else
-            LootCommand(rest)
-        end
-    elseif cmd == "tab" then
-        local n = tonumber(rest)
-        local which = rest:lower()
-        if n then
-            if state.tab == "prof" then
-                state.profIdx = n
-                SetTab("prof")
-            elseif state.tab == "quest" then
-                ns.SelectQuest(n)
-                SetTab("quest")
-            else
-                state.lootIdx = n
-                SetTab("loot")
-            end
-        elseif which == "loot" then
-            SetTab("loot")
-        elseif which == "prof" or which == "profs" then
-            SetTab("prof")
-        elseif which == "quest" or which == "quests" then
-            SetTab("quest")
-        elseif which == "travel" or which == "dungeon" or which == "dungeons" then
-            SetTab("travel")
-        elseif which == "boss" or which == "bosses" then
-            SetTab("boss")
-        elseif which == "item" or which == "items" then
-            SetTab("item")
-        elseif which == "view" then
-            BossNav_NextView()
-        else
-            BossNav_ToggleTab()
-        end
-    elseif cmd == "prof" or cmd == "profs" then
-        ProfCommand(rest)
-    elseif cmd == "quest" or cmd == "quests" or cmd == "q" then
+-- /bnav boss [n|name]: outside it picks a dungeon like /bnav go
+AddCommand({ "boss", "next" }, function(rest)
+    if TravelMode() then GoCommand(rest) return end
+    local cfg = state.cfg
+    if rest == "" or not cfg then BossNav_CycleBoss() return end
+    local n = tonumber(rest)
+    if n then BossNav_SelectBoss(n) return end
+    local needle = rest:lower()
+    for i, b in ipairs(cfg.bosses) do
+        if b[1]:lower():find(needle, 1, true) then BossNav_SelectBoss(i) return end
+    end
+    Print("No boss matching '" .. rest .. "'.")
+end)
+
+AddCommand("prev", function() BossNav_PrevBoss() end)
+
+AddCommand("floor", function(rest)
+    local n = tonumber(rest)
+    if n and state.cfg then
+        state.floorOverride = n
         if not mapFrame:IsShown() then mapFrame:Show() end
-        ns.QuestCommand(rest)
-    elseif cmd == "items" or cmd == "item" then
-        if not mapFrame:IsShown() then mapFrame:Show() end
-        ns.ItemsCommand(rest)
-    elseif cmd == "class" or cmd == "classes" then
-        ns.FilterCommand("class", rest)
-    elseif cmd == "other" or cmd == "goods" then
-        ns.FilterCommand("other", rest)
-    elseif cmd == "armor" or cmd == "armour" then
-        ns.FilterCommand("armor", rest)
-    elseif cmd == "gear" or cmd == "slot" or cmd == "slots" then
-        ns.FilterCommand("slot", rest)
-    elseif cmd == "weapon" or cmd == "weapons" then
-        ns.FilterCommand("weapon", rest)
-    elseif cmd == "wield" or cmd == "hand" or cmd == "hands" then
-        ns.FilterCommand("hand", rest)
-    elseif cmd == "filter" or cmd == "filters" then
-        ns.FiltersCommand(rest)
-    elseif cmd == "threat" or cmd == "aggro" then
-        ThreatCommand(rest)
-    elseif cmd == "classplates" or cmd == "classplate" or cmd == "classcolors" or cmd == "classcolor" then
-        Print("Class colours on player health bars " .. (ToggleClassColors() and "on" or "off") .. ".")
-    elseif cmd == "distance" or cmd == "dist" then
-        if rest:lower() == "test" then
-            ns.DistanceReport(Print)
-        else
-            Print("Distance under party/raid frames " .. (ns.TogglePartyDistance() and "on" or "off") .. ".")
-        end
-    elseif cmd == "drinkicon" or cmd == "drink" then
-        Print("Drinking icon on party/raid frames " .. (ToggleDrinkIcon() and "on" or "off") .. ".")
-    elseif cmd == "rangefade" or cmd == "range" then
-        Print("Fading group members beyond 30 yards " .. (ToggleRangeFade() and "on" or "off") .. ".")
-    elseif cmd == "pos" then
-        Diagnostics()
-    elseif cmd == "test" then
-        state.testMode = true
-        state.cfg = ZONE_INDEX[Norm("Wailing Caverns")]
-        state.zoneName = "Wailing Caverns (preview)"
-        state.bossIdx = 1
-        state.killed = {}
-        state.floorOverride = nil
-        state.autoFloor = nil
-        UpdateHUDVisibility()
-        mapFrame:Show()
         BossNav_RefreshMap()
     else
-        ShowHelp()
+        BossNav_NextFloor()
     end
+end)
+
+AddCommand("kill", function()
+    local boss = SelectedBoss()
+    if not boss then return end
+    state.killed[boss[1]] = (not state.killed[boss[1]]) or nil
+    Print(boss[1] .. (state.killed[boss[1]] and " marked [DEAD]." or " marked alive."))
+    TouchProgress()
+    RefreshIfShown()
+    pcall(BossNav_UpdateLive, true)
+end)
+
+AddCommand("reset", function()
+    ClearProgress(state.cfg)
+    Print("Kill marks cleared.")
+    RefreshIfShown()
+end)
+
+AddCommand("mark", function(rest) BossNav_MarkWaypoint(rest) end)
+AddCommand("markboss", MarkBossHere)
+
+AddCommand("addboss", function(rest)
+    local cfg = state.cfg
+    if not cfg then Print("Enter a known dungeon first.") return end
+    local name, tx, ty = rest:match("^(.-)%s+(%d+%.?%d*)%s+(%d+%.?%d*)%s*$")
+    name = name or rest
+    name = name:gsub("^%s+", ""):gsub("%s+$", "")
+    if name == "" then Print("Usage: /bnav addboss Boss Name [X Y]") return end
+    local x, y = tonumber(tx), tonumber(ty)
+    local floor = (x and y) and (state.shownFloor or cfg.floors[1]) or nil
+    if not AddBoss(cfg, name, x, y, floor) then Print(name .. " is already in the list.") end
+end)
+
+AddCommand("delboss", function(rest)
+    local cfg = state.cfg
+    if not cfg then Print("Enter a known dungeon first.") return end
+    local name = (rest ~= "" and rest) or (SelectedBoss() and SelectedBoss()[1])
+    if not name then Print("Usage: /bnav delboss [Boss Name]") return end
+    if RemoveBoss(cfg, name) then
+        Print(name .. " removed.")
+    else
+        Print(name .. " is a built-in boss or not in the list; only added bosses can be removed.")
+    end
+end)
+
+-- /bnav undo | clear | restore: the selected boss's waypoints
+AddCommand({ "undo", "clear", "restore" }, function(_, cmd)
+    local cfg, boss = state.cfg, SelectedBoss()
+    if not (cfg and boss) then
+        Print("Select a boss first (/bnav boss).")
+        return
+    end
+    if cmd == "restore" then
+        if DB().routes[cfg.key] then DB().routes[cfg.key][boss[1]] = nil end
+        Print("Built-in trail restored for " .. boss[1] .. ".")
+        RefreshIfShown()
+        return
+    end
+    local wps = EditableWaypoints(cfg, boss)
+    if #wps == 0 then
+        Print("No waypoints for this boss.")
+    elseif cmd == "undo" then
+        table.remove(wps)
+        Print("Last waypoint removed for " .. boss[1] .. ".")
+        RefreshIfShown()
+    else
+        for i = #wps, 1, -1 do wps[i] = nil end
+        Print("Waypoints cleared for " .. boss[1] .. ". /bnav restore brings the built-in trail back.")
+        RefreshIfShown()
+    end
+end)
+
+AddCommand("hud", function() BossNav_ToggleHUD() end)
+
+-- /bnav tab [name | n | view]
+local TAB_WORDS = {
+    loot = "loot", prof = "prof", profs = "prof", quest = "quest", quests = "quest",
+    travel = "travel", dungeon = "travel", dungeons = "travel",
+    boss = "boss", bosses = "boss", item = "item", items = "item",
+}
+AddCommand("tab", function(rest)
+    local n = tonumber(rest)
+    local which = rest:lower()
+    if n then
+        if state.tab == "prof" then
+            state.profIdx = n
+            SetTab("prof")
+        elseif state.tab == "quest" then
+            ns.SelectQuest(n)
+            SetTab("quest")
+        else
+            state.lootIdx = n
+            SetTab("loot")
+        end
+    elseif TAB_WORDS[which] then
+        SetTab(TAB_WORDS[which])
+    elseif which == "view" then
+        BossNav_NextView()
+    else
+        BossNav_ToggleTab()
+    end
+end)
+
+AddCommand("pos", Diagnostics)
+
+AddCommand("test", function()
+    state.testMode = true
+    state.cfg = ZONE_INDEX[Norm("Wailing Caverns")]
+    state.zoneName = "Wailing Caverns (preview)"
+    state.bossIdx = 1
+    state.killed = {}
+    state.floorOverride = nil
+    state.autoFloor = nil
+    UpdateHUDVisibility()
+    mapFrame:Show()
+    BossNav_RefreshMap()
+end)
+
+SLASH_BOSSNAV1 = "/bnav"
+SlashCmdList["BOSSNAV"] = function(msg)
+    local cmd, rest = (msg or ""):match("^%s*(%S*)%s*(.-)%s*$")
+    cmd = (cmd or ""):lower()
+    rest = rest or ""
+    if cmd == "" then BossNav_ToggleMap() return end
+    local run = ns.FindCommand(cmd)
+    if run then run(rest, cmd) else ShowHelp() end
 end
 
 -- shared with the other BossNav files

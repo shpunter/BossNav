@@ -342,6 +342,14 @@ local function ProfCommand(rest)
     end
 end
 
+-- /bnav prof [n|post|list|clear|debug]
+ns.AddCommand({ "prof", "profs" }, ProfCommand, {
+    "  /bnav prof [n]        Profs tab: how often each member mined, skinned, gathered, fished or crafted; n lists member n's spells",
+    "  /bnav prof post       post the profession counts to party/raid chat (/bnav prof list prints them to you)",
+    "  /bnav prof clear      forget the profession counts (also done when you leave the group)",
+    "  /bnav prof debug      print every group spell cast the game reports, to see what is counted",
+})
+
 -- shared with the other BossNav files
 ns.ClearProfs = ClearProfs
 ns.OnUnitSpellcast = OnUnitSpellcast
