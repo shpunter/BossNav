@@ -242,7 +242,7 @@ local function NextLeg(entry, playerMapID, px, py)
     local entrance = { mapID = emap, fx = ex, fy = ey, kind = "entrance", text = "Entrance: " .. (where or "?"), zonesLeft = 0 }
 
     local destZone = entry.zone
-    local saved = DB().entrances and DB().entrances[entry.key]
+    local saved = ns.SavedEntrance(entry)
     if saved and saved.zone then destZone = saved.zone end
     local destKey = Norm(destZone)
     local curKey = CurrentZoneKey(playerMapID)

@@ -25,11 +25,14 @@ local GoodsFilter            = ns.GoodsFilter
 local HandFilter             = ns.HandFilter
 local ITEM_CLASSES           = ns.ITEM_CLASSES
 local OnlyMyClass            = ns.OnlyMyClass
+local PaintTab               = ns.PaintTab
 local Print                  = ns.Print
 local SetAllClasses          = ns.SetAllClasses
 local SetClassTicked         = ns.SetClassTicked
 local SlotFilter             = ns.SlotFilter
 local SlotFiltersActive      = ns.SlotFiltersActive
+local StyleTab               = ns.StyleTab
+local TAB_EDGE               = ns.TAB_EDGE
 local TickedCount            = ns.TickedCount
 local WeaponFilter           = ns.WeaponFilter
 local mapFrame               = ns.mapFrame
@@ -74,9 +77,6 @@ local ROW_H = 20
 local BODY_TOP = TAB_H + 6
 
 local GOLD = { 1, 0.82, 0 }
-local EDGE = { 0.75, 0.62, 0.20, 1 }    -- the gold line the tabs sit on
-local PANEL = { 0.06, 0.06, 0.08, 1 }   -- the open tab: the window's dark colour
-local IDLE = { 0.13, 0.13, 0.16, 1 }    -- a closed tab
 
 local maxRows = 1
 for _, g in ipairs(GROUPS) do maxRows = math.max(maxRows, math.ceil(#g.entries / PER_ROW)) end
@@ -90,7 +90,7 @@ local edge = panel:CreateTexture(nil, "ARTWORK")
 edge:SetHeight(1)
 edge:SetPoint("TOPLEFT", panel, "TOPLEFT", 0, -TAB_H)
 edge:SetPoint("TOPRIGHT", panel, "TOPRIGHT", 0, -TAB_H)
-edge:SetColorTexture(unpack(EDGE))
+edge:SetColorTexture(unpack(TAB_EDGE))
 
 local tabs = {}             -- id -> tab button
 local pages = {}            -- id -> frame holding that group's boxes
@@ -116,9 +116,7 @@ local function PaintTabs()
     for _, g in ipairs(GROUPS) do
         local b, on = tabs[g.id], (g.id == open)
         b.text:SetText(g.title .. (g.AllTicked() and "" or " |cffff8040*|r"))
-        b.bg:SetColorTexture(unpack(on and PANEL or IDLE))
-        b:SetHeight(on and TAB_H + 1 or TAB_H)
-        b.top:SetShown(on)
+        PaintTab(b, on, TAB_H)
         if on then b.text:SetTextColor(GOLD[1], GOLD[2], GOLD[3]) else b.text:SetTextColor(0.6, 0.6, 0.6) end
         pages[g.id]:SetShown(on)
     end
@@ -153,16 +151,7 @@ local x = 0
 for _, g in ipairs(GROUPS) do
     local b = CreateFrame("Button", nil, panel)
     b:SetFrameLevel(panel:GetFrameLevel() + 2)   -- over the edge line
-    b.bg = b:CreateTexture(nil, "BACKGROUND")
-    b.bg:SetAllPoints()
-    b.top = b:CreateTexture(nil, "BORDER")         -- gold edge on top of the open tab
-    b.top:SetHeight(2)
-    b.top:SetPoint("TOPLEFT")
-    b.top:SetPoint("TOPRIGHT")
-    b.top:SetColorTexture(unpack(EDGE))
-    b.hl = b:CreateTexture(nil, "HIGHLIGHT")
-    b.hl:SetAllPoints()
-    b.hl:SetColorTexture(1, 0.82, 0, 0.12)
+    StyleTab(b)
     b.text = b:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     b.text:SetPoint("CENTER", 0, -1)
     b.text:SetText(g.title .. " *")                -- widest it gets

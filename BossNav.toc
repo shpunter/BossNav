@@ -9,9 +9,11 @@ Quests\BossNav_QuestData.lua
 Window\BossNav_Progress.lua
 Loot\BossNav_Gold.lua
 Core\BossNav_MapAPI.lua
+Bosses\BossNav_Parts.lua
 Bosses\BossNav_Entrances.lua
 Travel\BossNav_Routes.lua
 Window\BossNav_Window.lua
+Window\BossNav_TabLook.lua
 Window\BossNav_Tabs.lua
 Bosses\BossNav_MapArt.lua
 Core\BossNav_Waypoints.lua

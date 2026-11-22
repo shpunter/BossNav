@@ -66,9 +66,14 @@ local function TravelActive()
     return TravelMode() and NavTarget() ~= nil
 end
 
+-- A row by its key; else the first row of the dungeon with that key (a
+-- dungeon split into parts, or a key saved before the split).
 local function IndexOfKey(key)
     for i, e in ipairs(TRAVEL) do
         if e.key == key then return i end
+    end
+    for i, e in ipairs(TRAVEL) do
+        if e.cfg.key == key then return i end
     end
     return nil
 end
@@ -491,7 +496,7 @@ end
 
 local function TravelOnZone(prevCfg)
     local entry = SelectedDungeon()
-    if state.inInstance and state.cfg and entry and entry.key == state.cfg.key then
+    if state.inInstance and state.cfg and entry and entry.cfg.key == state.cfg.key then
         Print("Arrived at " .. entry.name .. ".")
         ClearTravelTarget(true)
     elseif TravelMode() and not entry and prevCfg and IsGhost() then

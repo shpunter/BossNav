@@ -57,7 +57,7 @@ end
 local TRASH = "Trash"
 
 local function HasTrash(cfg)
-    for _, src in ipairs(cfg and ITEM_SOURCES[cfg.name] or {}) do
+    for _, src in ipairs(cfg and ITEM_SOURCES[cfg.dataName] or {}) do
         if src.extra then return true end
     end
     return false
@@ -95,8 +95,15 @@ end
 -- Order: dungeons as in the dungeon list, bosses in kill order, then rares,
 -- trash and other sources.
 local function AddDungeon(list, cfg, boss)
-    for _, src in ipairs(ITEM_SOURCES[cfg.name] or {}) do
-        if Passes(src, boss) then
+    -- a part of a split dungeon (BossNav_Parts.lua): only its bosses' loot,
+    -- plus the trash of the whole dungeon
+    local mine
+    if cfg.part then
+        mine = {}
+        for _, b in ipairs(cfg.bosses) do mine[b[1]] = true end
+    end
+    for _, src in ipairs(ITEM_SOURCES[cfg.dataName] or {}) do
+        if Passes(src, boss) and (not mine or src.extra or mine[src.boss]) then
             for i, id in ipairs(src.items) do
                 local chance = src.chance[i]
                 if ItemForTickedClasses(id) and ItemForTickedSlots(id) then

@@ -81,7 +81,7 @@ end
 local function CurrentEntry()
     if not (state.inInstance and state.cfg) then return nil end
     for _, e in ipairs(TRAVEL) do
-        if e.cfg == state.cfg then return e end
+        if e.cfg.key == state.cfg.key then return e end
     end
     return nil
 end

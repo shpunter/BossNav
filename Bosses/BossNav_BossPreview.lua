@@ -24,14 +24,15 @@ local statusText             = ns.statusText
 local HELP_PREVIEW = "Select Next / Previous Boss keys walk the list | /bnav tab travel picks another dungeon | /bnav go name"
 local NO_VISITS = {}
 
-local previewIdx, previewKey = 1, nil
+local previewIdx, previewCfg = 1, nil
 
 -- The dungeon this shows: the one picked in the dungeon list.
 local function PreviewCfg()
     local e = SelectedDungeon()
     local cfg = e and e.cfg or nil
-    if cfg and cfg.key ~= previewKey then
-        previewKey = cfg.key
+    -- by table: the parts of a split dungeon share one key
+    if cfg and cfg ~= previewCfg then
+        previewCfg = cfg
         previewIdx = 1
     end
     return cfg

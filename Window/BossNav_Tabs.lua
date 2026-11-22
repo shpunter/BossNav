@@ -24,8 +24,11 @@
 -- (the focus: Dungeons / Bosses / Items columns).
 local ADDON, ns = ...
 -- from the files loaded before this one
+local PaintTab               = ns.PaintTab
 local SIDEBAR_W              = ns.SIDEBAR_W
 local SavedKilled            = ns.SavedKilled
+local StyleTab               = ns.StyleTab
+local TAB_EDGE               = ns.TAB_EDGE
 local SetListTop             = ns.SetListTop
 local SetWide                = ns.SetWide
 local bossCol                = ns.bossCol
@@ -43,9 +46,6 @@ local LIST_TOP_FLAT = TOP_Y - TOP_H - 4 -- Loot / Profs lists right under the ta
 local HINT_W = 46                       -- room for "[S-F6]" at a row's right end
 
 local GOLD = { 1, 0.82, 0 }
-local EDGE = { 0.75, 0.62, 0.20, 1 }    -- the gold line the tabs sit on
-local PANEL = { 0.06, 0.06, 0.08, 1 }   -- the sidebar background (BossNav_Window.lua)
-local IDLE = { 0.13, 0.13, 0.16, 1 }    -- a closed section tab
 
 local SECTIONS = { "dungeon", "quest", "loot", "prof" }
 local SECTION_LABEL = { dungeon = "Dungeons", quest = "Quests", loot = "Loot", prof = "Profs" }
@@ -123,23 +123,14 @@ local edge = sidebar:CreateTexture(nil, "ARTWORK")
 edge:SetHeight(1)
 edge:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 0, TOP_Y - TOP_H)
 edge:SetPoint("TOPRIGHT", sidebar, "TOPRIGHT", 0, TOP_Y - TOP_H)
-edge:SetColorTexture(unpack(EDGE))
+edge:SetColorTexture(unpack(TAB_EDGE))
 
 local sectionTabs = {}
 for _, key in ipairs(SECTIONS) do
     local b = CreateFrame("Button", nil, sidebar)
     b:SetHeight(TOP_H)
     b:SetFrameLevel(sidebar:GetFrameLevel() + 2)   -- over the edge line
-    b.bg = b:CreateTexture(nil, "BACKGROUND")
-    b.bg:SetAllPoints()
-    b.top = b:CreateTexture(nil, "BORDER")         -- gold edge on top of the open tab
-    b.top:SetHeight(2)
-    b.top:SetPoint("TOPLEFT")
-    b.top:SetPoint("TOPRIGHT")
-    b.top:SetColorTexture(unpack(EDGE))
-    b.hl = b:CreateTexture(nil, "HIGHLIGHT")
-    b.hl:SetAllPoints()
-    b.hl:SetColorTexture(1, 0.82, 0, 0.12)
+    StyleTab(b)
     b.text = b:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     b.text:SetPoint("CENTER", 0, -1)
     b.text:SetText(SECTION_LABEL[key])
@@ -164,19 +155,8 @@ local function LayOutSections(hint)
 end
 
 local function PaintSection(b, open)
-    if open then
-        -- the panel's colour and one pixel taller, so it covers the edge
-        -- line and runs into the panel below
-        b.bg:SetColorTexture(unpack(PANEL))
-        b:SetHeight(TOP_H + 1)
-        b.top:Show()
-        b.text:SetTextColor(1, 1, 1)
-    else
-        b.bg:SetColorTexture(unpack(IDLE))
-        b:SetHeight(TOP_H)
-        b.top:Hide()
-        b.text:SetTextColor(0.6, 0.6, 0.6)
-    end
+    PaintTab(b, open, TOP_H)
+    if open then b.text:SetTextColor(1, 1, 1) else b.text:SetTextColor(0.6, 0.6, 0.6) end
 end
 
 --------------------------------------------------------------------------

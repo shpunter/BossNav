@@ -57,11 +57,14 @@ local function ClampScroll(first)
     return math.max(1, math.min(first, MaxFirst()))
 end
 
--- Inside a dungeon: the row of the dungeon you are in.
+-- Inside a dungeon: the row of the dungeon you are in. A dungeon split into
+-- parts has several rows: the one you picked, else its first.
 local function HereIdx()
     if TravelMode() or not state.cfg then return nil end
+    local picked = state.travelIdx and TRAVEL[state.travelIdx]
+    if picked and picked.cfg.key == state.cfg.key then return state.travelIdx end
     for i, e in ipairs(TRAVEL) do
-        if e.cfg == state.cfg then return i end
+        if e.cfg.key == state.cfg.key then return i end
     end
     return nil
 end

@@ -65,7 +65,9 @@
 --   Bosses/BossNav_Entrances.lua      dungeon entrances in the open world, travel list by level
 --   Travel/BossNav_Routes.lua         zone-to-zone routing: which exit or flight master leads toward a dungeon
 --   Window/BossNav_Window.lua         map window frames, sidebar rows, pins
---   Window/BossNav_Tabs.lua           section tabs (Dungeons / Quests / Loot / Profs), the Dungeons column headers (Dungeons / Bosses / Items) and switching
+--   Bosses/BossNav_Parts.lua          dungeons the game lists in parts (Scarlet wings, Dire Maul, Spire, Stratholme): a row per part
+--   Window/BossNav_TabLook.lua       the look of a tab: rounded top corners, gold outline on the open one
+--   Window/BossNav_Tabs.lua          section tabs (Dungeons / Quests / Loot / Profs), the Dungeons column headers (Dungeons / Bosses / Items) and switching
 --   Bosses/BossNav_MapArt.lua         map art renderers
 --   Core/BossNav_Waypoints.lua        boss selection, floors, waypoints
 --   Window/BossNav_Render.lua         drawing the whole map window

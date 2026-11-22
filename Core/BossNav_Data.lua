@@ -112,7 +112,7 @@ local DUNGEONS = {
         ["Verdan the Everliving"] = { {60,47,"Serpentis' ledge"}, {66,60,"south along the ledge"} },
         ["Mutanus the Devourer"] = { {41,47,"talk to Disciple of Naralex at entrance"}, {48,43,"escort north-east"} },
       } },
-    { zones = {"The Deadmines","Deadmines"}, folder = "TheDeadmines", floors = {1,2},
+    { zones = {"The Deadmines","Deadmines"}, title = "Deadmines", folder = "TheDeadmines", floors = {1,2},
       floorNames = {"The Deadmines","Ironclad Cove"}, bosses = {
         {"Rhahk'Zor",35.5,53.5,1},{"Miner Johnson"},{"Sneed",49.2,75.3,1},{"Gilnid",12.1,65.9,2},
         {"Captain Greenskin",59.2,32.7,2},{"Mr. Smite",27.8,40.1,2},{"Cookie",70.0,45.0,2},
@@ -124,7 +124,7 @@ local DUNGEONS = {
         {"Commander Springvale",27.3,52.2,3},{"Odo the Blindwatcher",57.8,70.8,4},{"Fenrus the Devourer",53.1,46.8,5},
         {"Wolf Master Nandos",54.9,55.0,6},{"Archmage Arugal",50.0,52.0,7},
     } },
-    { zones = {"The Stockade","Stormwind Stockade"}, folder = "TheStockade", floors = {1}, bosses = {
+    { zones = {"The Stockade","Stormwind Stockade","Stormwind Stockades"}, title = "Stormwind Stockades", folder = "TheStockade", floors = {1}, bosses = {
         {"Targorr the Dread"},{"Kam Deepfury",68.1,25.5,1},{"Hamhock"},{"Dextren Ward"},{"Bazil Thredd"},
     } },
     { zones = {"Blackfathom Deeps"}, folder = "BlackfathomDeeps", floors = {1,2,3},
@@ -170,7 +170,7 @@ local DUNGEONS = {
         {"Noxxion",35.0,8.6,1},{"Razorlash",16.0,29.6,1},{"Lord Vyletongue",36.8,61.4,1},{"Celebras the Cursed",23.9,12.1,2},
         {"Landslide",40.3,42.6,2},{"Tinkerer Gizlock",49.6,56.6,2},{"Rotgrip",40.5,71.0,2},{"Princess Theradras",25.4,68.6,2},
     } },
-    { zones = {"The Temple of Atal'Hakkar","Temple of Atal'Hakkar","Sunken Temple"}, folder = "TheTempleofAtalhakkar", floors = {1}, bosses = {
+    { zones = {"The Temple of Atal'Hakkar","Temple of Atal'Hakkar","Sunken Temple"}, title = "Sunken Temple", folder = "TheTempleofAtalhakkar", floors = {1}, bosses = {
         {"Atal'alarion",59.6,13.4,1},{"Avatar of Hakkar",23.5,39.4,1},{"Jammal'an the Prophet",74.4,39.7,1},{"Dreamscythe",51.9,41.5,1},
         {"Weaver",45.7,41.7,1},{"Hazzas",48.7,75.5,1},{"Morphaz",45.5,75.5,1},{"Shade of Eranikus",65.0,76.3,1},
     } },
@@ -225,11 +225,11 @@ local DUNGEONS = {
         {"Razorgore the Untamed",41.0,52.4,1},{"Vaelastrasz the Corrupt",32.6,24.0,1},{"Broodlord Lashlayer",49.5,53.7,3},
         {"Firemaw",45.4,37.4,3},{"Ebonroc",34.2,18.2,3},{"Flamegor",34.8,32.3,4},{"Chromaggus",38.6,63.2,4},{"Nefarian",68.9,63.0,4},
     } },
-    { zones = {"Ruins of Ahn'Qiraj"}, folder = "RuinsofAhnQiraj", floors = {1}, special = true, bosses = {
+    { zones = {"Ruins of Ahn'Qiraj","Ahn'Qiraj Ruins"}, title = "Ahn'Qiraj Ruins", folder = "RuinsofAhnQiraj", floors = {1}, special = true, bosses = {
         {"Kurinnaxx",55.1,31.1,1},{"General Rajaxx",57.1,42.7,1},{"Moam",32.2,31.4,1},{"Buru the Gorger",68.3,54.0,1},
         {"Ayamiss the Hunter",60.4,78.7,1},{"Ossirian the Unscarred",42.0,60.5,1},
     } },
-    { zones = {"Ahn'Qiraj","Temple of Ahn'Qiraj","Ahn'Qiraj Temple"}, folder = "AhnQiraj", floors = {1,2,3},
+    { zones = {"Ahn'Qiraj","Temple of Ahn'Qiraj","Ahn'Qiraj Temple"}, title = "Ahn'Qiraj Temple", folder = "AhnQiraj", floors = {1,2,3},
       floorNames = {"The Hive Undergrounds","The Temple Gates","Vault of C'Thun"}, bosses = {
         {"The Prophet Skeram",44.8,45.4,2},{"Silithid Royalty (Bug Trio)",27.8,43.3,1},{"Battleguard Sartura",43.6,29.2,1},
         {"Fankriss the Unyielding",61.0,19.0,1},{"Viscidus",70.6,15.6,1},{"Princess Huhuran",42.6,43.8,1},
@@ -244,7 +244,7 @@ local DUNGEONS = {
         {"Sapphiron",55.3,58.7,6},{"Kel'Thuzad",35.7,19.4,6},
     } },
     -- WoW Forever dungeons (map art in BossNav/Images where available, originally from Forever Atlas)
-    { zones = {"The Hall of Thanes","Hall of Thanes"}, floors = {1},
+    { zones = {"The Hall of Thanes","Hall of Thanes"}, title = "Hall of Thanes", floors = {1},
       bundled = FOREVER_IMG .. "HallOfThanes.tga", bundledAspect = 0.871, bosses = {
         {"Faldrim Anvilmar",44.1,66.6,1},{"Magmatus (Infurnus)",89.5,41.4,1},{"Plunder",49.6,48.7,1},{"Durgen Dirgehammer",49.6,9.2,1},
     } },
@@ -286,10 +286,14 @@ local DUNGEONS = {
     } },
 }
 
+-- cfg.name: shown in the window, the game's own name (its group finder,
+-- GroupFinderActivity) where that differs from zones[1].
+-- cfg.dataName: zones[1], what the entrance, quest and loot tables are keyed by.
 local ZONE_INDEX = {}
 for _, cfg in ipairs(DUNGEONS) do
     cfg.key = Norm(cfg.zones[1])
-    cfg.name = cfg.zones[1]
+    cfg.dataName = cfg.zones[1]
+    cfg.name = cfg.title or cfg.zones[1]
     for _, z in ipairs(cfg.zones) do ZONE_INDEX[Norm(z)] = cfg end
 end
 
