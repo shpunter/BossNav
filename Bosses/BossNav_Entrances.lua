@@ -23,8 +23,9 @@ local ENTRANCES = {
     ["The Stockade"]              = { zone = "Stormwind City",       x = 50.6, y = 66.4, levels = {22, 30}, faction = "Alliance" },
     ["Blackfathom Deeps"]         = { zone = "Ashenvale",            x = 14.4, y = 14.5, levels = {24, 32} },
     ["Gnomeregan"]                = { zone = "Dun Morogh",           x = 24.4, y = 39.7, levels = {29, 38} },
-    ["Razorfen Kraul"]            = { zone = "The Barrens",          x = 42.2, y = 89.8, levels = {30, 40} },
-    ["Scarlet Monastery"]         = { zone = "Tirisfal Glades",      x = 84.9, y = 30.9, levels = {28, 45} },
+    ["Razorfen Kraul"]            = { zone = "The Barrens",          x = 42.2, y = 89.8, levels = {29, 38} },
+    -- Dungeon Finder lists Scarlet Graveyard as 30-38; the other wings go higher.
+    ["Scarlet Monastery"]         = { zone = "Tirisfal Glades",      x = 84.9, y = 30.9, levels = {30, 45} },
     ["Razorfen Downs"]            = { zone = "The Barrens",          x = 48.9, y = 94.4, levels = {40, 50} },
     ["Uldaman"]                   = { zone = "Badlands",             x = 42.4, y = 18.6, levels = {42, 52} },
     ["Zul'Farrak"]                = { zone = "Tanaris",              x = 39.0, y = 20.2, levels = {44, 54} },
@@ -51,7 +52,7 @@ local ENTRANCES = {
     -- Excavation Site: hilltop southeast of Whelgar's Excavation Site.
     ["Excavation Site: Wetlands"] = { zone = "Wetlands",             x = 48.1, y = 56.5, levels = {26, 33} },
     -- City of Dalaran: sewer gate on the northwest wall by Lordamere Lake (needs the Dalaran Sewer Key).
-    ["City of Dalaran"]           = { zone = "Alterac Mountains",    x = 8.0,  y = 61.2, levels = {28, 33} },
+    ["City of Dalaran"]           = { zone = "Alterac Mountains",    x = 8.0,  y = 61.2, levels = {28, 35} },
     -- Half-Pint Tavern: datamined only, not in the game; no entrance.
     ["Half-Pint Tavern"]          = { },
 }
