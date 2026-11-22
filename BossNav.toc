@@ -62,3 +62,4 @@ Items\BossNav_ItemsPanel.lua
 Core\BossNav_Zone.lua
 Core\BossNav_Commands.lua
 Core\BossNav_Events.lua
+Core\BossNav_BlockReport.lua

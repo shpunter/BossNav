@@ -79,16 +79,10 @@ events:RegisterEvent("CHAT_MSG_LOOT")
 events:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 -- ...and for teammates, whose cast spells the client hides: "Bob creates [X]."
 events:RegisterEvent("CHAT_MSG_TRADESKILLS")
--- Diagnostics: if the client ever blocks a call from this addon, name it.
-events:RegisterEvent("ADDON_ACTION_FORBIDDEN")
-events:RegisterEvent("ADDON_ACTION_BLOCKED")
+-- (blocked calls are reported by BossNav_BlockReport.lua)
 
 events:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4, arg5)
-    if event == "ADDON_ACTION_FORBIDDEN" or event == "ADDON_ACTION_BLOCKED" then
-        if arg1 == "BossNav" then
-            Print("|cffff4444the client blocked this call:|r " .. tostring(arg2) .. "  (please report this line)")
-        end
-    elseif event == "ADDON_LOADED" then
+    if event == "ADDON_LOADED" then
         if arg1 == "BossNav" then
             DB()
             ApplySavedExtraBosses()
