@@ -208,12 +208,20 @@ allBtn:SetScript("OnClick", function()
     BossNav_RefreshMap()
 end)
 
+-- the wing you are in, when inside a split dungeon (Scarlet Monastery...)
+local function InsidePart(cfg)
+    if Outside() or cfg ~= state.cfg or not ns.CurrentPart then return nil end
+    return ns.CurrentPart(cfg)
+end
+
 local function KillText(cfg, killed)
+    local part = InsidePart(cfg)
+    local list = part and part.bosses or cfg.bosses
     local n = 0
-    for _, b in ipairs(cfg.bosses) do
+    for _, b in ipairs(list) do
         if killed[b[1]] then n = n + 1 end
     end
-    return string.format("|cff888888%d/%d killed|r", n, #cfg.bosses)
+    return string.format("|cff888888%d/%d killed|r", n, #list)
 end
 
 -- The dungeon the columns are about and its kills, or nil.
@@ -273,7 +281,8 @@ local function ContextText()
     if not Outside() then
         local cfg = state.cfg
         if not cfg then return "|cff888888No boss data for this zone|r" end
-        return string.format("|cffffd100%s|r  -  %s", cfg.name, KillText(cfg, state.killed))
+        local part = InsidePart(cfg)
+        return string.format("|cffffd100%s|r  -  %s", part and part.name or cfg.name, KillText(cfg, state.killed))
     end
     local e = ns.SelectedDungeon and ns.SelectedDungeon()
     if not e then

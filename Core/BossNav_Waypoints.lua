@@ -12,12 +12,38 @@ local function SelectedBoss()
     return cfg and cfg.bosses[state.bossIdx] or nil
 end
 
+-- Split dungeons (BossNav_Parts.lua): inside, the game treats e.g. Scarlet
+-- Monastery as one dungeon, but you only run one wing. The wing is the one
+-- holding the floor you are on: the room name (floorBySubzone), a floor you
+-- picked, the last boss seen or killed (state.partFloor), else the selected
+-- boss. Returns the part view, or nil for an unsplit dungeon.
+local function CurrentPart(cfg)
+    local parts = cfg and ns.PartViews and ns.PartViews(cfg)
+    if not parts then return nil end
+    local floor = cfg.floorBySubzone and cfg.floorBySubzone[GetSubZoneText() or ""]
+    floor = floor or state.floorOverride or state.autoFloor or state.partFloor
+    if not floor then
+        local boss = cfg.bosses[state.bossIdx]
+        floor = boss and boss[4]
+    end
+    if not floor then return nil end
+    for _, part in ipairs(parts) do
+        for _, f in ipairs(part.floors) do
+            if f == floor then return part end
+        end
+    end
+    return nil
+end
+
+-- killed, total: for the wing you are in, or the whole dungeon
 local function KilledCount(cfg)
+    local part = CurrentPart(cfg)
+    local list = part and part.bosses or cfg.bosses
     local n = 0
-    for _, b in ipairs(cfg.bosses) do
+    for _, b in ipairs(list) do
         if state.killed[b[1]] then n = n + 1 end
     end
-    return n
+    return n, #list
 end
 
 local function CurrentFloor(cfg)
@@ -75,6 +101,7 @@ end
 
 -- shared with the other BossNav files
 ns.CurrentFloor = CurrentFloor
+ns.CurrentPart = CurrentPart
 ns.EditableWaypoints = EditableWaypoints
 ns.KilledCount = KilledCount
 ns.SelectedBoss = SelectedBoss

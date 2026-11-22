@@ -154,7 +154,7 @@ local DUNGEONS = {
         ["Chapel Gardens"] = 4, ["Crusader's Chapel"] = 4,
       }, bosses = {
         {"Interrogator Vishas",49.0,63.0,1},{"Bloodmage Thalnos",23.5,48.8,1},
-        {"Houndmaster Loksey",47.0,47.0,2},{"Arcanist Doan",81.6,64.6,2},
+        {"Houndmaster Loksey",28.0,74.5,2},{"Arcanist Doan",81.6,64.6,2},
         {"Herod",52.0,42.0,3},
         {"High Inquisitor Fairbanks",40.0,24.0,4},{"Scarlet Commander Mograine",48.1,14.4,4},{"High Inquisitor Whitemane",48.0,24.0,4},
     } },

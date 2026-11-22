@@ -136,6 +136,7 @@ BINDING_NAME_BOSSNAV_SWITCH_NAV = "Switch Navigation: Quest Giver / Dungeon"
 BINDING_NAME_BOSSNAV_QUEST_DOWN = "Scroll Down (quest text / item list)"
 BINDING_NAME_BOSSNAV_QUEST_UP = "Scroll Up (quest text / item list)"
 BINDING_NAME_BOSSNAV_TOGGLE_THREAT = "Toggle Threat Window"
+BINDING_NAME_BOSSNAV_RESET_KILLS = "Reset Kill Marks (after a dungeon reset)"
 
 BossNavDB = BossNavDB or {}
 

@@ -238,7 +238,7 @@ function BossNav_RefreshMap()
     if boss then
         local dead = state.killed[boss[1]]
         statusText:SetText(string.format("Target: |cff%s%s|r%s   |cff888888Killed %d/%d|r",
-            dead and "888888" or "00ff00", boss[1], dead and "  [DEAD]" or "", KilledCount(cfg), #cfg.bosses))
+            dead and "888888" or "00ff00", boss[1], dead and "  [DEAD]" or "", KilledCount(cfg)))
     else
         statusText:SetText("")
     end

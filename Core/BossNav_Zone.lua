@@ -36,11 +36,18 @@ local function UpdateZone()
         state.floorOverride = nil
         state.autoFloor = nil
         state.mapID = nil
+        state.partFloor = nil
         if cfg then
+            -- a split dungeon counts only the wing you are in, when it is known
+            local part = ns.CurrentPart and ns.CurrentPart(cfg)
+            local list = part and part.bosses or cfg.bosses
             local done = 0
-            for _ in pairs(state.killed) do done = done + 1 end
+            for _, b in ipairs(list) do
+                if state.killed[b[1]] then done = done + 1 end
+            end
             local remembered = done > 0 and string.format(" %d already marked dead (/bnav reset clears).", done) or ""
-            Print(string.format("%s: %d bosses.%s /bnav opens the map, /bnav boss picks the target.", cfg.name, #cfg.bosses, remembered))
+            Print(string.format("%s: %d bosses.%s /bnav opens the map, /bnav boss picks the target.",
+                part and part.name or cfg.name, #list, remembered))
         end
     else
         state.zoneName = zone

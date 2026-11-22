@@ -220,7 +220,19 @@ local function SkullUnit(unit)
     return (pcall(SetRaidTarget, unit, SKULL))
 end
 
+-- A boss came into view: remember its floor, so a split dungeon
+-- (Scarlet Monastery wings...) knows which wing you are in.
+local function NoteBossPart(unit)
+    local boss = IdentifyBoss(unit)
+    if boss and boss[4] and state.partFloor ~= boss[4] then
+        state.partFloor = boss[4]
+        if ns.RefreshIfShown then ns.RefreshIfShown() end
+        pcall(BossNav_UpdateLive, true)   -- the HUD's Killed n/m
+    end
+end
+
 -- shared with the other BossNav files
+ns.NoteBossPart = NoteBossPart
 ns.SkullUnit = SkullUnit
 ns.IdentifyBoss = IdentifyBoss
 ns.OnEncounterStart = OnEncounterStart

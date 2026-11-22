@@ -28,6 +28,7 @@ Bosses\BossNav_BossPreview.lua
 Travel\BossNav_WorldMap.lua
 Bosses\BossNav_Kills.lua
 Bosses\BossNav_InstanceReset.lua
+Bosses\BossNav_ResetButton.lua
 Bosses\BossNav_Marker.lua
 Bosses\BossNav_RarePing.lua
 Bosses\BossNav_RareAlert.lua
