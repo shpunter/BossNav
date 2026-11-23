@@ -25,6 +25,7 @@ local OnGroupRosterChanged   = ns.OnGroupRosterChanged
 local OnLootMessage          = ns.OnLootMessage
 local OnLootPopup            = ns.OnLootPopup
 local OnMoneyChanged         = ns.OnMoneyChanged
+local OnXPChanged            = ns.OnXPChanged
 local OnProfLootMessage      = ns.OnProfLootMessage
 local OnTradeSkillMessage    = ns.OnTradeSkillMessage
 local OnQuestTurnedIn        = ns.OnQuestTurnedIn
@@ -60,6 +61,7 @@ events:RegisterEvent("ZONE_CHANGED_INDOORS")
 events:RegisterEvent("ENCOUNTER_END")
 events:RegisterEvent("BOSS_KILL")
 events:RegisterEvent("PLAYER_MONEY")
+events:RegisterEvent("PLAYER_XP_UPDATE")
 -- Travel list: dungeons above your level are red, so a level-up redraws it.
 events:RegisterEvent("PLAYER_LEVEL_UP")
 -- Quests tab: taking, handing in or dropping a quest changes what is crossed out.
@@ -109,6 +111,7 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4, arg5)
         DropOtherFactionBosses()   -- the faction may be unknown at ADDON_LOADED
         UpdateZone()
         OnMoneyChanged()   -- sets the purse baseline after a load or zone change
+        OnXPChanged()      -- and the XP bar baseline
     elseif event == "GROUP_ROSTER_UPDATE" then
         CheckLeftGroup()
         ColorUnitFrames()
@@ -118,6 +121,8 @@ events:SetScript("OnEvent", function(_, event, arg1, arg2, arg3, arg4, arg5)
         if state.cfg and state.cfg.floorBySubzone and not state.floorOverride and not state.autoFloor then
             RefreshIfShown()
         end
+    elseif event == "PLAYER_XP_UPDATE" then
+        if arg1 == "player" then OnXPChanged() end
     elseif event == "PLAYER_MONEY" then
         OnMoneyChanged()
     elseif event == "PLAYER_LEVEL_UP" then

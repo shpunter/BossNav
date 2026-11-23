@@ -61,6 +61,7 @@
 --   Quests/BossNav_QuestData.lua      quests per dungeon: giver, place, faction, level
 --   Window/BossNav_Progress.lua       saved per-dungeon progress
 --   Loot/BossNav_Gold.lua             gold earned in the current dungeon
+--   Loot/BossNav_XP.lua               experience earned in the current dungeon
 --   Core/BossNav_MapAPI.lua           guarded access to the client's map API
 --   Bosses/BossNav_Entrances.lua      dungeon entrances in the open world, travel list by level
 --   Travel/BossNav_Routes.lua         zone-to-zone routing: which exit or flight master leads toward a dungeon
@@ -96,6 +97,7 @@
 --   Loot/BossNav_Loot.lua             loot roll tracker (Need / Greed / Pass, rolls, winner)
 --   Loot/BossNav_LootPanel.lua        the Loot tab: item list and roll panel in the window
 --   Loot/BossNav_LootPopup.lua        popup that shows Need / Greed / Pass live while an item is rolled
+--   Loot/BossNav_EarnedPost.lua       P button on the HUD, keybind and /bnav earned: post gold, XP and run time to party chat
 --   Profs/BossNav_Profs.lua           profession tracker (mines, herbs, skins, fish, crafts per member)
 --   Profs/BossNav_ProfsChat.lua       teammates' gathers and crafts read from loot / craft chat lines
 --   Profs/BossNav_ProfsPanel.lua      the Profs tab: member list and profession table in the window
@@ -137,6 +139,7 @@ BINDING_NAME_BOSSNAV_QUEST_DOWN = "Scroll Down (quest text / item list)"
 BINDING_NAME_BOSSNAV_QUEST_UP = "Scroll Up (quest text / item list)"
 BINDING_NAME_BOSSNAV_TOGGLE_THREAT = "Toggle Threat Window"
 BINDING_NAME_BOSSNAV_RESET_KILLS = "Reset Kill Marks (after a dungeon reset)"
+BINDING_NAME_BOSSNAV_POST_EARNED = "Post Gold and XP Earned to Party Chat"
 
 BossNavDB = BossNavDB or {}
 
@@ -259,6 +262,7 @@ local state = {
     killed = {},        -- [bossName] = true
     visited = {},       -- [waypointKey] = true
     gold = 0,           -- copper earned inside the current dungeon
+    xp = 0,             -- experience earned inside the current dungeon
     floorOverride = nil,
     autoFloor = nil,    -- floor derived from the player's current uiMap
     shownFloor = nil,   -- floor currently drawn

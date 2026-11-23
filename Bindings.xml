@@ -44,4 +44,7 @@
     <Binding name="BOSSNAV_LFG_ROLE">
         BossNav_CycleLFGRole()
     </Binding>
+    <Binding name="BOSSNAV_POST_EARNED">
+        BossNav_PostEarned()
+    </Binding>
 </Bindings>
