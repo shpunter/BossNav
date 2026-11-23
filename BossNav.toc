@@ -5,6 +5,7 @@
 ## SavedVariables: BossNavDB
 Core\BossNav_Core.lua
 Core\BossNav_Data.lua
+Core\BossNav_BossImages.lua
 Quests\BossNav_QuestData.lua
 Window\BossNav_Progress.lua
 Loot\BossNav_Gold.lua

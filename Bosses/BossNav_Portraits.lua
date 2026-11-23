@@ -62,7 +62,9 @@ local function LearnPortrait(unit)
     local boss = IdentifyBoss(unit)
     if not boss then return "not recognised as a boss of this dungeon" end
     local name = boss[1]
-    if BOSS_DISPLAY[name] then return name .. " already has a portrait" end
+    if BOSS_DISPLAY[name] or (ns.BOSS_IMAGE and ns.BOSS_IMAGE[name]) then
+        return name .. " already has a portrait"
+    end
     if not (probe.SetUnit and probe.GetDisplayInfo) then return "this client cannot read creature models" end
     local ok = pcall(probe.SetUnit, probe, unit)
     if not ok then return "the client refused to load " .. name .. "'s model" end
