@@ -392,8 +392,14 @@ local CROSS_TEX = "Interface\\RaidFrame\\ReadyCheck-NotReady"   -- red X
 local function SetBossIcon(tex, name, dead)
     if not tex then return end
     local displayID = name and BOSS_DISPLAY[name]
+    local image = name and ns.BOSS_IMAGE and ns.BOSS_IMAGE[name]
     local ok = false
-    if displayID and SetPortraitTextureFromCreatureDisplayID then
+    -- a bundled picture (Forever-only bosses, BossNav_BossImages.lua) comes first
+    if image then
+        ok = tex:SetTexture(image) ~= false
+        if ok then tex:SetTexCoord(0, 1, 0, 1) end
+    end
+    if not ok and displayID and SetPortraitTextureFromCreatureDisplayID then
         ok = pcall(SetPortraitTextureFromCreatureDisplayID, tex, displayID)
         if ok then tex:SetTexCoord(0, 1, 0, 1) end
     end

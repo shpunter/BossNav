@@ -243,6 +243,49 @@ for (const [key, dungeon] of store) {
     out.set(d.name, list);
 }
 
+// ---------------------------------------------------------------- web
+// Loot players have seen drop in WoW Forever (Tools/forever_loot.json, made by
+// Tools/fetch_forever_loot.js). Atlas stays first: the web data only adds the
+// items Atlas lacks, the drop % Atlas doesn't know, and whole bosses Atlas has
+// no loot for (every Forever-only dungeon).
+const WEB_FILE = path.join(__dirname, "forever_loot.json");
+const MIN_QUALITY = 2;   // green and up: quest items and junk stay out
+// Web spellings that differ from BossNav's
+const WEB_ALIAS = { "Arcanic Enigma": "Mana Elemental", "Chest of The Seven": "The Seven", "Trash mobs": "Trash" };
+let webAdded = 0, webRates = 0;
+if (fs.existsSync(WEB_FILE)) {
+    const web = JSON.parse(fs.readFileSync(WEB_FILE, "utf8"));
+    for (const [slug, sources] of Object.entries(web.dungeons)) {
+        const d = matchDungeon(sources.map(s => s.boss));
+        if (!d) { report.push(`web: skipped ${slug}: no BossNav dungeon`); continue; }
+        const list = out.get(d.name) || [];
+        for (const s of sources) {
+            const items = s.items.filter(i => i.quality >= MIN_QUALITY);
+            if (items.length === 0) continue;
+            const webName = WEB_ALIAS[s.boss] || s.boss.replace(/^Ring of Law:\s*/, "");
+            const boss = s.kind === "trash" ? null : matchBoss(d, webName);
+            const name = boss || webName;
+            let entry = list.find(x => norm(x.boss) === norm(name) || norm(x.boss) === norm(s.boss));
+            if (!entry) {
+                entry = { boss: name, extra: !boss, items: [], chance: [] };
+                list.push(entry);
+                if (!boss) report.push(`${d.name}: web "${s.boss}" kept as other source`);
+            }
+            for (const i of items) {
+                if (i.name && !itemNames.has(i.id)) itemNames.set(i.id, i.name);
+                const at = entry.items.indexOf(i.id);
+                if (at < 0) {
+                    entry.items.push(i.id); entry.chance.push(i.chance); webAdded++;
+                } else if (!entry.chance[at] && i.chance) {
+                    entry.chance[at] = i.chance; webRates++;
+                }
+            }
+        }
+        out.set(d.name, list);
+    }
+    console.log(`web loot from ${web.source} (${web.fetched}): ${webAdded} items added, ${webRates} drop rates filled`);
+}
+
 // Bosses in BossNav's order first, then the other sources
 for (const d of dungeons) {
     const list = out.get(d.name);
