@@ -62,6 +62,17 @@ local function GoldText()
     return "Gold earned here: " .. MoneyText(earned)
 end
 
+-- "3g 12s 4c" with no colours or icons, for chat lines (the chat box drops them).
+local function PlainMoney(copper)
+    copper = math.floor(copper or 0)
+    local g, s, c = math.floor(copper / 10000), math.floor((copper % 10000) / 100), copper % 100
+    if g > 0 then return string.format("%dg %ds %dc", g, s, c) end
+    if s > 0 then return string.format("%ds %dc", s, c) end
+    return string.format("%dc", c)
+end
+
 -- shared with the other BossNav files
+ns.GoldEarned = GoldEarned
+ns.PlainMoney = PlainMoney
 ns.GoldText = GoldText
 ns.OnMoneyChanged = OnMoneyChanged

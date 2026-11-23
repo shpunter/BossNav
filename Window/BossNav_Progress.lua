@@ -20,21 +20,26 @@ local function LoadProgress(cfg)
         rec = nil
     end
     if cfg and not rec then
-        rec = { killed = {}, visited = {}, gold = 0, bossIdx = 1, time = time() }
+        rec = { killed = {}, visited = {}, gold = 0, xp = 0, bossIdx = 1, time = time(), started = time() }
         store[cfg.key] = rec
     end
     if rec then
         rec.killed = rec.killed or {}
         rec.visited = rec.visited or {}
+        rec.started = rec.started or time()   -- records saved before the run timer existed
         state.killed = rec.killed
         state.visited = rec.visited
         state.bossIdx = rec.bossIdx or 1
         state.gold = rec.gold or 0
+        state.xp = rec.xp or 0
+        state.started = rec.started
     else
         state.killed = {}
         state.visited = {}
         state.bossIdx = 1
         state.gold = 0
+        state.xp = 0
+        state.started = nil
     end
     return rec
 end
@@ -60,7 +65,17 @@ local function TouchProgress()
     end
     rec.bossIdx = state.bossIdx
     rec.gold = state.gold or 0
+    rec.xp = state.xp or 0
+    rec.started = state.started or rec.started or time()
     rec.time = time()
+end
+
+-- Seconds since this run of the dungeon began (first entry with no fresh
+-- saved progress, or the last time the marks were cleared). Counts time
+-- spent outside too, such as running back as a spirit. nil outside a dungeon.
+local function RunSeconds()
+    if not state.started then return nil end
+    return math.max(0, time() - state.started)
 end
 
 -- Keeps the dungeon copy IDs (BossNav_InstanceReset.lua): clearing marks by
@@ -71,9 +86,11 @@ local function ClearProgress(cfg)
     state.killed = {}
     state.visited = {}
     state.gold = 0
+    state.xp = 0
+    state.started = time()
     if cfg then DB().progress[cfg.key] = nil end
     if cfg and not state.testMode then
-        DB().progress[cfg.key] = { killed = state.killed, visited = state.visited, gold = 0, bossIdx = state.bossIdx, time = time(), copies = copies }
+        DB().progress[cfg.key] = { killed = state.killed, visited = state.visited, gold = 0, xp = 0, bossIdx = state.bossIdx, time = time(), started = state.started, copies = copies }
     end
 end
 
@@ -107,6 +124,7 @@ end
 -- shared with the other BossNav files
 ns.ClearProgress = ClearProgress
 ns.OnGroupRosterChanged = OnGroupRosterChanged
+ns.RunSeconds = RunSeconds
 ns.SavedKilled = SavedKilled
 ns.LoadProgress = LoadProgress
 ns.TouchProgress = TouchProgress

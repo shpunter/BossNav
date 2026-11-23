@@ -9,6 +9,7 @@ Core\BossNav_BossImages.lua
 Quests\BossNav_QuestData.lua
 Window\BossNav_Progress.lua
 Loot\BossNav_Gold.lua
+Loot\BossNav_XP.lua
 Core\BossNav_MapAPI.lua
 Bosses\BossNav_Parts.lua
 Bosses\BossNav_Entrances.lua
@@ -48,6 +49,7 @@ Threat\BossNav_Threat.lua
 Loot\BossNav_Loot.lua
 Loot\BossNav_LootPanel.lua
 Loot\BossNav_LootPopup.lua
+Loot\BossNav_EarnedPost.lua
 Profs\BossNav_Profs.lua
 Profs\BossNav_ProfsChat.lua
 Profs\BossNav_ProfsPanel.lua
