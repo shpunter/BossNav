@@ -41,4 +41,7 @@
     <Binding name="BOSSNAV_RESET_KILLS">
         BossNav_ResetKills()
     </Binding>
+    <Binding name="BOSSNAV_LFG_ROLE">
+        BossNav_CycleLFGRole()
+    </Binding>
 </Bindings>

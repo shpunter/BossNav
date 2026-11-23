@@ -66,6 +66,9 @@ Items\BossNav_ItemInfo.lua
 Items\BossNav_ItemCompare.lua
 Items\BossNav_FilterPanel.lua
 Items\BossNav_ItemsPanel.lua
+LFG\BossNav_LFGFilter.lua
+LFG\BossNav_LFGWindow.lua
+LFG\BossNav_LFGChecks.lua
 Core\BossNav_Zone.lua
 Core\BossNav_Commands.lua
 Core\BossNav_Events.lua
