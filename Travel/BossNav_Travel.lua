@@ -165,11 +165,11 @@ end
 function BossNav_CycleDungeon(step)
     local n = #TRAVEL
     if n == 0 then return end
-    local idx
-    if not state.travelIdx then
-        idx = (step < 0) and n or 1
-    else
-        idx = ((state.travelIdx + step - 1) % n) + 1
+    local idx = state.travelIdx or ((step < 0) and 1 or n)
+    -- skip the dungeons the "Available only" box hides
+    for _ = 1, n do
+        idx = ((idx + step - 1) % n) + 1
+        if not ns.DungeonShown or ns.DungeonShown(idx) then break end
     end
     BossNav_SelectDungeon(idx)
 end

@@ -15,6 +15,7 @@ Bosses\BossNav_Parts.lua
 Bosses\BossNav_Entrances.lua
 Travel\BossNav_Routes.lua
 Window\BossNav_Window.lua
+Window\BossNav_Scrollbar.lua
 Window\BossNav_TabLook.lua
 Window\BossNav_Tabs.lua
 Bosses\BossNav_MapArt.lua
@@ -25,6 +26,7 @@ Window\BossNav_Minimap.lua
 Bosses\BossNav_Live.lua
 Travel\BossNav_Travel.lua
 Travel\BossNav_RouteToggle.lua
+Travel\BossNav_DungeonFilter.lua
 Travel\BossNav_TravelPanel.lua
 Bosses\BossNav_BossPreview.lua
 Travel\BossNav_WorldMap.lua

@@ -162,8 +162,12 @@ local function ShowEmptyNote(n, cfg, boss)
     emptyNote:Show()
 end
 
+-- Scrollbar on the right edge of the column (BossNav_Scrollbar.lua)
+local scrollbar = ns.NewScrollbar(itemCol, itemAnchor, MAX_ROWS, ROW_H)
+
 local function HideRows(from)
     for i = from, #rows do rows[i]:Hide() end
+    if from == 1 then scrollbar:Hide() end
 end
 
 --------------------------------------------------------------------------
@@ -335,6 +339,7 @@ local function RenderItemTab()
         r:Show()
     end
     HideRows(shown + 1)
+    scrollbar:Draw(first, n)
     ShowEmptyNote(n, cfg, boss)
 
     if not focused then return false end
