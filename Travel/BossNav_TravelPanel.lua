@@ -9,6 +9,7 @@ local GetBossPin             = ns.GetBossPin
 local GetRow                 = ns.GetRow
 local GetWayPin              = ns.GetWayPin
 local HasEntrance            = ns.HasEntrance
+local HideDungeonFilter      = ns.HideDungeonFilter
 local HideRouteToggle        = ns.HideRouteToggle
 local LevelColor             = ns.LevelColor
 local listAnchor             = ns.listAnchor
@@ -28,9 +29,11 @@ local RenderNative           = ns.RenderNative
 local SIDEBAR_W              = ns.SIDEBAR_W
 local SetEntranceIcon        = ns.SetEntranceIcon
 local SetTargetIcon          = ns.SetTargetIcon
+local ShowDungeonFilter      = ns.ShowDungeonFilter
 local ShowRouteToggle        = ns.ShowRouteToggle
 local TRAVEL                 = ns.TRAVEL
 local TravelMode             = ns.TravelMode
+local VisibleDungeons        = ns.VisibleDungeons
 local WorldPos               = ns.WorldPos
 local headerText             = ns.headerText
 local helpText               = ns.helpText
@@ -47,10 +50,25 @@ local HELP_TRAVEL = "/bnav go [n|name] | /bnav go up|down | /bnav go off | /bnav
 -- of the dungeon shown in the top row. The mouse wheel over the list, the
 -- /bnav go up|down commands and selecting a dungeon all move it.
 --------------------------------------------------------------------------
-local scrollFirst = 1
+local scrollFirst = 1   -- position in the visible list, not a TRAVEL index
+
+-- Indexes into TRAVEL of the rows shown (the "Available only" box filters
+-- them, see BossNav_DungeonFilter.lua).
+local visible = {}
+local function RefreshVisible()
+    visible = VisibleDungeons()
+end
+
+local function PosOf(idx)
+    if not idx then return nil end
+    for pos, i in ipairs(visible) do
+        if i == idx then return pos end
+    end
+    return nil
+end
 
 local function MaxFirst()
-    return math.max(1, #TRAVEL - MAX_ROWS + 1)
+    return math.max(1, #visible - MAX_ROWS + 1)
 end
 
 local function ClampScroll(first)
@@ -69,9 +87,15 @@ local function HereIdx()
     return nil
 end
 
+-- Brings the selection into view only when it (or the filtered list)
+-- changed since the last draw, so scrolling away from it is not undone.
+local lastSelIdx, lastCount
 local function KeepSelectionVisible()
-    local sel = HereIdx() or state.travelIdx
-    if not sel then return end
+    local selIdx = HereIdx() or state.travelIdx
+    local changed = (selIdx ~= lastSelIdx) or (#visible ~= lastCount)
+    lastSelIdx, lastCount = selIdx, #visible
+    local sel = changed and PosOf(selIdx)
+    if not sel then scrollFirst = ClampScroll(scrollFirst) return end
     if sel < scrollFirst then
         scrollFirst = sel
     elseif sel > scrollFirst + MAX_ROWS - 1 then
@@ -82,6 +106,7 @@ end
 
 -- Scroll the list by a number of rows (negative = up) and redraw.
 local function TravelScrollBy(rows)
+    RefreshVisible()
     scrollFirst = ClampScroll(scrollFirst + rows)
     if mapFrame:IsShown() then BossNav_RefreshMap() end
 end
@@ -91,29 +116,11 @@ sidebar:SetScript("OnMouseWheel", function(_, delta)
     if ns.InDungeonsSection and ns.InDungeonsSection() then TravelScrollBy(-delta * 3) end
 end)
 
--- Scrollbar on the right edge of the sidebar: a track and a thumb
-local scrollbar = CreateFrame("Frame", nil, sidebar)
-scrollbar:SetWidth(5)
-scrollbar:SetPoint("TOPRIGHT", listAnchor, "TOPRIGHT", -1, 0)
-scrollbar:SetPoint("BOTTOMRIGHT", listAnchor, "TOPRIGHT", -1, -MAX_ROWS * ROW_H)
-scrollbar.track = scrollbar:CreateTexture(nil, "BACKGROUND")
-scrollbar.track:SetAllPoints()
-scrollbar.track:SetColorTexture(0.15, 0.15, 0.18, 1)
-scrollbar.thumb = scrollbar:CreateTexture(nil, "ARTWORK")
-scrollbar.thumb:SetWidth(5)
-scrollbar.thumb:SetColorTexture(0.75, 0.62, 0.20, 1)
-scrollbar:Hide()
+-- Scrollbar on the right edge of the sidebar (BossNav_Scrollbar.lua)
+local scrollbar = ns.NewScrollbar(sidebar, listAnchor, MAX_ROWS, ROW_H)
 
 local function DrawScrollbar()
-    local n = #TRAVEL
-    if n <= MAX_ROWS then scrollbar:Hide() return end
-    local trackH = MAX_ROWS * ROW_H
-    local thumbH = math.max(12, trackH * MAX_ROWS / n)
-    local offset = (scrollFirst - 1) / (n - MAX_ROWS) * (trackH - thumbH)
-    scrollbar.thumb:ClearAllPoints()
-    scrollbar.thumb:SetPoint("TOP", scrollbar, "TOP", 0, -offset)
-    scrollbar.thumb:SetHeight(thumbH)
-    scrollbar:Show()
+    scrollbar:Draw(scrollFirst, #visible)
 end
 
 -- Called at the start of every window redraw so the bar never stays over
@@ -122,6 +129,7 @@ end
 local function HideTravelWidgets()
     scrollbar:Hide()
     HideRouteToggle()
+    HideDungeonFilter()
 end
 
 --------------------------------------------------------------------------
@@ -177,13 +185,14 @@ end
 -- Names are coloured against your level (see LevelColor in BossNav_Travel.lua):
 -- red above you, grey when outgrown, green when in range.
 local function DrawSelector()
+    RefreshVisible()
     KeepSelectionVisible()
     local here = HereIdx()
     local myLevel = PlayerLevel()
     local myFaction = PlayerFaction()
     for row = 1, MAX_ROWS do
-        local i = scrollFirst + row - 1
-        local e = TRAVEL[i]
+        local i = visible[scrollFirst + row - 1]
+        local e = i and TRAVEL[i]
         if not e then break end
         local r = GetRow(row)
         -- only while the dungeon (not a quest) is the selection
@@ -211,6 +220,7 @@ local function DrawSelector()
         r:Show()
     end
     DrawScrollbar()
+    ShowDungeonFilter()
 end
 
 -- Draws the map area in travel mode while the dungeon list has the focus.
