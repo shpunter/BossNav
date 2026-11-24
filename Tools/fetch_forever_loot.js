@@ -3,7 +3,7 @@
 //
 // The game never loads this file. Run it when you want fresher loot data:
 //   node Tools/fetch_forever_loot.js
-// then run Tools/export_items.js to rebuild Items/BossNav_ItemData.lua.
+// Nothing reads it automatically any more (the Atlas export was removed).
 // Forever Atlas has no loot for the Forever-only dungeons; this fills them in.
 "use strict";
 const fs = require("fs");
