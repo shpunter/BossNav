@@ -110,7 +110,7 @@
 --   Quests/BossNav_QuestInfo.lua      the selected quest drawn like the game's quest window
 --   Quests/BossNav_QuestsPanel.lua    the Quests tab: a dungeon's quests and where to take them
 --   Quests/BossNav_QuestMapPins.lua   quest givers of the selected dungeon on the game's world map
---   Items/BossNav_ItemData.lua        loot per dungeon boss, generated from Forever Atlas by Tools/export_items.js
+--   Items/BossNav_ItemData.lua        loot per dungeon boss, copied from Forever Atlas and foreverchanges.pro (static)
 --   Items/BossNav_ItemClasses.lua     which class can use an item; the saved class ticks
 --   Items/BossNav_ItemSlots.lua       slot, weapon type and hand of an item; the saved ticks
 --   Items/BossNav_ItemFilter.lua      which items the Items column lists (the dungeon and boss you picked)
