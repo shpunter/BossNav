@@ -155,7 +155,10 @@ local DUNGEONS = {
       }, bosses = {
         {"Interrogator Vishas",49.0,63.0,1},{"Bloodmage Thalnos",23.5,48.8,1},
         {"Houndmaster Loksey",28.0,74.5,2},{"Arcanist Doan",81.6,64.6,2},
-        {"Herod",52.0,42.0,3},
+        -- Atlas has 52, 42 (marked provisional), which lands outside the
+        -- map; Herod stands in the Hall of Champions, the round room at the
+        -- top. Measured from an in-game screenshot.
+        {"Herod",78.5,9.0,3},
         {"High Inquisitor Fairbanks",40.0,24.0,4},{"Scarlet Commander Mograine",48.1,14.4,4},{"High Inquisitor Whitemane",48.0,24.0,4},
     } },
     { zones = {"Uldaman"}, folder = "Uldaman", floors = {1}, bosses = {

@@ -5,6 +5,7 @@ local ADDON, ns = ...
 -- from the files loaded before this one
 local AddCommand             = ns.AddCommand
 local ChatChannel            = ns.ChatChannel
+local Duration               = ns.Duration
 local GoldEarned             = ns.GoldEarned
 local PlainMoney             = ns.PlainMoney
 local Print                  = ns.Print
@@ -13,15 +14,6 @@ local Thousands              = ns.Thousands
 local XPEarned               = ns.XPEarned
 local hud                    = ns.hud
 local state                  = ns.state
-
--- "1h 05m", "23m 10s" or "45s".
-local function Duration(sec)
-    sec = math.floor(sec)
-    local h, m, s = math.floor(sec / 3600), math.floor((sec % 3600) / 60), sec % 60
-    if h > 0 then return string.format("%dh %02dm", h, m) end
-    if m > 0 then return string.format("%dm %02ds", m, s) end
-    return string.format("%ds", s)
-end
 
 -- One chat message per row: chat lines cannot hold a line break.
 local function EarnedLines()

@@ -7,6 +7,7 @@ local FloorFromMapGroup      = ns.FloorFromMapGroup
 local FloorName              = ns.FloorName
 local GoldText               = ns.GoldText
 local XPText                 = ns.XPText
+local RunTimeText            = ns.RunTimeText
 local HideMinimapPins        = ns.HideMinimapPins
 local KilledCount            = ns.KilledCount
 local MapWorldSize           = ns.MapWorldSize
@@ -134,7 +135,7 @@ local function UpdateLive(skipRefresh)
         hud.arrow:Hide()
         local where = AreaWord(boss[2], boss[3])
         local floorHint = (#cfg.floors > 1) and (", " .. FloorName(cfg, bossFloor)) or ""
-        hud.sub:SetText(GoldText() .. XPText())
+        hud.sub:SetText(GoldText() .. XPText() .. RunTimeText())
         navText:SetText(string.format("|cffffd100%s|r is in %s%s. This client hides your position in dungeons, so follow the pin on the map.",
             boss[1], where, floorHint))
         return
