@@ -326,6 +326,19 @@ local QUESTS = {
         { id=95664, name="Elder Knowledge", faction="H", level=24, giver="Titan Relic", start="item", from="R, e, l, i, c,  , G, u, a, r, d, i, a, n", inside=true, turnin="Bashana Runetotem", tzone="Thunder Bluff", tx=70.8, ty=33.7, note="Then Earthen Echo for Muln Earthfury, Mulgore 33.4, 22.5" },
         { id=95682, name="Open the Maw", faction="H", level=24, giver="Deathstalker Agent", zone="Wetlands", x=51.4, y=59.2, pre="Dragonmaw Rumors (Zaruk, Hammerfall 74.4, 35.6)", note="Dragonmaw Saboteurs, Warders and the Dispatch from a Thaumaturgist" },
     },
+    -- Quest list from the warcrafttavern guide, objectives from Wowhead (Nov 2026).
+    -- Neither names a giver: the givers here are the NPCs who speak in the quest
+    -- text, at their classic spots (approx), unverified in game.
+    ["The Drowned City"] = {
+        { id=95787, name="Take Two With Water", faction="A", level=35, giver="Loremaster Dibbs", zone="Hillsbrad Foothills", x=50.8, y=57.1, approx=true, note="Southshore. Use the hide and charcoal on the four Tablets of I'lalai inside" },
+        { id=95788, name="Magics of the Drowned City", faction="A", level=35, note="5 I'lalai Fetishes from the trolls inside; giver not known yet" },
+        { id=97130, name="Ancient Gurubashi Secrets", faction="A", level=35, note="Ancient Gurubashi Idol from the most powerful priest inside; Kirin Tor quest, giver not known yet" },
+        { id=95775, name="The Drowned City", faction="H", level=35, giver="Kin'weelay", zone="Stranglethorn Vale", x=32.2, y=27.7, approx=true, note="Grom'gol. Rubbings of the four Tablets of I'lalai inside" },
+        { id=95776, name="The Only Good Brinescale...", faction="H", level=35, giver="Kin'weelay", zone="Stranglethorn Vale", x=32.2, y=27.7, approx=true, note="Grom'gol (giver guessed). Slay Var'Taka. Reward: Tidesoaked Leggings or Naga Priestess's Mantle" },
+        { id=96774, name="Ancient Gurubashi Idol", faction="H", level=35, giver="Mazu'kon", zone="Mulgore", note="Ancient Gurubashi Idol from the most powerful priest inside" },
+        { id=95789, name="Shady Saltseers", faction="B", level=35, giver="Baron Revilgaz", zone="Stranglethorn Vale", x=27.2, y=77.0, approx=true, note="Booty Bay (giver guessed). 10 Voodoo-Infused Artifacts from Saltseer pirates. Reward: Rusted Troll War Belt or Saltseer's Helm" },
+        { id=95791, name="The Saltseer Captain", faction="B", level=35, giver="Baron Revilgaz", zone="Stranglethorn Vale", x=27.2, y=77.0, approx=true, note="Booty Bay (giver guessed). Slay 3 Saltseer Coroners and Captain Dreadrise. Reward: Mutinous Cuffs or South Seas Shroud" },
+    },
 }
 
 -- Look up by the dungeon key BossNav uses everywhere (Norm of the name).

@@ -118,7 +118,8 @@ local function UpdateLive(skipRefresh)
 
     if not boss[2] then
         hud.arrow:Hide()
-        hud.sub:SetText("No pin for this boss yet. /bnav markboss at its spot records one.")
+        -- the earnings stay on the bar; the markboss hint is on the map window
+        hud.sub:SetText(GoldText() .. XPText() .. "  |cff888888(no pin yet)|r")
         navText:SetText("No map pin for " .. boss[1] .. ". Stand at the boss and type |cffffd100/bnav markboss|r to record it.")
         return
     end
