@@ -69,8 +69,9 @@ local ENTRANCES = {
     ["City of Dalaran"]           = { zone = "Alterac Mountains",    x = 8.0,  y = 61.2, levels = {28, 35} },
     -- Half-Pint Tavern: datamined only, not in the game; no entrance.
     ["Half-Pint Tavern"]          = { },
+    -- Drowned City: underwater past the Vile Reef, a cavern with a large tablet by the water-elemental island.
+    ["The Drowned City"]          = { zone = "Stranglethorn Vale",   x = 21.4, y = 27.9, levels = {35, 42} },
     -- in the game's group finder, entrance not known yet
-    ["The Drowned City"]          = { levels = {35, 42} },
     ["Krol'dok Stronghold"]       = { levels = {40, 47} },
     ["Alcaz Prison"]              = { levels = {48, 55} },
     ["Blackmaw Hold"]             = { levels = {55, 60} },

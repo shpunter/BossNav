@@ -15,6 +15,7 @@ Bosses\BossNav_Parts.lua
 Bosses\BossNav_Entrances.lua
 Travel\BossNav_Routes.lua
 Window\BossNav_Window.lua
+Window\BossNav_WindowDrag.lua
 Window\BossNav_Scrollbar.lua
 Window\BossNav_TabLook.lua
 Window\BossNav_Tabs.lua

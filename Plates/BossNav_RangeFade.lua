@@ -3,7 +3,8 @@
 -- The game has no plain "30 yards" check, so the first test that answers wins:
 --   1. a 30-yard item range check (works on any class, needs no spell)
 --   2. a 30-yard friendly spell the player knows (buffs of priest, mage...)
---   3. the follow distance check (28 yards)
+--   3. the follow distance check (28 yards; skipped in combat, where the
+--      client blocks it)
 --   4. the game's own group range check (~40 yards), the last resort
 -- Inside instances the answer may be a secret value; then the frame is faded
 -- with SetAlphaFromBoolean, which takes a secret without reading it.
@@ -61,8 +62,12 @@ local function SpellCheck(unit)
     return nil
 end
 
+-- The client blocks CheckInteractDistance for addons in combat ("Interface
+-- action failed because of an AddOn"); pcall does not stop that report, so
+-- the check is skipped in combat and the group range check answers instead.
 local function InteractCheck(unit)
     if not CheckInteractDistance then return nil end
+    if InCombatLockdown and InCombatLockdown() then return nil end
     return Answer(pcall(CheckInteractDistance, unit, 4))
 end
 
