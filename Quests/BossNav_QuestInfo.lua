@@ -13,6 +13,8 @@ local QUEST_REWARD_ITEMS     = ns.QUEST_REWARD_ITEMS
 local QUEST_TEXT             = ns.QUEST_TEXT
 local ReadQuestLog           = ns.ReadQuestLog
 local canvas                 = ns.canvas
+local mapFrame               = ns.mapFrame
+local navText                = ns.navText
 
 local PAD = 14
 local CONTENT_W = CANVAS_W - 2 * PAD - 16          -- room for the scroll bar
@@ -23,15 +25,30 @@ local SCROLL_STEP = 60
 -- quest window colours: black headings, dark brown text on parchment
 local HEAD_R, HEAD_G, HEAD_B = 0, 0, 0
 local TEXT_R, TEXT_G, TEXT_B = 0.18, 0.12, 0.06
-local QUALITY_HEX = { [0] = "4a4a4a", "000000", "033a03", "0a3d8f", "6a1a9a", "a85400" }
+-- item quality colours (grey, white, green, blue, purple, orange), darkened
+-- just enough to read on parchment
+local QUALITY_HEX = { [0] = "555555", "000000", "0b6e00", "0050b0", "7a1fb5", "b35900" }
 
 --------------------------------------------------------------------------
 -- Frame: parchment with a scrolling page
 --------------------------------------------------------------------------
+-- The page takes the whole left column: from the map's top down to the
+-- window's bottom, less room for the navigation line and help under it
+-- (moved below the page while it shows), so most quests fit unscrolled.
+local FOOTER_H = 60
 local frame = CreateFrame("Frame", nil, canvas)
-frame:SetAllPoints()
+frame:SetPoint("TOPLEFT", canvas, "TOPLEFT")
+frame:SetPoint("BOTTOMRIGHT", mapFrame, "BOTTOMLEFT", 12 + CANVAS_W, 12 + FOOTER_H)
 frame:SetFrameLevel(canvas:GetFrameLevel() + 8)   -- above the map, pins and the Quests panel
 frame:Hide()
+frame:SetScript("OnShow", function()
+    navText:ClearAllPoints()
+    navText:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", 0, -8)
+end)
+frame:SetScript("OnHide", function()
+    navText:ClearAllPoints()
+    navText:SetPoint("TOPLEFT", canvas, "BOTTOMLEFT", 0, -8)
+end)
 -- solid parchment colour first, so the page stays readable if the
 -- texture below is missing on this client
 local fill = frame:CreateTexture(nil, "BACKGROUND", nil, -1)
@@ -140,11 +157,20 @@ local function ItemIcon(id)
     return nil
 end
 
--- Name and quality: the game's when it has the item cached, else ours.
+-- Name and quality: the game's when it has the item loaded, else ours (the
+-- classic quality, which WoW Forever changed on some items). An item the
+-- game has not loaded yet is asked for; the page redraws when it arrives
+-- (BossNav_ItemInfo.lua).
 local function ItemNameQuality(id)
-    if id and GetItemInfo then
-        local ok, name, _, quality = pcall(GetItemInfo, id)
-        if ok and type(name) == "string" and not (IsSecret and IsSecret(name)) then return name, quality end
+    local get = (C_Item and C_Item.GetItemInfo) or GetItemInfo
+    if id and get then
+        local ok, name, _, quality = pcall(get, id)
+        if ok and type(name) == "string" and not (IsSecret and IsSecret(name)) then
+            if IsSecret and IsSecret(quality) then quality = nil end
+            local known = QUEST_REWARD_ITEMS[id]
+            return name, quality or (known and known[2])
+        end
+        if C_Item and C_Item.RequestLoadItemDataByID then pcall(C_Item.RequestLoadItemDataByID, id) end
     end
     local known = id and QUEST_REWARD_ITEMS[id]
     if known then return known[1], known[2] end
@@ -370,10 +396,10 @@ local function ShowQuestInfo(q, titleText, infoLines)
             Put("small", "Reputation:  " .. table.concat(parts, ",  "), 8)
         end
     elseif q.id and QUEST_TEXT[q.id] and not live then
-        Put("small", "No item or money reward.", 16)
+        Put("small", info.ru and "Rewards not known yet: take the quest to see them." or "No item or money reward.", 16)
     end
     if not live and q.id and QUEST_TEXT[q.id] then
-        Put("small", "|cff3d2b12Text and rewards from the classic quest database; take the quest to see WoW Forever's own.|r", 16)
+        Put("small", "|cff3d2b12Rewards as WoW Forever lists them (foreverchanges.pro); take the quest to see the game's own.|r", 16)
     end
 
     HideUnused()

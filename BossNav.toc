@@ -6,6 +6,7 @@
 Core\BossNav_Core.lua
 Core\BossNav_Data.lua
 Core\BossNav_BossImages.lua
+Quests\BossNav_QuestChains.lua
 Quests\BossNav_QuestData.lua
 Window\BossNav_Progress.lua
 Loot\BossNav_Gold.lua
@@ -58,6 +59,8 @@ Profs\BossNav_ProfsChat.lua
 Profs\BossNav_ProfsPanel.lua
 Quests\BossNav_QuestLog.lua
 Quests\BossNav_QuestStatus.lua
+Quests\BossNav_QuestXP.lua
+Quests\BossNav_QuestReward.lua
 Quests\BossNav_QuestText.lua
 Quests\BossNav_QuestLogInfo.lua
 Quests\BossNav_QuestInfo.lua

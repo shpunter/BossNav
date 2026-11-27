@@ -28,15 +28,18 @@ local function ItemID(link)
 end
 
 -- One list of reward items ("choice" or "reward") from the selected log line.
-local function ReadItems(kind, countFn, infoFn)
+-- Newer clients count only when given the quest ID (older ones ignore it),
+-- and name the item ID as the sixth answer.
+local function ReadItems(kind, countFn, infoFn, questID)
     local list = {}
-    local n = Safe(countFn)
+    local n = Safe(countFn, questID)
+    if type(n) ~= "number" or n == 0 then n = Safe(countFn) end
     if type(n) ~= "number" then return list end
     for i = 1, n do
-        local name, icon, count, quality = Safe(infoFn, i)
+        local name, icon, count, quality, _, itemID = Safe(infoFn, i, questID)
         if name then
             list[#list + 1] = {
-                id = ItemID(Safe(GetQuestLogItemLink, kind, i)),
+                id = (type(itemID) == "number" and itemID) or ItemID(Safe(GetQuestLogItemLink, kind, i)),
                 name = name, icon = icon, count = count or 1, quality = quality,
             }
         end
@@ -57,9 +60,10 @@ local function ReadQuestLog(q)
     local info = {}
     info.d, info.o = Safe(GetQuestLogQuestText, idx)
     if not info.d then info.d, info.o = Safe(GetQuestLogQuestText) end
-    info.c = ReadItems("choice", GetNumQuestLogChoices, GetQuestLogChoiceInfo)
-    info.r = ReadItems("reward", GetNumQuestLogRewards, GetQuestLogRewardInfo)
-    info.m = Safe(GetQuestLogRewardMoney)
+    local qid = QuestRealID(q)
+    info.c = ReadItems("choice", GetNumQuestLogChoices, GetQuestLogChoiceInfo, qid)
+    info.r = ReadItems("reward", GetNumQuestLogRewards, GetQuestLogRewardInfo, qid)
+    info.m = Safe(GetQuestLogRewardMoney, qid) or Safe(GetQuestLogRewardMoney)
     if type(old) == "number" and old > 0 then Safe(SelectQuestLogEntry, old) end
     if not (info.d or info.o) then return nil end
     info.live = true

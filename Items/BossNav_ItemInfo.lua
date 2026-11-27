@@ -70,16 +70,18 @@ local function QualityWord(q)
     return q and QUALITY_WORD[q] or nil
 end
 
--- Redraw the Items view (once, a moment after a burst of item data arrives).
+-- Redraw the Items view, or the quest window's reward names on the Quests
+-- tab (once, a moment after a burst of item data arrives).
+local REDRAW_TABS = { item = true, quest = true }
 local pending = false
 local events = CreateFrame("Frame")
 events:RegisterEvent("GET_ITEM_INFO_RECEIVED")
 events:SetScript("OnEvent", function()
-    if pending or state.tab ~= "item" then return end
+    if pending or not REDRAW_TABS[state.tab] then return end
     pending = true
     C_Timer.After(0.3, function()
         pending = false
-        if state.tab == "item" and ns.RefreshIfShown then ns.RefreshIfShown() end
+        if REDRAW_TABS[state.tab] and ns.RefreshIfShown then ns.RefreshIfShown() end
     end)
 end)
 
