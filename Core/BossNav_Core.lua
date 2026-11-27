@@ -58,6 +58,7 @@
 -- the others only through the addon namespace table `ns`):
 --   Core/BossNav_Core.lua             constants, helpers, shared state
 --   Core/BossNav_Data.lua             dungeon list, boss pins, trails, portrait IDs
+--   Quests/BossNav_QuestChains.lua    GENERATED: the earlier quests of each quest chain (Tools/build_quest_chains.py)
 --   Quests/BossNav_QuestData.lua      quests per dungeon: giver, place, faction, level
 --   Window/BossNav_Progress.lua       saved per-dungeon progress
 --   Loot/BossNav_Gold.lua             gold earned in the current dungeon
@@ -105,6 +106,8 @@
 --   Profs/BossNav_ProfsPanel.lua      the Profs tab: member list and profession table in the window
 --   Quests/BossNav_QuestLog.lua       finds a quest in your log by ID or by name; learns the game's real ID
 --   Quests/BossNav_QuestStatus.lua    whether you already did a quest or have it in your log
+--   Quests/BossNav_QuestXP.lua        GENERATED: experience per quest (Tools/build_quest_xp.py)
+--   Quests/BossNav_QuestReward.lua    the experience a quest gives at your level
 --   Quests/BossNav_QuestText.lua      built-in quest text and rewards for the quests in BossNav_QuestData.lua
 --   Quests/BossNav_QuestLogInfo.lua   quest text and rewards read from your quest log when you have the quest
 --   Quests/BossNav_QuestInfo.lua      the selected quest drawn like the game's quest window
@@ -146,7 +149,7 @@ BINDING_NAME_BOSSNAV_POST_EARNED = "Post Gold and XP Earned to Party Chat"
 BossNavDB = BossNavDB or {}
 
 local CANVAS_W, CANVAS_H = 540, 360
-local SIDEBAR_W = 325
+local SIDEBAR_W = 460   -- wide enough for a full quest name beside its icons and XP
 local LEGACY_ASPECT = 1.5
 local WAYPOINT_RADIUS = 0.025
 local FOREVER_IMG = "Interface\\AddOns\\BossNav\\Images\\"

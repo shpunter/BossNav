@@ -15,6 +15,7 @@ local PlayerLevel            = ns.PlayerLevel
 local QuestLevelRGB          = ns.QuestLevelRGB
 local QuestStatus            = ns.QuestStatus
 local QUEST_STATUS_WORD      = ns.QUEST_STATUS_WORD
+local QuestXPText            = ns.QuestXPText
 local ResolveMapIDByName     = ns.ResolveMapIDByName
 local RoundIcon              = ns.RoundIcon
 local VisibleQuests          = ns.VisibleQuests
@@ -53,8 +54,10 @@ local function PinTooltip(p)
             -- tooltips cannot cross out text: a done / in-log quest is tagged and dimmed
             local status = QuestStatus(q)
             if status then r, g, b = r * 0.55, g * 0.55, b * 0.55 end
-            GameTooltip:AddLine(string.format("[%d] %s%s%s", q.level, q.name, q.classes and (" (" .. q.classes .. ")") or "",
-                status and ("  - " .. QUEST_STATUS_WORD[status]) or ""), r, g, b)
+            local xpText = not status and QuestXPText(q)
+            GameTooltip:AddLine(string.format("[%d] %s%s%s%s", q.level, q.name, q.classes and (" (" .. q.classes .. ")") or "",
+                status and ("  - " .. QUEST_STATUS_WORD[status]) or "",
+                xpText and ("  |cffb48cff" .. xpText .. "|r") or ""), r, g, b)
         end
         if spot.offView then
             GameTooltip:AddLine("Outside this view; the arrow points to it", 1, 0.6, 0.2)

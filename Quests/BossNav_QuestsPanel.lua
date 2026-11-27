@@ -15,6 +15,10 @@ local QuestLevelColor        = ns.QuestLevelColor
 local QuestLevelRGB          = ns.QuestLevelRGB
 local QuestStatus            = ns.QuestStatus
 local QUEST_STATUS_WORD      = ns.QUEST_STATUS_WORD
+local QuestRewardXP          = ns.QuestRewardXP
+local QuestXPText            = ns.QuestXPText
+local QUEST_XP               = ns.QUEST_XP
+local Thousands              = ns.Thousands
 local listAnchor             = ns.listAnchor
 local SIDEBAR_W              = ns.SIDEBAR_W
 local SelectedDungeon        = ns.SelectedDungeon
@@ -51,8 +55,38 @@ local function QuestIcon(status, ready)
     return nil
 end
 
+local function Done(id) return QuestStatus({ id = id }) == "done" end
+
+-- True when an earlier quest still stands in the way of taking this one:
+-- one of "after" not handed in, or none of "afterAny" handed in. A quest
+-- with only a "pre" in words counts as locked (the game can't be asked).
+local function Locked(q, status)
+    if status ~= nil then return false end
+    if not (q.after or q.afterAny) then return q.pre ~= nil end
+    for _, id in ipairs(q.after or {}) do
+        if not Done(id) then return true end
+    end
+    if q.afterAny then
+        for _, id in ipairs(q.afterAny) do
+            if Done(id) then return false end
+        end
+        return true
+    end
+    return false
+end
+
+-- The quest's chain steps for your faction (Alliance when the client will
+-- not say), or nil.
+local function ChainFor(q)
+    if q.chain then return q.chain end
+    if not q.chainA then return nil end
+    local f = PlayerFaction()
+    return (f and f:sub(1, 1) == "H") and q.chainH or q.chainA
+end
+
 -- Sidebar row columns, in pixels from the row's left edge (after MARK_W).
 local ICON_COL = { quest = 0, alliance = 18, horde = 33, text = 51 }
+local XP_W = 64   -- the XP column at the right end of a row
 local CREST_A = "Interface\\FriendsFrame\\PlusManz-Alliance"
 local CREST_H = "Interface\\FriendsFrame\\PlusManz-Horde"
 
@@ -86,18 +120,42 @@ end
 
 -- The dungeon's quests your faction and class can take (all of them with
 -- /bnav quest all; a filter is skipped when the client will not say your
--- faction or class).
+-- faction or class). A chain quest not taken yet has its earlier steps
+-- listed right above it; a step two chains share, or one that is a quest
+-- of the dungeon itself, is listed once only.
 local function VisibleQuests()
     local cfg = QuestDungeon()
     local faction = PlayerFaction()
     local myClass = PlayerClass()
-    local list = {}
+    local shown = {}
     for _, q in ipairs(DungeonQuests(cfg)) do
         local factionOk = not faction or q.faction == "B" or q.faction:sub(1, 1) == faction:sub(1, 1)
         if state.questAll or (factionOk and not OtherClass(q, myClass)) then
-            list[#list + 1] = q
+            shown[#shown + 1] = q
         end
     end
+    -- a step that is one of the dungeon's own quests is listed as that
+    -- quest's row, moved up to where the chain needs it
+    local own = {}
+    for _, q in ipairs(shown) do own[q.id] = q end
+    local list, listed = {}, {}
+    local function Add(q)
+        if listed[q.id] then return end
+        listed[q.id] = true
+        local chain = ChainFor(q)
+        if chain and QuestStatus(q) == nil then
+            for _, step in ipairs(chain) do
+                if own[step.id] then
+                    Add(own[step.id])
+                elseif not listed[step.id] then
+                    listed[step.id] = true
+                    list[#list + 1] = step
+                end
+            end
+        end
+        list[#list + 1] = q
+    end
+    for _, q in ipairs(shown) do Add(q) end
     return list, cfg
 end
 
@@ -110,7 +168,8 @@ local function CanTakeQuest(q)
     if OtherClass(q, PlayerClass()) then return false end
     local myLevel = PlayerLevel()
     if myLevel and q.level and q.level > myLevel then return false end
-    return QuestStatus(q) == nil
+    local status = QuestStatus(q)
+    return status == nil and not Locked(q, status)
 end
 
 -- Where a quest starts, in words.
@@ -247,7 +306,13 @@ local function GetQuestRow(i)
         b.hordeIcon:SetTexture(CREST_H)
         b.text = b:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
         b.text:SetPoint("LEFT", b, "LEFT", MARK_W + ICON_COL.text, 0)
-        b.text:SetWidth(SIDEBAR_W - 8 - MARK_W - ICON_COL.text - 24)
+        b.text:SetWidth(SIDEBAR_W - 8 - MARK_W - ICON_COL.text - 24 - XP_W)
+        -- the experience it gives you, right-aligned in front of the map button
+        b.xp = b:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        b.xp:SetPoint("RIGHT", b, "RIGHT", -24, 0)
+        b.xp:SetWidth(XP_W)
+        b.xp:SetJustifyH("RIGHT")
+        b.xp:SetWordWrap(false)
         b.text:SetJustifyH("LEFT")
         b.text:SetWordWrap(false)
         -- Line through a handed-in quest (font strings cannot strike through)
@@ -320,9 +385,24 @@ local function ShowQuest(q, myLevel)
     end
     local who, where = StartText(q)
     lines[#lines + 1] = LABEL:format("Take it from") .. who .. "  |cff033a03" .. where .. "|r"
+    local xp, full = QuestRewardXP(q), QUEST_XP[q.id]
+    if xp then
+        lines[#lines + 1] = LABEL:format("Experience") .. Thousands(xp)
+            .. ((full and full[2] ~= xp) and ("  |cff3d2b12(" .. Thousands(full[2]) .. " at its level)|r") or "")
+    end
     local back = TurninText(q)
     if back then lines[#lines + 1] = LABEL:format("Hand it in to") .. back end
-    if q.pre then lines[#lines + 1] = LABEL:format("Do first") .. q.pre end
+    if q.chainOf then
+        lines[#lines + 1] = LABEL:format("Chain") .. string.format("step %d of %d before %s", q.step, q.steps, q.chainOf.name)
+    end
+    local chain = ChainFor(q)
+    if chain then
+        local names = {}
+        for i, step in ipairs(chain) do names[i] = step.name end
+        lines[#lines + 1] = LABEL:format("Do first") .. table.concat(names, ", ")
+    elseif q.pre then
+        lines[#lines + 1] = LABEL:format("Do first") .. q.pre
+    end
     if q.note then lines[#lines + 1] = LABEL:format("Tip") .. q.note end
     title:Hide(); body:Hide(); empty:Hide()
     ns.ShowQuestInfo(q, q.name, lines)
@@ -385,11 +465,20 @@ local function RenderQuestTab()
         local lvlColor = QuestLevelColor(q, myLevel) or "|cff888888"
         local nameColor = QuestLevelColor(q, myLevel) or "|cffffffff"
         local qtex = QuestIcon(status, ready)
-        if qtex then r.qicon:SetTexture(qtex); r.qicon:Show() else r.qicon:Hide() end
-        r.allianceIcon:SetShown(q.faction ~= "H")
-        r.hordeIcon:SetShown(q.faction ~= "A")
-        local main = string.format("%s[%d]|r %s%s|r", lvlColor, q.level, nameColor, q.name)
-        local tag = ready and "ready to hand in" or (status and QUEST_STATUS_WORD[status]) or PlaceTag(q)
+        -- a chain quest you can't take yet: the "!" greyed out
+        local locked = Locked(q, status)
+        if qtex then r.qicon:SetTexture(qtex); r.qicon:SetDesaturated(locked); r.qicon:Show() else r.qicon:Hide() end
+        -- a chain step: its "!" moved in under the crests, which it doesn't
+        -- show (its quest's row has them), and its step number before the name
+        local isStep = q.chainOf ~= nil
+        r.qicon:ClearAllPoints()
+        r.qicon:SetPoint("LEFT", r, "LEFT", MARK_W + (isStep and ICON_COL.horde or ICON_COL.quest), 0)
+        r.allianceIcon:SetShown(not isStep and q.faction ~= "H")
+        r.hordeIcon:SetShown(not isStep and q.faction ~= "A")
+        local main = string.format("%s[%d]|r %s%s%s|r", lvlColor, q.level,
+            isStep and ("|cff888888" .. q.step .. ".|r ") or "", nameColor, q.name)
+        local tag = ready and "ready to hand in" or (status and QUEST_STATUS_WORD[status])
+            or (locked and "needs earlier quest") or PlaceTag(q)
         r.text:SetText(main)
         local strikeW = math.min(r.text:GetStringWidth() or 0, r.text:GetWidth())
         r.text:SetText(main .. " |cff666666(" .. tag .. ")|r")
@@ -401,6 +490,9 @@ local function RenderQuestTab()
         else
             r.strike:Hide()
         end
+        -- experience at your level, purple like the HUD's; none once handed in
+        local xpText = status ~= "done" and QuestXPText(q)
+        r.xp:SetText(xpText and ("|cffb48cff" .. xpText .. "|r") or "")
         r:Show()
     end
     HideRows(shown + 1)

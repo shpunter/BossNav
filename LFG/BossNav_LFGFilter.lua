@@ -1,8 +1,9 @@
 -- Group finder role filter: keep only the players who listed one of the
 -- checked roles (tank, healer, dps). A player who listed several roles stays
--- when any of them is checked; nothing checked shows everyone. The roles come
--- from C_LFGList.GetSearchResultLeaderInfo (.lfgRoles), so for a listed group
--- it is the leader's roles.
+-- when any of them is checked; nothing checked shows everyone. A single
+-- player's roles come from C_LFGList.GetSearchResultLeaderInfo (.lfgRoles);
+-- a group stays only when a member already plays a checked role
+-- (C_LFGList.GetSearchResultMemberCounts).
 -- Keyboard use: /bnav lfg [tank|heal|dps|off], /bnav lfg list, invite, whisper.
 local ADDON, ns = ...
 -- from the files loaded before this one
@@ -59,10 +60,35 @@ local function MemberCount(resultID)
     return ok and type(info) == "table" and Plain(info.numMembers) or 1
 end
 
--- true when the listing should stay visible under the current filter;
--- a listing whose roles cannot be read stays visible
+-- the game's member-count key for each role
+local COUNT_KEY = { tank = "TANK", healer = "HEALER", dps = "DAMAGER" }
+
+-- for a group: true / false when a member does / does not play that role,
+-- nil when the game does not say
+local function GroupHas(resultID, role)
+    if not (C_LFGList and C_LFGList.GetSearchResultMemberCounts) then return nil end
+    local ok, counts = pcall(C_LFGList.GetSearchResultMemberCounts, resultID)
+    if not (ok and type(counts) == "table") then return nil end
+    local have = Plain(counts[COUNT_KEY[role]])
+    if type(have) == "number" then return have > 0 end
+    return nil
+end
+
+-- true when the listing should stay visible under the current filter.
+-- A group stays when one of its members plays a checked role (Heal ticked ->
+-- groups that already have a healer); a single player stays when they listed
+-- one of the checked roles. Anything that cannot be read stays visible.
 local function Matches(resultID)
     if not Wanted() then return true end
+    if MemberCount(resultID) > 1 then
+        local unknown = false
+        for role in pairs(Checked()) do
+            local has = GroupHas(resultID, role)
+            if has == true then return true end
+            if has == nil then unknown = true end
+        end
+        if not unknown then return false end
+    end
     local info = LeaderInfo(resultID)
     local roles = info and info.lfgRoles
     if type(roles) ~= "table" then return true end
