@@ -78,6 +78,22 @@ local function RunSeconds()
     return math.max(0, time() - state.started)
 end
 
+-- "1h 05m", "23m 10s" or "45s".
+local function Duration(sec)
+    sec = math.floor(sec)
+    local h, m, s = math.floor(sec / 3600), math.floor((sec % 3600) / 60), sec % 60
+    if h > 0 then return string.format("%dh %02dm", h, m) end
+    if m > 0 then return string.format("%dm %02ds", m, s) end
+    return string.format("%ds", s)
+end
+
+-- Text for the HUD line after the gold and XP; empty with no run going.
+local function RunTimeText()
+    local sec = RunSeconds()
+    if not sec then return "" end
+    return "   Time: |cffffffff" .. Duration(sec) .. "|r"
+end
+
 -- Keeps the dungeon copy IDs (BossNav_InstanceReset.lua): clearing marks by
 -- hand does not make a new copy of the dungeon.
 local function ClearProgress(cfg)
@@ -123,6 +139,8 @@ end
 
 -- shared with the other BossNav files
 ns.ClearProgress = ClearProgress
+ns.Duration = Duration
+ns.RunTimeText = RunTimeText
 ns.OnGroupRosterChanged = OnGroupRosterChanged
 ns.RunSeconds = RunSeconds
 ns.SavedKilled = SavedKilled
