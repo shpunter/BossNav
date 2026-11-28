@@ -296,7 +296,7 @@ local SOURCES = {
         { boss = "Atiesh", extra = true, items = { 22736 }, chance = { 0 } },
         { boss = "Balzaphon", extra = true, items = { 23126, 23125, 23124 }, chance = { 0, 100, 0 } },
         { boss = "Sothos and Jarien's Heirlooms", extra = true, items = { 22327, 22301, 22328, 22334, 22329 }, chance = { 0, 0, 0, 0, 0 } },
-        { boss = "Plans", extra = true, items = { 12827 }, chance = { 0 } },
+        { boss = "Plans", extra = true, items = { 12827, 12830 }, chance = { 0, 0 } },
     },
     ["Dire Maul"] = {
         { boss = "Guard Mol'dar", items = { 18494, 18493, 18496, 18497, 18498, 18450, 18458, 18459, 18451, 18462, 18463, 18464, 18460, 18250, 18268 }, chance = { 6.7, 6.55, 6.36, 5.48, 6.23, 8.1, 7.91, 8.21, 7.68, 7.84, 7.69, 8.22, 7.92, 14.13, 48.24 } },
@@ -1114,6 +1114,7 @@ local NAMES = {
     [12806] = "Unforged Rune Covered Breastplate",
     [12811] = "Righteous Orb",
     [12827] = "Plans: Serenity",
+    [12830] = "Plans: Corruption",
     [12833] = "Plans: Hammer of the Titans",
     [12834] = "Plans: Arcanite Champion",
     [12835] = "Plans: Annihilator",

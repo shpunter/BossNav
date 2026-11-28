@@ -345,6 +345,20 @@ local QUESTS = {
         { id=95789, name="Shady Saltseers", faction="B", level=34, giver="Krazek", zone="Stranglethorn Vale", x=27.0, y=77.2, note="Booty Bay. 10 Voodoo-Infused Artifacts from Saltseer pirates. Reward: Rusted Troll War Belt or Saltseer's Helm" },
         { id=95791, name="The Saltseer Captain", faction="B", level=34, giver="Krazek", zone="Stranglethorn Vale", x=27.0, y=77.2, approx=true, note="Booty Bay (giver guessed). Slay 3 Saltseer Coroners and Captain Dreadrise. Reward: Mutinous Cuffs or South Seas Shroud" },
     },
+    -- Quest list from the warcrafttavern and mmonster.co guides; givers, spots,
+    -- levels and prerequisites from bindonforever.com (QuestieDB data), text and
+    -- rewards from foreverchanges.pro (Nov 2026). Unverified in game.
+    ["Krol'dok Stronghold"] = {
+        { id=94982, name="Eye of Mugg", faction="A", level=40, qlevel=45, giver="Demar Brant", zone="Riverglades", x=66.7, y=81.0, note="Farholde Keep. Eye of Mugg from Overlord Mugg, the last boss. Reward: Rock on Stick, Bigger Rock on Bigger Stick or Stick No Rock" },
+        { id=94984, name="Tome of Twilight", faction="A", level=39, qlevel=44, giver="Ashe Amberhall", zone="Riverglades", x=66.8, y=81.1, note="Farholde Keep. Kill Nar'gurk, the ogre magi in the summoning circle up the left fork, for the Tome" },
+        { id=94983, name="Twilight Mementos", faction="A", level=38, qlevel=42, giver="Sergeant Riftan", zone="Riverglades", x=30.7, y=49.1, note="Twilight's Shroud. 8 Cultist Bangles from the Twilight's Hammer inside. Then Lingering Essence and Curios of Curiosity in Farholde Keep" },
+        { id=96771, name="Vengeance of the Highborne", faction="A", level=37, qlevel=45, giver="Ranath Nightstride", zone="Alterac Mountains", x=17.8, y=66.0, note="Dalaran. Slay Zalfan Moonshadow, a Twilight Warlock on the left fork after Tunk's forge; Kirin Tor quest" },
+        { id=94980, name="Krol'dok Moulding", faction="A", level=38, qlevel=41, giver="Krol'dok Moulding", start="item", from="Tunk", inside=true, turnin="Alphonse Dumas", tzone="Riverglades", tx=64.5, ty=82.0, note="Tunk the blacksmith stands at a forge where the road curves left after War Handler Ashka. Then Key Ingredients (4 Thick Leather, 12 Iron Bars) gives the Krol'dok Compound Key" },
+        { id=94968, name="Eye of Mugg", faction="H", level=40, qlevel=45, giver="Krom'rosh", zone="Riverglades", x=59.4, y=45.6, note="Rog'mar. Eye of Mugg from Overlord Mugg, the last boss. Reward: Rock on Stick, Bigger Rock on Bigger Stick or Stick No Rock" },
+        { id=94972, name="Tome of Twilight", faction="H", level=39, qlevel=44, giver="Tran'gul", zone="Riverglades", x=59.5, y=44.0, note="Rog'mar. The Tome of Twilight from Nar'gurk, the ogre magi in the summoning circle up the left fork" },
+        { id=94975, name="A Token of Vengeance", faction="H", level=38, qlevel=42, giver="Da'grosh", zone="Riverglades", x=33.5, y=37.9, note="Twilight's Shroud. 15 Cultist Ears from the Twilight's Hammer inside" },
+        { id=94973, name="Krol'dok Moulding", faction="H", level=38, qlevel=41, giver="Krol'dok Moulding", start="item", from="Tunk", inside=true, turnin="Kreza Darkthorn", tzone="Riverglades", tx=59.9, ty=46.0, note="Tunk the blacksmith stands at a forge where the road curves left after War Handler Ashka. Then Key Ingredients (4 Thick Leather, 12 Iron Bars) gives the Krol'dok Compound Key" },
+    },
 }
 
 -- Look up by the dungeon key BossNav uses everywhere (Norm of the name).

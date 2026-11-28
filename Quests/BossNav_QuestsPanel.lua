@@ -379,6 +379,28 @@ local function GetQuestRow(i)
 end
 
 --------------------------------------------------------------------------
+-- Scrolling: the list keeps its place (questFirst = list position of the
+-- top row) and only moves when the selected quest would leave the view, or
+-- with the mouse wheel. A thin bar at the right edge shows where you are.
+--------------------------------------------------------------------------
+local scrollbar = ns.NewScrollbar(sidebar, listAnchor, MAX_ROWS, ROW_H)
+local questCount = 0      -- rows in the list at the last redraw
+local lastIdx             -- selection at the last redraw
+local lastCfg             -- dungeon at the last redraw
+
+local function ClampFirst(first)
+    return math.max(1, math.min(first, math.max(1, questCount - MAX_ROWS + 1)))
+end
+
+-- The sidebar's wheel already scrolls the dungeon list (BossNav_TravelPanel);
+-- on the Quests tab it scrolls the quest list instead.
+sidebar:HookScript("OnMouseWheel", function(_, delta)
+    if state.tab ~= "quest" or questCount <= MAX_ROWS then return end
+    state.questFirst = ClampFirst((state.questFirst or 1) - delta * 3)
+    BossNav_RefreshMap()
+end)
+
+--------------------------------------------------------------------------
 -- Detail panel over the map
 --------------------------------------------------------------------------
 local panel = CreateFrame("Frame", nil, canvas)
@@ -469,6 +491,7 @@ local function RenderQuestTab()
         panel:Hide()
         ns.HideQuestInfo()
         HideRows(1)
+        scrollbar:Hide()
         return false
     end
 
@@ -484,8 +507,24 @@ local function RenderQuestTab()
     navText:SetText("")
     panel:Show()
 
-    -- Sidebar: keep the selected quest in view (20 rows fit)
-    local first = math.max(1, state.questIdx - MAX_ROWS + 1)
+    -- Sidebar: 20 rows fit; scroll only as far as needed to keep a newly
+    -- selected quest in view, so the wheel's position holds otherwise
+    questCount = count
+    if cfg ~= lastCfg then   -- another dungeon: start at the top
+        lastCfg, lastIdx, state.questFirst = cfg, nil, 1
+    end
+    local first = state.questFirst or 1
+    if state.questIdx ~= lastIdx then
+        if state.questIdx < first then
+            first = state.questIdx
+        elseif state.questIdx > first + MAX_ROWS - 1 then
+            first = state.questIdx - MAX_ROWS + 1
+        end
+        lastIdx = state.questIdx
+    end
+    first = ClampFirst(first)
+    state.questFirst = first
+    scrollbar:Draw(first, count)
     local myLevel = PlayerLevel()
     local shown = 0
     for i = first, math.min(count, first + MAX_ROWS - 1) do

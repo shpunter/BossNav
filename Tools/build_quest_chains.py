@@ -174,7 +174,8 @@ SYM_ZONE = {v: k for k, v in ZONE_SYM.items()}
 SMALL = {'OF', 'THE', 'AND'}
 # world-map zones (outdoor zones and cities) of the two old continents
 OUTDOOR = {1,3,4,8,10,11,12,28,33,36,38,40,41,44,45,46,47,51,85,130,139,267,1497,1519,1537,
-           14,15,16,17,141,148,215,331,357,361,400,405,406,440,490,493,618,1377,1637,1638,1657}
+           14,15,16,17,141,148,215,331,357,361,400,405,406,440,490,493,618,1377,1637,1638,1657,
+           16591}   # Forever: Riverglades
 SPECIAL = {490: "Un'Goro Crater"}
 def zone_name(zid):
     if zid in SPECIAL: return SPECIAL[zid]
@@ -346,7 +347,13 @@ for dname, qid, name, fac in mine:
 
 # Steps the QuestieDB data leaves without a giver, from bindonforever.com.
 OVERRIDE = {95786: dict(giver="Brother Nimetz", zone="Stranglethorn Vale", x=37.8, y=3.6, zid=33,
-                        turnin="Loremaster Dibbs", tzone="Hillsbrad Foothills", tx=50.6, ty=57.1)}
+                        turnin="Loremaster Dibbs", tzone="Hillsbrad Foothills", tx=50.6, ty=57.1),
+            # Riverglades steps QuestieDB has no giver for (bindonforever.com, 2026-11-28)
+            95418: dict(giver="Clubtoe", zone="Riverglades", x=50.0, y=47.0, zid=16591,
+                        turnin="Tran'gul", tzone="Riverglades", tx=59.5, ty=44.0),
+            95601: dict(giver="Twilight Brute", zone="Riverglades", x=49.2, y=46.7, zid=16591,
+                        turnin="Clubtoe", tzone="Riverglades", tx=50.0, ty=47.0),
+            94889: dict(giver="Sergeant Riftan", zone="Riverglades", x=30.7, y=49.1, zid=16591)}
 
 def step_lua(sid, wants):
     r = row(sid)
