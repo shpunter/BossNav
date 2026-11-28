@@ -29,6 +29,9 @@
     <Binding name="BOSSNAV_SWITCH_NAV">
         BossNav_SwitchNav()
     </Binding>
+    <Binding name="BOSSNAV_QUEST_END">
+        BossNav_SwitchQuestEnd()
+    </Binding>
     <Binding name="BOSSNAV_QUEST_DOWN">
         BossNav_ScrollQuest(1)
     </Binding>

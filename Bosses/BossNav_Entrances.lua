@@ -33,7 +33,7 @@ local ENTRANCES = {
     ["Scarlet Library"]           = { levels = {33, 41} },
     ["Scarlet Armory"]            = { levels = {36, 44} },
     ["Scarlet Cathedral"]         = { levels = {38, 46} },
-    ["Razorfen Downs"]            = { zone = "The Barrens",          x = 48.9, y = 94.4, levels = {37, 46} },
+    ["Razorfen Downs"]            = { zone = "The Barrens",          x = 50.8, y = 92.8, levels = {37, 46} },
     ["Uldaman"]                   = { zone = "Badlands",             x = 42.4, y = 18.6, levels = {41, 51} },
     ["Zul'Farrak"]                = { zone = "Tanaris",              x = 39.0, y = 20.2, levels = {44, 54} },
     ["Maraudon"]                  = { zone = "Desolace",             x = 29.1, y = 62.5, levels = {46, 55} },
