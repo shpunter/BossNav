@@ -248,7 +248,7 @@ local function RenderTravelTab()
         local _, _, _, where = EntranceOf(entry)
         local other = OtherNavTarget()
         statusText:SetText(string.format("%s: |cff00ff00%s|r |cff888888%s|r   %s%s",
-            entry.isQuest and "Quest giver" or "Dungeon", entry.name, entry.levels,
+            entry.isQuest and (entry.handIn and "Hand in to" or "Quest giver") or "Dungeon", entry.name, entry.levels,
             where or "entrance unknown (/bnav entrance at the portal)",
             other and string.format("   |cff6699ff(also: %s)|r", other.name) or ""))
         DrawEntrancePin(entry)

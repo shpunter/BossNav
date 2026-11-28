@@ -193,11 +193,25 @@ local function PlaceTag(q)
     return q.zone or "place unknown"
 end
 
+-- Who takes the quest back and where: the turn-in NPC the data names, else
+-- the giver (a quest row without "turnin" goes back to whoever gave it).
+-- nil when that is not known: a quest started from an item or an object
+-- with no turn-in NPC in the data.
+local function HandInOf(q)
+    if q.turnin then
+        return { who = q.turnin, zone = q.tzone, x = q.tx, y = q.ty, inside = q.tinside }
+    end
+    if q.start == "item" or q.start == "object" then return nil end
+    return { who = q.giver, zone = q.zone, x = q.x, y = q.y, inside = q.inside, same = true }
+end
+
 local function TurninText(q)
-    if not q.turnin then return nil end
-    if q.tinside then return q.turnin .. ", inside the dungeon" end
-    if q.tzone and q.tx then return string.format("%s, %s  %.1f, %.1f", q.turnin, q.tzone, q.tx, q.ty) end
-    return q.turnin .. (q.tzone and (", " .. q.tzone) or "")
+    local h = HandInOf(q)
+    if not (h and h.who) then return "not known" end
+    if h.same and not q.inside then return h.who .. "  |cff3d2b12(the giver, same place)|r" end
+    if h.inside then return h.who .. ", inside the dungeon" end
+    if h.zone and h.x then return string.format("%s  |cff033a03%s  %.1f, %.1f|r", h.who, h.zone, h.x, h.y) end
+    return h.who .. (h.zone and (", " .. h.zone) or "")
 end
 
 -- In your log with every objective done.
@@ -205,14 +219,25 @@ local function IsReady(q)
     return QuestStatus(q) == "active" and ns.QuestLogComplete ~= nil and ns.QuestLogComplete(q) == true
 end
 
--- Where the arrow and the map button lead for a quest: the giver, or once
--- the quest is ready to hand in, whoever takes it back (the giver when the
--- data names no one else). Shaped like a quest row so the same code uses it.
-local function NavSpot(q)
-    if not (q.turnin and IsReady(q)) then return q end
+-- Which end of the selected quest the arrow leads to: "take" (the giver) or
+-- "handin". Picked by itself (in your log: hand in; else: take) until the
+-- Switch Quest Navigation key or /bnav quest handin|take overrides it; picking
+-- another quest goes back to picking by itself.
+local function QuestEnd(q)
+    if state.questEnd then return state.questEnd end
+    return QuestStatus(q) == "active" and "handin" or "take"
+end
+
+-- Where the arrow and the map button lead for a quest: the giver, or the
+-- one who takes it back (see QuestEnd; which forces one end). Shaped like a
+-- quest row so the same code uses it; a hand-in spot has handIn = true, and
+-- no zone when the hand-in place is not known.
+local function NavSpot(q, which)
+    if (which or QuestEnd(q)) ~= "handin" then return q end
+    local h = HandInOf(q) or {}
     return {
         id = tostring(q.id) .. ":turnin", name = q.name, level = q.level,
-        giver = q.turnin, zone = q.tzone, x = q.tx, y = q.ty, inside = q.tinside,
+        giver = h.who or q.giver, zone = h.zone, x = h.x, y = h.y, inside = h.inside,
         handIn = true,
     }
 end
@@ -234,7 +259,7 @@ local function NavigateToQuest(q)
             .. (SelectedDungeon() and (", navigating to " .. SelectedDungeon().name .. ".") or "."))
     elseif (state.questTarget or state.questInside) and ns.ClearQuestTarget then
         ns.ClearQuestTarget(true)
-        Print(q.name .. ": giver place unknown"
+        Print(q.name .. (q.handIn and ": hand-in place unknown" or ": giver place unknown")
             .. (SelectedDungeon() and (", navigating to " .. SelectedDungeon().name .. ".") or "."))
     end
 end
@@ -244,6 +269,8 @@ local function SelectQuest(idx)
     local list = VisibleQuests()
     local q = list[idx]
     if not q then return end
+    -- a newly picked quest: the arrow end is picked by itself again
+    if idx ~= state.questIdx then state.questEnd = nil end
     state.questIdx = idx
     NavigateToQuest(NavSpot(q))
     -- the quest is the selection now, even when its giver place is unknown
@@ -251,6 +278,26 @@ local function SelectQuest(idx)
         state.selKind = "quest"
         if ns.RefreshIfShown then ns.RefreshIfShown() end
     end
+end
+
+-- Lead the arrow to the other end of the selected quest: from the giver to
+-- whoever takes it back, or back again. which: "take", "handin" or nil to flip.
+local function SwitchQuestEnd(which)
+    local q = VisibleQuests()[state.questIdx or 1]
+    if not q then Print("No quest picked: open the Quests tab and pick one.") return end
+    state.questIdx = state.questIdx or 1
+    if not which then which = (QuestEnd(q) == "handin") and "take" or "handin" end
+    state.questEnd = which
+    local spot = NavSpot(q)
+    Print(q.name .. ": " .. (which == "handin" and "where to hand it in" or "where to take it")
+        .. ((spot.giver and spot.zone) and (" - " .. spot.giver) or ""))
+    NavigateToQuest(spot)
+    state.selKind = "quest"
+    if ns.RefreshIfShown then ns.RefreshIfShown() end
+end
+
+function BossNav_SwitchQuestEnd()
+    SwitchQuestEnd()
 end
 
 --------------------------------------------------------------------------
@@ -278,7 +325,7 @@ local function GetQuestRow(i)
         m:SetScript("OnEnter", function(self)
             if not GameTooltip then return end
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-            GameTooltip:AddLine(b.ready and "Show where to hand it in" or "Show on the map", 1, 0.82, 0)
+            GameTooltip:AddLine(b.handIn and "Show where to hand it in" or "Show where to take it", 1, 0.82, 0)
             GameTooltip:Show()
         end)
         m:SetScript("OnLeave", function() if GameTooltip then GameTooltip:Hide() end end)
@@ -390,8 +437,10 @@ local function ShowQuest(q, myLevel)
         lines[#lines + 1] = LABEL:format("Experience") .. Thousands(xp)
             .. ((full and full[2] ~= xp) and ("  |cff3d2b12(" .. Thousands(full[2]) .. " at its level)|r") or "")
     end
-    local back = TurninText(q)
-    if back then lines[#lines + 1] = LABEL:format("Hand it in to") .. back end
+    lines[#lines + 1] = LABEL:format("Hand it in to") .. TurninText(q)
+    lines[#lines + 1] = LABEL:format("Arrow leads to")
+        .. (QuestEnd(q) == "handin" and "where to hand it in" or "where to take it")
+        .. "  |cff3d2b12(Switch Quest Navigation key, or /bnav quest handin / take)|r"
     if q.chainOf then
         lines[#lines + 1] = LABEL:format("Chain") .. string.format("step %d of %d before %s", q.step, q.steps, q.chainOf.name)
     end
@@ -452,12 +501,12 @@ local function RenderQuestTab()
         -- a done or in-log quest is crossed out and tagged instead of the place
         local status = QuestStatus(q)
         local ready = status == "active" and IsReady(q)
-        r.ready = ready
         -- the map button while the quest is still to be picked up (the
-        -- giver) or ready to hand in (whoever takes it back), when that one
+        -- giver) or is in your log (whoever takes it back), when that one
         -- has a spot on the world map
-        local spot = NavSpot(q)
-        if (status == nil or ready) and spot.zone and spot.x and not spot.inside then
+        local spot = NavSpot(q, (i == state.questIdx) and nil or (status == "active" and "handin" or "take"))
+        r.handIn = spot.handIn
+        if status ~= "done" and spot.zone and spot.x and not spot.inside then
             r.mapBtn:Show()
         else
             r.mapBtn:Hide()
@@ -552,6 +601,13 @@ local function QuestCommand(rest)
         ns.ShowQuestOnWorldMap(tonumber(showArg) or state.questIdx or 1)
         return
     end
+    -- /bnav quest handin | take | end: which end of the quest the arrow leads to
+    local endArg = ({ handin = "handin", turnin = "handin", take = "take", giver = "take", ["end"] = false })[arg]
+    if endArg ~= nil then
+        SwitchQuestEnd(endArg or nil)
+        ns.SetTab("quest")
+        return
+    end
     if arg == "map" then
         local db = ns.DB()
         db.questmap = not db.questmap
@@ -582,7 +638,8 @@ end, {
     "  /bnav quest all       show every faction's and class's quests, or only yours again",
     "  /bnav quest list      print the quest list and giver places to your chat",
     "  /bnav quest down|up|top  scroll the quest text and rewards (also keybinds)",
-    "  /bnav quest show [n]  navigate to the selected (or n-th) quest's giver and show it zoomed in on the world map",
+    "  /bnav quest show [n]  navigate to the selected (or n-th) quest's giver (in your log: where to hand it in) and show it zoomed in on the world map",
+    "  /bnav quest handin    lead the arrow to where the selected quest is handed in; /bnav quest take back to its giver; /bnav quest end flips (also a keybind)",
     "  /bnav quest map       toggle the quest givers of the selected dungeon on the game's world map",
 })
 
@@ -593,3 +650,4 @@ ns.RenderQuestTab = RenderQuestTab
 ns.VisibleQuests = VisibleQuests
 ns.CanTakeQuest = CanTakeQuest
 ns.QuestNavSpot = NavSpot
+ns.SwitchQuestEnd = SwitchQuestEnd

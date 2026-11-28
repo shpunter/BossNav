@@ -3,6 +3,7 @@
 -- with /bnav go). Only that dungeon's quests you can pick up right now:
 -- your faction, your class, your level reached (even with /bnav quest all),
 -- not done and not in your log yet. Givers on the same spot share one pin.
+-- A quest in your log shows a "?" pin where it is handed in instead.
 -- A giver outside the part of the map you are looking at (zoomed into a
 -- zone, or into part of a map) stays visible: its pin sits on the edge of
 -- the view, faded, with an arrow pointing toward the real spot.
@@ -26,6 +27,7 @@ local WorldPos               = ns.WorldPos
 local state                  = ns.state
 
 local QUEST_TEX = "Interface\\GossipFrame\\AvailableQuestIcon"
+local TURNIN_TEX = "Interface\\GossipFrame\\ActiveQuestIcon"
 local FACTION_RGB = { A = { 0.25, 0.5, 1 }, H = { 1, 0.25, 0.25 }, B = { 1, 0.82, 0 } }
 
 local pins = {}
@@ -41,7 +43,7 @@ local function PinTooltip(p)
     pcall(function()
         local spot = p.spot
         GameTooltip:SetOwner(p, "ANCHOR_RIGHT")
-        GameTooltip:AddLine(spot.giver, 1, 0.82, 0)
+        GameTooltip:AddLine((spot.handIn and "Hand in to " or "") .. spot.giver, 1, 0.82, 0)
         GameTooltip:AddLine(string.format("%s  %.1f, %.1f%s", spot.zone, spot.x, spot.y, spot.approx and " (about)" or ""), 0.6, 0.6, 0.6)
         local myLevel = PlayerLevel()
         for _, e in ipairs(spot.quests) do
@@ -107,20 +109,28 @@ end
 
 -- The spots to mark: one per giver place, each with its quests and their
 -- index in the Quests tab list (for the click and the highlight).
+-- A quest in your log adds a hand-in spot ("?" pin) where it goes back.
 local function GiverSpots()
     local list = VisibleQuests()
     local spots, byKey = {}, {}
+    local function Add(spot, q, i, handIn)
+        local key = string.format("%s|%s|%.0f|%.0f", handIn and "in" or "take", spot.zone, spot.x, spot.y)
+        local s = byKey[key]
+        if not s then
+            s = { zone = spot.zone, x = spot.x, y = spot.y, approx = q.approx, giver = spot.giver or "?",
+                  handIn = handIn, quests = {} }
+            byKey[key] = s
+            spots[#spots + 1] = s
+        end
+        s.quests[#s.quests + 1] = { quest = q, idx = i, navKey = "quest:" .. tostring(spot.id or spot.name) }
+    end
     for i, q in ipairs(list) do
-        -- only quests you can pick up now: faction, class, level, not done or in log
+        -- quests you can pick up now: faction, class, level, not done or in log
         if q.zone and q.x and q.y and not q.inside and CanTakeQuest(q) then
-            local key = string.format("%s|%.0f|%.0f", q.zone, q.x, q.y)
-            local s = byKey[key]
-            if not s then
-                s = { zone = q.zone, x = q.x, y = q.y, approx = q.approx, giver = q.giver or "?", quests = {} }
-                byKey[key] = s
-                spots[#spots + 1] = s
-            end
-            s.quests[#s.quests + 1] = { quest = q, idx = i }
+            Add(q, q, i, false)
+        elseif ns.QuestNavSpot and QuestStatus(q) == "active" then
+            local h = ns.QuestNavSpot(q, "handin")
+            if h.zone and h.x and h.y and not h.inside then Add(h, q, i, true) end
         end
     end
     return spots
@@ -212,9 +222,10 @@ local function RefreshQuestMapPins()
             local selected = false
             if questKey then
                 for _, e in ipairs(s.quests) do
-                    if "quest:" .. tostring(e.quest.id or e.quest.name) == questKey then selected = true end
+                    if e.navKey == questKey then selected = true end
                 end
             end
+            p.icon:SetTexture(s.handIn and TURNIN_TEX or QUEST_TEX)
             local px = math.max(ml, math.min(mr, fx))
             local py = math.max(mt, math.min(mb, fy))
             local onEdge = (px ~= fx or py ~= fy)
@@ -240,10 +251,14 @@ local function ShowQuestOnWorldMap(idx)
     local list = VisibleQuests()
     local q = list[idx]
     if not q then ns.Print("No quest " .. tostring(idx) .. " in the list.") return end
-    -- a quest ready to hand in: whoever takes it back
+    -- another quest than the picked one: its arrow end is picked by itself
+    if idx ~= state.questIdx then state.questEnd = nil end
+    -- a quest in your log: whoever takes it back
     if ns.QuestNavSpot then q = ns.QuestNavSpot(q) end
     if q.inside or not (q.zone and q.x and q.y) then
-        ns.Print(q.name .. ": no spot on the world map (" .. (q.inside and "taken inside the dungeon" or "place unknown") .. ").")
+        local why = q.inside and (q.handIn and "handed in inside the dungeon" or "taken inside the dungeon")
+            or (q.handIn and "hand-in place unknown" or "place unknown")
+        ns.Print(q.name .. ": no spot on the world map (" .. why .. ").")
         return
     end
     local mapID = ResolveMapIDByName(q.zone)

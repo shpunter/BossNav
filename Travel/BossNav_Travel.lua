@@ -187,13 +187,13 @@ local function SetQuestTarget(q, brief)
     state.questTarget = {
         key = key,
         name = q.giver or q.name, levels = q.name,
-        zone = q.zone, x = q.x, y = q.y, isQuest = true,
+        zone = q.zone, x = q.x, y = q.y, isQuest = true, handIn = q.handIn,
     }
     state.navFocus = "quest"
     state.selKind = "quest"
     state.questInside = nil
-    Print(string.format("Navigating to |cffffd100%s|r  (%s %.1f, %.1f) for %s",
-        state.questTarget.name, q.zone, q.x, q.y, q.name))
+    Print(string.format("%s |cffffd100%s|r  (%s %.1f, %.1f) for %s",
+        q.handIn and "Hand in to" or "Navigating to", state.questTarget.name, q.zone, q.x, q.y, q.name))
     if brief then TargetChanged() return end
     if SelectedDungeon() then
         Print("The dungeon target is kept: /bnav nav (or the Switch Navigation key) goes back to it.")
@@ -250,7 +250,7 @@ local function SwitchNav(which)
     state.navFocus = which
     state.selKind = which
     local t = NavTarget()
-    Print("Navigating to " .. (t.isQuest and "quest giver " or "dungeon ") .. "|cffffd100" .. t.name .. "|r.")
+    Print("Navigating to " .. (t.isQuest and (t.handIn and "hand in to " or "quest giver ") or "dungeon ") .. "|cffffd100" .. t.name .. "|r.")
     TargetChanged()
 end
 
@@ -329,6 +329,7 @@ end
 --------------------------------------------------------------------------
 local ENTRANCE_TEX = "Interface\\Minimap\\Dungeon"
 local QUEST_TEX = "Interface\\GossipFrame\\AvailableQuestIcon"
+local TURNIN_TEX = "Interface\\GossipFrame\\ActiveQuestIcon"   -- "?": where a quest is handed in
 local ENTRANCE_FALLBACK_TEX = "Interface\\Icons\\INV_Misc_Map_01"
 
 -- What the next leg's spot looks like: a flight master or a zone exit is
@@ -367,7 +368,11 @@ end
 
 -- The icon of the target itself: a quest giver or the dungeon entrance.
 local function SetTargetIcon(tex, entry)
-    if ShowsQuestIcon(entry) then SetIcon(tex, QUEST_TEX, ENTRANCE_FALLBACK_TEX) else SetEntranceIcon(tex) end
+    if ShowsQuestIcon(entry) then
+        SetIcon(tex, entry.handIn and TURNIN_TEX or QUEST_TEX, ENTRANCE_FALLBACK_TEX)
+    else
+        SetEntranceIcon(tex)
+    end
 end
 
 -- The icon for the spot the leg leads to; the target itself (and a
@@ -424,7 +429,7 @@ local function UpdateTravelLive(skipRefresh)
     local dxE, dyS = OffsetToLeg(leg, mapID, px, py)
     local legText = leg and leg.text or ""
     if entry.isQuest and leg and (leg.kind == "entrance" or leg.kind == "direct") then
-        legText = string.format("Giver: %s %.1f, %.1f", entry.zone, entry.x, entry.y)
+        legText = string.format("%s: %s %.1f, %.1f", entry.handIn and "Hand in" or "Giver", entry.zone, entry.x, entry.y)
     end
     SetTargetIcon(hud.icon, entry)
     local iconSize = ShowsQuestIcon(entry) and HUD_QUEST_ICON or HUD_ICON
