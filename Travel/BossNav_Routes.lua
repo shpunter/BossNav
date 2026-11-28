@@ -6,6 +6,7 @@ local ADDON, ns = ...
 local DB                     = ns.DB
 local EntranceOf             = ns.EntranceOf
 local MapName                = ns.MapName
+local MapWorldSize           = ns.MapWorldSize
 local Norm                   = ns.Norm
 local ResolveMapIDByName     = ns.ResolveMapIDByName
 
@@ -74,6 +75,11 @@ local LINKS = {
     { "Tirisfal Glades", 85, 68, "Western Plaguelands", 26, 53, how = "the Bulwark" },
     { "Western Plaguelands", 93, 70, "Eastern Plaguelands", 8, 68, how = "Thondroril River bridge" },
     { "Western Plaguelands", 43, 86, "Alterac Mountains", 68, 25, how = "Chillwind Camp road" },
+    -- Riverglades (WoW Forever). Guides give no coordinates for the land
+    -- roads, so these spots are estimates: walking a border once saves the
+    -- exact spot (BossNav_Crossings.lua), which then replaces them.
+    { "Redridge Mountains", 45, 8, "Riverglades", 6, 55, how = "right fork at the signpost before the Burning Steppes gate" },
+    { "Badlands", 45, 95,       "Riverglades", 40, 5, how = "road south from the Badlands" },
     -- Kalimdor
     { "Durotar", 46, 13,        "Orgrimmar", 50, 92, faction = H },
     { "Durotar", 33, 47,        "The Barrens", 62, 19 },
@@ -99,6 +105,7 @@ local LINKS = {
     { "Un'Goro Crater", 30, 75, "Silithus", 80, 18 },
     -- Boats and zeppelins (between continents)
     { "Stranglethorn Vale", 27, 77, "The Barrens", 63, 38, how = "boat Booty Bay - Ratchet" },
+    { "Tanaris", 68.6, 23.0,    "Riverglades", 80.6, 54.6, how = "boat Steamwheedle Port - Powderfuse Port" },
     { "Wetlands", 5, 57,        "Dustwallow Marsh", 71, 56, how = "boat Menethil - Theramore", faction = A },
     { "Wetlands", 5, 57,        "Darkshore", 36, 45, how = "boat Menethil - Auberdine", faction = A },
     { "Durotar", 51, 12,        "Tirisfal Glades", 62, 59, how = "zeppelin Orgrimmar - Undercity", faction = H },
@@ -106,19 +113,50 @@ local LINKS = {
     { "Tirisfal Glades", 62, 59, "Stranglethorn Vale", 32, 29, how = "zeppelin Undercity - Grom'gol", faction = H },
 }
 
--- Adjacency: GRAPH[zoneKey] = { { to = zoneKey, zone = "Name", x, y, how, faction }, ... }
+-- Adjacency: GRAPH[zoneKey] = { { to = zoneKey, zone = "Name", x, y, tx, ty, how, faction }, ... }
+-- x, y is the crossing in this zone, tx, ty where it lands you in the next.
 local GRAPH = {}
 local ZONE_NAME = {}
-local function AddEdge(from, to, x, y, how, faction)
+local function AddEdge(from, to, x, y, tx, ty, how, faction)
     local fk, tk = Norm(from), Norm(to)
     ZONE_NAME[fk] = from
     ZONE_NAME[tk] = to
     GRAPH[fk] = GRAPH[fk] or {}
-    table.insert(GRAPH[fk], { to = tk, zone = to, x = x, y = y, how = how, faction = faction })
+    table.insert(GRAPH[fk], { to = tk, zone = to, x = x, y = y, tx = tx, ty = ty, how = how, faction = faction })
 end
 for _, l in ipairs(LINKS) do
-    AddEdge(l[1], l[4], l[2], l[3], l.how, l.faction)
-    AddEdge(l[4], l[1], l[5], l[6], l.how, l.faction)
+    AddEdge(l[1], l[4], l[2], l[3], l[5], l[6], l.how, l.faction)
+    AddEdge(l[4], l[1], l[5], l[6], l[2], l[3], l.how, l.faction)
+end
+
+-- A link you ride (boat, zeppelin, tram, portal) rather than walk over.
+local function IsRide(edge)
+    local how = edge.how or ""
+    return how:find("^boat") or how:find("^zeppelin") or how:find("Tram") or how:find("portal")
+end
+
+-- The crossings out of a zone. Spots you walked over yourself
+-- (BossNav_Crossings.lua saves them in DB().crossings) replace the built-in
+-- guesses for that pair of zones and add borders the list above lacks.
+local function EdgesFrom(key)
+    local learned = DB().crossings and DB().crossings[key]
+    if not learned then return GRAPH[key] or {} end
+    local list = {}
+    for _, e in ipairs(GRAPH[key] or {}) do
+        if not learned[e.to] or IsRide(e) then list[#list + 1] = e end
+    end
+    for toKey, spots in pairs(learned) do
+        for _, c in ipairs(spots) do
+            list[#list + 1] = { to = toKey, zone = ZONE_NAME[toKey] or c.zone,
+                x = c.x, y = c.y, tx = c.tx, ty = c.ty }
+        end
+    end
+    return list
+end
+
+-- True for a zone the router knows (so a crossing into it is worth saving).
+local function IsRouteZone(key)
+    return key ~= nil and GRAPH[key] ~= nil
 end
 
 -- "Alliance" or "Horde", or nil when the client will not say.
@@ -128,34 +166,82 @@ local function PlayerFaction()
     return nil
 end
 
--- Shortest path by zone count, using only links your faction can take.
--- Returns the list of edges to walk, or nil.
-local function FindPath(fromKey, toKey, faction)
+-- Size of a zone in yards (cached). A zone the client will not measure
+-- counts as an average classic zone, so it still gets a fair cost.
+local DEFAULT_W, DEFAULT_H = 3500, 2330
+local SIZE = {}
+local function ZoneSize(key)
+    local s = SIZE[key]
+    if not s then
+        local w, h = MapWorldSize(ResolveMapIDByName(ZONE_NAME[key] or ""))
+        s = { w or DEFAULT_W, h or DEFAULT_H }
+        SIZE[key] = s
+    end
+    return s[1], s[2]
+end
+
+-- Yards between two spots (percent of the zone's map) inside one zone.
+local function Yards(key, x1, y1, x2, y2)
+    local w, h = ZoneSize(key)
+    local dx, dy = (x2 - x1) / 100 * w, (y2 - y1) / 100 * h
+    return math.sqrt(dx * dx + dy * dy)
+end
+
+-- Extra cost of a crossing, in yards of running: waiting for and riding a
+-- boat or zeppelin takes minutes, the tram about one.
+local function CrossingCost(edge)
+    local how = edge.how or ""
+    if how:find("^boat") or how:find("^zeppelin") then return 1500 end
+    if how:find("Tram") then return 500 end
+    return 0
+end
+
+-- Shortest path by distance, using only links your faction can take: from
+-- your spot (sx, sy percent of your zone) through the crossings to the goal
+-- spot (gx, gy percent of the goal zone). Returns the list of edges to walk,
+-- or nil when no road leads there.
+local function FindPath(fromKey, sx, sy, toKey, gx, gy, faction)
     if not (GRAPH[fromKey] and GRAPH[toKey]) then return nil end
     if fromKey == toKey then return {} end
-    local prev, queue, seen = {}, { fromKey }, { [fromKey] = true }
-    local head = 1
-    while head <= #queue do
-        local cur = queue[head]
-        head = head + 1
-        for _, edge in ipairs(GRAPH[cur]) do
+    -- a node is where you stand in a zone: the start, or a crossing's far side
+    local nodes = { { zone = fromKey, x = sx, y = sy, cost = 0 } }
+    local best, done = nil, {}
+    while true do
+        local cur, ci = nil, nil
+        for i, n in ipairs(nodes) do
+            if not done[i] and (not cur or n.cost < cur.cost) then cur, ci = n, i end
+        end
+        if not cur or (best and cur.cost >= best.cost) then break end
+        done[ci] = true
+        if cur.zone == toKey then
+            local total = cur.cost + Yards(toKey, cur.x, cur.y, gx, gy)
+            if not best or total < best.cost then best = { cost = total, node = cur } end
+        end
+        for _, edge in ipairs(EdgesFrom(cur.zone)) do
             local allowed = not edge.faction or not faction or edge.faction == faction
-            if allowed and not seen[edge.to] then
-                seen[edge.to] = true
-                prev[edge.to] = { from = cur, edge = edge }
-                if edge.to == toKey then
-                    local path, k = {}, toKey
-                    while prev[k] do
-                        table.insert(path, 1, prev[k].edge)
-                        k = prev[k].from
-                    end
-                    return path
+            if allowed then
+                local cost = cur.cost + Yards(cur.zone, cur.x, cur.y, edge.x, edge.y) + CrossingCost(edge)
+                -- the same landing spot reached again: keep the cheaper way
+                local found = nil
+                for i, n in ipairs(nodes) do
+                    if n.zone == edge.to and n.x == edge.tx and n.y == edge.ty then found = i break end
                 end
-                queue[#queue + 1] = edge.to
+                if not found then
+                    nodes[#nodes + 1] = { zone = edge.to, x = edge.tx, y = edge.ty, cost = cost, prev = cur, edge = edge }
+                elseif not done[found] and cost < nodes[found].cost then
+                    local n = nodes[found]
+                    n.cost, n.prev, n.edge = cost, cur, edge
+                end
             end
         end
     end
-    return nil
+    if not best then return nil end
+    local path, n = {}, best.node
+    while n.edge do
+        table.insert(path, 1, n.edge)
+        n = n.prev
+    end
+    return path
 end
 
 --------------------------------------------------------------------------
@@ -256,14 +342,22 @@ local function NextLeg(entry, playerMapID, px, py)
     end
     if not (destKey and curKey) or destKey == curKey then return entrance end
 
-    local path = FindPath(curKey, destKey, faction)
+    -- your spot on the zone's own map (you may be standing on a city or
+    -- area map inside it); the zone's middle when the client will not say
+    local curMap = ResolveMapIDByName(ZONE_NAME[curKey] or "") or playerMapID
+    if curMap ~= playerMapID and C_Map and C_Map.GetPlayerMapPosition then
+        local ok, pos = pcall(C_Map.GetPlayerMapPosition, curMap, "player")
+        local zx, zy
+        if ok and pos then pcall(function() zx, zy = pos:GetXY() end) end
+        if type(zx) == "number" and type(zy) == "number" then px, py = zx, zy end
+    end
+    local sx, sy = (px or 0.5) * 100, (py or 0.5) * 100
+    local path = FindPath(curKey, sx, sy, destKey, ex * 100, ey * 100, faction)
     if not path or #path == 0 then
         entrance.kind = "direct"
         entrance.text = "No road for " .. (faction or "you") .. " between " .. (ZONE_NAME[curKey] or GetRealZoneText() or "here") .. " and " .. destZone .. "; straight line shown"
         return entrance
     end
-
-    local curMap = ResolveMapIDByName(ZONE_NAME[curKey] or "") or playerMapID
 
     -- Flying: a flight path learned at both ends takes you to the zone.
     local flying = RouteMode() == "fly"
@@ -286,6 +380,7 @@ end
 
 -- shared with the other BossNav files
 ns.FlightNodes = FlightNodes
+ns.IsRouteZone = IsRouteZone
 ns.NextLeg = NextLeg
 ns.PlayerFaction = PlayerFaction
 ns.ROUTE_MODES = ROUTE_MODES

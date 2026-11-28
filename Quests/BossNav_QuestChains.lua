@@ -245,6 +245,33 @@ local STEPS = {
     [92751] = { id=92751, name="Detonation at a Distance", level=9, qlevel=16, giver="Jasper Fel", zone="Stormwind City", x=80.3, y=70.1, turnin="Sprite Jumpsprocket", tzone="Stormwind City", tx=61.9, ty=30.6, afterAny={92750}, note="Bring the Remote Detonator Kit to Sprite Jumpsprocket in the Dwarven District of Stormwind." },
     [92752] = { id=92752, name="Explosive Consultation", level=9, qlevel=16, giver="Sprite Jumpsprocket", zone="Stormwind City", x=61.9, y=30.6, turnin="Alba Fairmoon", tzone="Westfall", tx=52.5, ty=53.0, after={92749, 92751}, note="Return to Alba Fairmoon in Westfall." },
     [93680] = { id=93680, name="Key to the City", level=30, qlevel=33, giver="Magus Wordeen Voidglare", zone="Hillsbrad Foothills", x=61.6, y=20.9, note="Acquire the Dalaran Sewer Key for Magus Wordeen Voidglare in Tarren Mill." },
+    [93786] = { id=93786, name="A Message in Blood", level=35, qlevel=36, giver="Krom'rosh", zone="Riverglades", x=59.4, y=45.6, note="Slay 12 Meadowsbrook Farmhands, then return to Krom'rosh with news of your success." },
+    [93787] = { id=93787, name="Food for the Taking", level=36, giver="Krom'rosh", zone="Riverglades", x=59.4, y=45.6, note="Steal 6 Feed Satchels from the Alliance farm in Meadowsbrook then return to Krom'rosh." },
+    [94483] = { id=94483, name="Show Them How It's Done", level=36, qlevel=39, giver="Krom'rosh", zone="Riverglades", x=59.4, y=45.6, after={93786, 93787}, note="Slay 8 Farholde Priests and 12 Farholde Scouts south of the river." },
+    [94672] = { id=94672, name="Encroaching Twilight", level=36, qlevel=41, giver="Tran'gul", zone="Riverglades", x=59.4, y=44.2, afterAny={94483}, note="Defeat 8 Twilight Raiders and 8 Twilight Neophytes within Sunnyglade for Tran'gul in Rog'mar." },
+    [94680] = { id=94680, name="Twilight Missives", level=36, qlevel=41, giver="Tran'gul", zone="Riverglades", x=59.4, y=44.2, afterAny={94483}, note="Retrieve 3 Twilight Missives from Twilight Shadowmancers in Sunnyglade for Tran'gul in Rog'mar." },
+    [94727] = { id=94727, name="Digging for Answers", level=36, qlevel=40, giver="Tran'gul", zone="Riverglades", x=59.4, y=44.2, turnin="Clubtoe", tzone="Riverglades", tx=49.9, ty=47, after={94672, 94680}, note="Convince a Twilight's Hammer miner in Sunnyglade to divulge their secrets." },
+    [94744] = { id=94744, name="The Wayward Warrior", level=38, qlevel=43, giver="Krom'rosh", zone="Riverglades", x=59.4, y=45.6, turnin="Da'grosh", tzone="Riverglades", tx=33.4, ty=38, afterAny={95428}, note="Find Da'grosh in the hills west of Rog'mar." },
+    [94745] = { id=94745, name="Carving a Path", level=38, qlevel=44, giver="Da'grosh", zone="Riverglades", x=33.4, y=38, afterAny={94744}, note="Defeat 8 Twilight Fanatics, 8 Twilight Corrupters, and 8 Twilight Champions within the Twilight's Shroud for Da'grosh." },
+    [94748] = { id=94748, name="Break Their Chains", level=38, qlevel=44, giver="Da'grosh", zone="Riverglades", x=33.4, y=38, afterAny={94744}, note="Rescue 5 Rog'mar Scouts within the Twilight's Shroud for Da'grosh." },
+    [94768] = { id=94768, name="Bring Me His Head", level=38, qlevel=46, giver="Da'grosh", zone="Riverglades", x=33.4, y=38, after={94745, 94748}, note="Defeat Overlord Kilgar within the Twilight's Shroud and bring his head to Da'grosh." },
+    [94879] = { id=94879, name="Scraps of Knowledge", level=36, qlevel=40, giver="Ashe Amberhall", zone="Riverglades", x=66.6, y=81, note="Collect 5 Twilight Pages from within Sunnyglade for Ashe Amberall in Farholde Keep." },
+    [94881] = { id=94881, name="Curious Trinkets", level=36, qlevel=38, giver="Ashe Amberhall", zone="Riverglades", x=66.6, y=81, note="Retrieve 25 Twilight Charms from Twilight Shadowmancers and Twilight Neophytes in Sunnyglade for Ashe Amberhall in Farholde Keep." },
+    [94886] = { id=94886, name="The Western Front", level=38, qlevel=44, giver="Demar Brant", zone="Riverglades", x=66.4, y=80.8, turnin="Sergeant Riftan", tzone="Riverglades", tx=30.4, ty=49, afterAny={94879}, note="Find Sergeant Riftan near the Twilight's Shroud to the west." },
+    [94888] = { id=94888, name="No Soldier Left Behind", level=38, qlevel=44, giver="Sergeant Riftan", zone="Riverglades", x=30.4, y=49, afterAny={94886}, note="Rescue 5 Farholde Scouts within the Twilight's Shroud for Sergeant Riftan." },
+    [94889] = { id=94889, name="Carving a Path", level=38, qlevel=44, giver="Sergeant Riftan", zone="Riverglades", x=30.7, y=49.1, afterAny={94886}, note="Defeat 8 Twilight Fanatics, 8 Twilight Corrupters, and 8 Twilight Champions within the Twilight's Shroud for Sergeant Riftan." },
+    [94890] = { id=94890, name="Bring Me His Head", level=38, qlevel=46, giver="Sergeant Riftan", zone="Riverglades", x=30.4, y=49, after={94888, 94889}, note="Defeat Overlord Kilgar within the Twilight's Shroud and bring his head to Sergeant Riftan." },
+    [94907] = { id=94907, name="A Small Favor", level=36, qlevel=44, giver="Ashe Amberhall", zone="Riverglades", x=66.6, y=81, afterAny={94881}, note="Summon a Twilight's Thrall from a conduit within the Twilight Shroud and capture it with Amberhall's Soulstone." },
+    [95278] = { id=95278, name="It Is Time, Brother...", level=38, qlevel=45, giver="Da'grosh", zone="Riverglades", x=33.4, y=38, turnin="Krom'rosh", tzone="Riverglades", tx=59.4, ty=45.6, afterAny={94768}, note="Deliver the missive to Krom'rosh at Rog'mar." },
+    [95417] = { id=95417, name="The Purple Ones", level=36, qlevel=40, giver="Clubtoe", zone="Riverglades", x=49.9, y=47, turnin="Twilight Brute", tzone="Riverglades", tx=48.0, ty=48.0, afterAny={94727}, note="Find missing ogres in the caves beneath Sunnyglade for Clubtoe." },
+    [95418] = { id=95418, name="Spread the Word", level=36, qlevel=40, giver="Clubtoe", zone="Riverglades", x=50.0, y=47.0, turnin="Tran'gul", tzone="Riverglades", tx=59.5, ty=44.0, afterAny={95427}, note="Deliver the head of Chogg to Tran'gul in Rog'mar." },
+    [95420] = { id=95420, name="Land of Giants", level=36, qlevel=40, giver="Tran'gul", zone="Riverglades", x=59.4, y=44.2, turnin="Clugfist", tzone="Riverglades", tx=64.5, ty=14.7, afterAny={95418}, note="Deliver Chogg's head to the ogre city to the north." },
+    [95424] = { id=95424, name="Might Makes Right", level=36, qlevel=41, giver="Clugfist", zone="Riverglades", x=64.5, y=14.7, afterAny={95420}, note="Kill 7 Twilight Maulers and 7 Twilight Firecallers for Clugfist in Bolder'ok." },
+    [95425] = { id=95425, name="Unworthy Champion", level=36, qlevel=42, giver="Clugfist", zone="Riverglades", x=64.5, y=14.7, afterAny={95420}, note="Collect Skullthumper from Klunk for Clugfist in Bolder'ok." },
+    [95427] = { id=95427, name="Twilight No More!", level=36, qlevel=41, giver="Clubtoe", zone="Riverglades", x=49.9, y=47, after={95601, 95602}, note="Kill Chogg'Zac in the Sunnyglade cave and collect their heads for Clubtoe." },
+    [95428] = { id=95428, name="Clugfist's Decree", level=36, qlevel=41, giver="Clugfist", zone="Riverglades", x=64.5, y=14.7, turnin="Krom'rosh", tzone="Riverglades", tx=59.4, ty=45.6, after={95424, 95425}, note="Report to Krom'rosh in Rog'mar." },
+    [95601] = { id=95601, name="The Purple Ones", level=36, qlevel=40, giver="Twilight Brute", zone="Riverglades", x=49.2, y=46.7, turnin="Clubtoe", tzone="Riverglades", tx=50.0, ty=47.0, afterAny={95417}, note="Kill 5 Empowered Brutes and 10 Twilight Ritualists then return to Clubtoe in Sunnyglade." },
+    [95602] = { id=95602, name="Sickening Lights", level=36, qlevel=40, giver="Clubtoe", zone="Riverglades", x=49.9, y=47, afterAny={94727}, note="Destroy 5 Twilight Ritual Circles found throughout the caves underneath Sunnyglade." },
     [95663] = { id=95663, name="Dragonmaw Rumors", level=24, qlevel=31, giver="Zaruk", zone="Arathi Highlands", x=74.5, y=35.6, turnin="Deathstalker Agent", tzone="Wetlands", tx=51.5, ty=59.3, note="Travel to the Wetlands and meet the Deathstalker Agent in the hills above the Dragonmaw camp." },
     [95748] = { id=95748, name="The Gurubashi Legends of Old", level=30, qlevel=40, giver="Kin'weelay", zone="Stranglethorn Vale", x=32.3, y=27.7, afterAny={629}, note="Use the hide and charcoal to create a rubbing of the Third Troll Legend tablet." },
     [95770] = { id=95770, name="Locating the Lost City", level=30, qlevel=40, giver="Kin'weelay", zone="Stranglethorn Vale", x=32.3, y=27.7, afterAny={95748}, note="Explore the Vile Reef and find the cavern entrance." },
@@ -362,6 +389,11 @@ local CHAINS = {
     [92457] = {92432},   -- Starving Arcane
     [92458] = {92432},   -- Heart of Disruption
     [92753] = {92742, 92744, 92745, 92747, 92748, 92749, 92750, 92751, 92752},   -- Destruction in Deadmines
+    [94968] = {93786, 93787, 94483, 94672, 94680, 94727, 95417, 95601, 95602, 95427, 95418, 95420, 95424, 95425, 95428, 94744, 94745, 94748, 94768, 95278},   -- Eye of Mugg
+    [94972] = {93786, 93787, 94483, 94672, 94680, 94727, 95417, 95601, 95602, 95427, 95418, 95420, 95424, 95425, 95428, 94744, 94745, 94748, 94768, 95278},   -- Tome of Twilight
+    [94975] = {93786, 93787, 94483, 94672, 94680, 94727, 95417, 95601, 95602, 95427, 95418, 95420, 95424, 95425, 95428, 94744, 94745, 94748, 94768},   -- A Token of Vengeance
+    [94983] = {94879, 94886, 94888, 94889, 94890},   -- Twilight Mementos
+    [94984] = {94881, 94907},   -- Tome of Twilight
     [95216] = {447, 450, 451},   -- The New Plague
     [95646] = {276, 277, 275},   -- Horrors in the Highland
     [95682] = {95663},   -- Open the Maw
@@ -482,6 +514,11 @@ local NEEDS = {
     [92457] = { afterAny={92432} },   -- Starving Arcane
     [92458] = { afterAny={92432} },   -- Heart of Disruption
     [92753] = { afterAny={92752} },   -- Destruction in Deadmines
+    [94968] = { afterAny={95278} },   -- Eye of Mugg
+    [94972] = { afterAny={95278} },   -- Tome of Twilight
+    [94975] = { afterAny={94768} },   -- A Token of Vengeance
+    [94983] = { afterAny={94890} },   -- Twilight Mementos
+    [94984] = { afterAny={94907} },   -- Tome of Twilight
     [95216] = { afterAny={451} },   -- The New Plague
     [95646] = { afterAny={275} },   -- Horrors in the Highland
     [95682] = { afterAny={95663} },   -- Open the Maw

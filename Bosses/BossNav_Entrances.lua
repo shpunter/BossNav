@@ -71,8 +71,10 @@ local ENTRANCES = {
     ["Half-Pint Tavern"]          = { },
     -- Drowned City: underwater past the Vile Reef, a cavern with a large tablet by the water-elemental island.
     ["The Drowned City"]          = { zone = "Stranglethorn Vale",   x = 21.4, y = 27.9, levels = {35, 42} },
+    -- Krol'dok Stronghold: a cave west of the big fortress gates, north of Sunnyglade
+    -- (warcrafttavern and mmonster.co, Nov 2026; one other guide says 39, 39).
+    ["Krol'dok Stronghold"]       = { zone = "Riverglades",          x = 37.5, y = 37.5, levels = {40, 47} },
     -- in the game's group finder, entrance not known yet
-    ["Krol'dok Stronghold"]       = { levels = {40, 47} },
     ["Alcaz Prison"]              = { levels = {48, 55} },
     ["Blackmaw Hold"]             = { levels = {55, 60} },
     ["The Shaper's Terrace"]      = { levels = {58, 60} },

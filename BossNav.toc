@@ -15,6 +15,7 @@ Core\BossNav_MapAPI.lua
 Bosses\BossNav_Parts.lua
 Bosses\BossNav_Entrances.lua
 Travel\BossNav_Routes.lua
+Travel\BossNav_Crossings.lua
 Window\BossNav_Window.lua
 Window\BossNav_WindowDrag.lua
 Window\BossNav_Scrollbar.lua
